@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Domilix - Filtres</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#0d1d2b",
+                      "inverse-surface": "#352f29",
+                      "background": "#fff8f4",
+                      "surface-variant": "#ece1d7",
+                      "secondary-fixed": "#d4e4f8",
+                      "surface-bright": "#fff8f4",
+                      "secondary-fixed-dim": "#b8c8dc",
+                      "on-secondary-container": "#556475",
+                      "outline-variant": "#d4c4b2",
+                      "on-tertiary-container": "#afe0ff",
+                      "surface-tint": "#835500",
+                      "on-surface": "#201b15",
+                      "surface-dim": "#e3d8ce",
+                      "primary": "#633f00",
+                      "surface-container-low": "#fdf2e7",
+                      "tertiary-fixed": "#c4e7ff",
+                      "primary-fixed-dim": "#f9bb65",
+                      "on-surface-variant": "#504537",
+                      "primary-container": "#835500",
+                      "on-error": "#ffffff",
+                      "surface-container-highest": "#ece1d7",
+                      "surface": "#fff8f4",
+                      "on-tertiary": "#ffffff",
+                      "tertiary": "#004d6a",
+                      "on-error-container": "#93000a",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#004c69",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-on-surface": "#faefe5",
+                      "surface-container": "#f7ece2",
+                      "inverse-primary": "#f9bb65",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#f2e6dc",
+                      "on-secondary": "#ffffff",
+                      "tertiary-fixed-dim": "#88cff9",
+                      "on-primary-container": "#ffd197",
+                      "secondary": "#516071",
+                      "on-secondary-fixed-variant": "#394858",
+                      "tertiary-container": "#03668b",
+                      "on-primary": "#ffffff",
+                      "secondary-container": "#d1e1f5",
+                      "primary-fixed": "#ffddb4",
+                      "on-tertiary-fixed": "#001e2c",
+                      "on-background": "#201b15",
+                      "on-primary-fixed": "#291800",
+                      "on-primary-fixed-variant": "#633f00",
+                      "outline": "#827565"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-max-width": "1280px",
+                      "base": "8px",
+                      "margin-desktop": "64px",
+                      "gutter": "24px",
+                      "margin-mobile": "20px",
+                      "section-gap": "80px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "caption": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body-lg": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label-sm": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "headline-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-lg": [
+                              "Plus Jakarta Sans"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "caption": [
+                              "12px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "60px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen text-on-background font-body-md relative overflow-hidden">
+<!-- Scrim / Backdrop -->
+<div class="fixed inset-0 bg-on-background/40 z-40"></div>
+<!-- Bottom Sheet Modal -->
+<div class="fixed bottom-0 left-0 w-full bg-surface z-50 rounded-t-[16px] shadow-[0px_-10px_40px_rgba(82,69,52,0.1)] flex flex-col max-h-[795px] overflow-hidden md:w-[600px] md:left-1/2 md:-translate-x-1/2 md:rounded-b-[16px] md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:max-h-[751px]">
+<!-- Drag Handle (Mobile only) -->
+<div class="w-full flex justify-center pt-3 pb-1 md:hidden">
+<div class="w-12 h-1.5 bg-surface-variant rounded-full"></div>
+</div>
+<!-- Header -->
+<div class="px-margin-mobile md:px-gutter py-4 flex justify-between items-center border-b border-surface-variant">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center p-2 -ml-2">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+</button>
+<h2 class="font-headline-md text-[24px] font-bold text-on-surface">Filtres</h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center p-2 -mr-2">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-margin-mobile md:px-gutter py-6 space-y-8">
+<!-- Type d'annonce -->
+<section class="space-y-4">
+<h3 class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-widest">Type d'annonce</h3>
+<div class="flex gap-4">
+<button class="flex-1 py-3 px-4 rounded-[12px] bg-primary text-on-primary font-label-sm text-label-sm text-center transition-colors">
+                        Location
+                    </button>
+<button class="flex-1 py-3 px-4 rounded-[12px] border border-outline-variant bg-surface text-on-surface font-label-sm text-label-sm text-center hover:border-outline transition-colors">
+                        Vente
+                    </button>
+</div>
+</section>
+<!-- Type de bien -->
+<section class="space-y-4">
+<h3 class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-widest">Type de bien</h3>
+<div class="flex flex-wrap gap-3">
+<button class="py-2.5 px-5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm border border-outline-variant hover:border-outline transition-colors">
+                        Appartement
+                    </button>
+<button class="py-2.5 px-5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm border border-primary-container transition-colors">
+                        Villa
+                    </button>
+<button class="py-2.5 px-5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm border border-outline-variant hover:border-outline transition-colors">
+                        Bureau
+                    </button>
+</div>
+</section>
+<!-- Budget -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<h3 class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-widest">Budget (FCFA)</h3>
+<span class="font-label-sm text-label-sm text-primary">0 - 10M+</span>
+</div>
+<!-- Custom Slider Track -->
+<div class="relative w-full h-2 bg-surface-variant rounded-full mt-2">
+<!-- Active Track -->
+<div class="absolute left-0 top-0 h-full bg-primary rounded-full w-2/3"></div>
+<!-- Thumb Left -->
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-6 h-6 bg-surface border-2 border-primary rounded-full shadow-sm cursor-pointer z-10"></div>
+<!-- Thumb Right -->
+<div class="absolute left-2/3 top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 bg-surface border-2 border-primary rounded-full shadow-sm cursor-pointer z-10"></div>
+</div>
+<div class="flex gap-4">
+<div class="flex-1">
+<label class="block font-caption text-caption text-on-surface-variant mb-1">Minimum</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-[12px] py-3 px-4 font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="0"/>
+</div>
+</div>
+<div class="flex-1">
+<label class="block font-caption text-caption text-on-surface-variant mb-1">Maximum</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-[12px] py-3 px-4 font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" readonly="" type="text" value="10 000 000+"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Chambres -->
+<section class="space-y-4">
+<h3 class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-widest">Chambres</h3>
+<div class="flex gap-3">
+<button class="w-12 h-12 rounded-[12px] border border-outline-variant bg-surface text-on-surface font-label-sm text-label-sm flex items-center justify-center hover:border-outline transition-colors">
+                        1
+                    </button>
+<button class="w-12 h-12 rounded-[12px] bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center transition-colors">
+                        2
+                    </button>
+<button class="w-12 h-12 rounded-[12px] border border-outline-variant bg-surface text-on-surface font-label-sm text-label-sm flex items-center justify-center hover:border-outline transition-colors">
+                        3
+                    </button>
+<button class="w-12 h-12 rounded-[12px] border border-outline-variant bg-surface text-on-surface font-label-sm text-label-sm flex items-center justify-center hover:border-outline transition-colors">
+                        4+
+                    </button>
+</div>
+</section>
+<!-- Commodités -->
+<section class="space-y-4 pb-4">
+<h3 class="font-label-sm text-label-sm uppercase text-on-surface-variant tracking-widest">Commodités</h3>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center gap-3 p-3 rounded-[12px] border border-primary bg-primary/5 text-primary transition-colors text-left">
+<span class="material-symbols-outlined" data-icon="wifi">wifi</span>
+<span class="font-label-sm text-label-sm flex-1">Wifi</span>
+</button>
+<button class="flex items-center gap-3 p-3 rounded-[12px] border border-outline-variant bg-surface text-on-surface hover:border-outline transition-colors text-left">
+<span class="material-symbols-outlined" data-icon="local_parking">local_parking</span>
+<span class="font-label-sm text-label-sm flex-1">Parking</span>
+</button>
+<button class="flex items-center gap-3 p-3 rounded-[12px] border border-outline-variant bg-surface text-on-surface hover:border-outline transition-colors text-left">
+<span class="material-symbols-outlined" data-icon="pool">pool</span>
+<span class="font-label-sm text-label-sm flex-1">Piscine</span>
+</button>
+<button class="flex items-center gap-3 p-3 rounded-[12px] border border-primary bg-primary/5 text-primary transition-colors text-left">
+<span class="material-symbols-outlined" data-icon="ac_unit">ac_unit</span>
+<span class="font-label-sm text-label-sm flex-1">Clim</span>
+</button>
+</div>
+</section>
+</div>
+<!-- Footer CTA -->
+<div class="p-margin-mobile md:p-gutter border-t border-surface-variant bg-surface">
+<button class="w-full bg-primary text-on-primary py-4 rounded-[12px] font-label-sm text-label-sm uppercase tracking-wider hover:bg-primary-fixed-variant transition-colors">
+                Appliquer les filtres
+            </button>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Domilix - Rechercher</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#0d1d2b",
+                        "inverse-surface": "#352f29",
+                        "background": "#fff8f4",
+                        "surface-variant": "#ece1d7",
+                        "secondary-fixed": "#d4e4f8",
+                        "surface-bright": "#fff8f4",
+                        "secondary-fixed-dim": "#b8c8dc",
+                        "on-secondary-container": "#556475",
+                        "outline-variant": "#d4c4b2",
+                        "on-tertiary-container": "#afe0ff",
+                        "surface-tint": "#835500",
+                        "on-surface": "#201b15",
+                        "surface-dim": "#e3d8ce",
+                        "primary": "#633f00",
+                        "surface-container-low": "#fdf2e7",
+                        "tertiary-fixed": "#c4e7ff",
+                        "primary-fixed-dim": "#f9bb65",
+                        "on-surface-variant": "#504537",
+                        "primary-container": "#835500",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#ece1d7",
+                        "surface": "#fff8f4",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#004d6a",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#004c69",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#faefe5",
+                        "surface-container": "#f7ece2",
+                        "inverse-primary": "#f9bb65",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#f2e6dc",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#88cff9",
+                        "on-primary-container": "#ffd197",
+                        "secondary": "#516071",
+                        "on-secondary-fixed-variant": "#394858",
+                        "tertiary-container": "#03668b",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#d1e1f5",
+                        "primary-fixed": "#ffddb4",
+                        "on-tertiary-fixed": "#001e2c",
+                        "on-background": "#201b15",
+                        "on-primary-fixed": "#291800",
+                        "on-primary-fixed-variant": "#633f00",
+                        "outline": "#827565"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-width": "1280px",
+                        "base": "8px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "section-gap": "80px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "caption": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["40px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "caption": ["12px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["14px", { "lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "headline-md": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display-lg": ["60px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased">
+<!-- TopAppBar (Web) -->
+<header class="hidden md:flex bg-surface dark:bg-surface-dim docked full-width top-0 bg-surface dark:bg-surface-dim flat no shadows flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max-width mx-auto">
+<div class="flex items-center gap-4">
+<button class="text-primary dark:text-primary-fixed-dim hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim tracking-tight">Domilix</h1>
+</div>
+<nav class="flex gap-8">
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Accueil</a>
+<a class="font-label-sm text-label-sm text-primary dark:text-primary-fixed-dim font-bold hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Rechercher</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Favoris</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Alertes</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Profil</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-outline-variant">
+<img alt="Profil utilisateur" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2-9jW-CDVro3ieM4HNccwQ7bqHoD5xu9z3v9M3KTvcKlu_fuY-gw6EEC3mHl3LP7761FdYWAkUMvX-57eNYwTBBhssMVPsaMzGziXj9m-KzRdz7sl3Gpo6OFR-vO-i4VDOILtxgNTilVaJjzclBI_tAd17kzYiq6NhTZH82JYRd-EySYE6tmQ2m98dxtUwu-1bFcrafHd9g6YKcvJ1vOn-ENFZel6xTv_BI58PH9TpIupv1N7kYg-LPQy9P6fGug7RtYe-LqKYUo"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-grow w-full max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12 pb-24 md:pb-32">
+<!-- Search & Filter Header -->
+<section class="mb-section-gap">
+<div class="flex flex-col md:flex-row gap-4 items-center mb-8">
+<div class="relative w-full flex-grow">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface border border-outline-variant rounded-xl py-4 pl-12 pr-4 font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm" placeholder="Où souhaitez-vous habiter ?" type="text" value="Villa à Yaoundé"/>
+</div>
+<button class="w-full md:w-auto flex items-center justify-center gap-2 bg-surface border border-outline-variant rounded-xl py-4 px-6 font-label-sm text-label-sm text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">tune</span>
+                    Filtres
+                </button>
+</div>
+<!-- Toggles -->
+<div class="flex flex-col sm:flex-row justify-between gap-6">
+<!-- Segmented Control: Property Type -->
+<div class="inline-flex bg-surface-container p-1 rounded-xl">
+<button class="px-6 py-2 rounded-lg bg-surface text-primary shadow-sm font-label-sm text-label-sm">Immobilier</button>
+<button class="px-6 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-colors">Mobilier</button>
+</div>
+<!-- Segmented Control: Transaction Type -->
+<div class="inline-flex bg-surface-container p-1 rounded-xl">
+<button class="px-6 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-colors">Location</button>
+<button class="px-6 py-2 rounded-lg bg-surface text-primary shadow-sm font-label-sm text-label-sm">Vente</button>
+</div>
+</div>
+<div class="mt-8">
+<h2 class="font-body-md text-body-md text-on-surface-variant">24 résultats pour "Villa à Yaoundé"</h2>
+</div>
+</section>
+<!-- Bento Grid Listings -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter mb-section-gap">
+<!-- Card 1 -->
+<article class="group bg-surface rounded-[16px] overflow-hidden border border-outline-variant hover:border-outline shadow-[0px_10px_20px_rgba(82,69,52,0.04)] transition-all flex flex-col relative">
+<div class="relative h-64 w-full overflow-hidden">
+<img alt="Villa Yaoundé" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A luxurious, modern villa exterior located in Yaoundé, bathed in warm, soft sunlight during late afternoon. The architecture features clean, minimalist lines, expansive floor-to-ceiling windows, and a lush, manicured tropical garden. The overall lighting is bright and inviting, maintaining a premium light-mode aesthetic with warm white tones, deep amber accents, and elegant shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJueh9CALg7F3KGsiaKYl17Nq8a1jgRFN0srpCFdqSNTvhmUV2WKqyo-rTJZSxPzIOflaEkh53DzB8wYwzJmDA1EgK29dk7sJc-1Y61UuKTzjiEatn7vIz8wNihw13lMpNeKmaxjm4bzMKPyVkruhyHwoXaVtrrox1GbapiTnSpo9RyDMAgzAJJjkRjff_2w_mL1Oy8iFxyWLRW64-qUqgqeOWgpUhUZGLZiSR_0nOqB5h_CICKlY63BQimsJ2AM29g1zFAfhUPJs"/>
+<div class="absolute top-4 right-4 bg-surface/90 backdrop-blur-sm px-3 py-1 rounded-full border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-primary">150 000 000 FCFA</span>
+</div>
+<div class="absolute top-4 left-4 bg-primary/10 backdrop-blur-sm px-3 py-1 rounded-full border border-primary/20">
+<span class="font-label-sm text-label-sm text-primary">Nouveau</span>
+</div>
+<button class="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-on-surface-variant hover:text-error transition-colors border border-outline-variant/50">
+<span class="material-symbols-outlined text-[20px]">favorite</span>
+</button>
+</div>
+<div class="p-6 bg-surface-container flex flex-col flex-grow">
+<div class="flex items-start justify-between mb-2">
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold line-clamp-1">Villa Contemporaine Bastos</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span> Yaoundé, Bastos
+                    </p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface rounded-full border border-outline-variant font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bed</span> 4 Ch.
+                        </span>
+<span class="px-3 py-1 bg-surface rounded-full border border-outline-variant font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">straighten</span> 320 m²
+                        </span>
+<span class="px-3 py-1 bg-surface rounded-full border border-outline-variant font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">pool</span> Piscine
+                        </span>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="group bg-surface rounded-[16px] overflow-hidden border border-outline-variant hover:border-outline shadow-[0px_10px_20px_rgba(82,69,52,0.04)] transition-all flex flex-col relative">
+<div class="relative h-64 w-full overflow-hidden">
+<img alt="Intérieur Villa" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A sophisticated living room interior of a high-end property in Cameroon, showcasing editorial minimalism. The space is filled with natural daylight, featuring elegant bespoke furniture, neutral cream and warm white walls, and rich wooden textures. The lighting is bright and high-key, creating a serene, premium atmosphere consistent with a luxury real estate journal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXiAsj2kmN6cea0Cf-Bx1YCUsFzPEzfI6QLdHsXOKY-8nAsHcgfkUmwSNTT6zl7UAFb7bq61L8qRPoc_jaIh9o_OgWI5SaAkpWNjHRQByvFtCBkN4N3HSUItr0Hpf-EwvqJicws1FDmDuYi0ItepljGXxviuLndO4ZXVVSpzp0LwBtJUyI0g5ctWIFIprR4xB_rwu-1bGaLI7bE21PJie_33VlXgJgn3pF6vYEaDqUPdFweGIYrvEjcsSUDAXcRE3bbH3kXp2c3tU"/>
+<div class="absolute top-4 right-4 bg-surface/90 backdrop-blur-sm px-3 py-1 rounded-full border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-primary">95 000 000 FCFA</span>
+</div>
+<button class="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-error transition-colors border border-outline-variant/50">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+</div>
+<div class="p-6 bg-surface-container flex flex-col flex-grow">
+<div class="flex items-start justify-between mb-2">
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold line-clamp-1">Maison Familiale Odza</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span> Yaoundé, Odza
+                    </p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface rounded-full border border-outline-variant font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bed</span> 3 Ch.
+                        </span>
+<span class="px-3 py-1 bg-surface rounded-full border border-outline-variant font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">straighten</span> 180 m²
+                        </span>
+</div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="group bg-surface rounded-[16px] overflow-hidden border border-outline-variant hover:border-outline shadow-[0px_10px_20px_rgba(82,69,52,0.04)] transition-all flex flex-col relative">
+<div class="relative h-64 w-full overflow-hidden">
+<img alt="Cuisine Villa" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="An expansive, sunlit minimalist kitchen and dining area in a premium villa. The space utilizes a sophisticated palette of warm whites and deep amber wood accents. High-resolution textures of marble and timber are visible. The mood is quiet and authoritative, designed to evoke a sense of curated luxury and comfortable elegance in a bright, modern setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpKTo0UxjyaVXuBN7mvZVjA1MV0dlDp2LiydxBn3N3yDYNF5C08-RwEgnthrLFAp-ZywXgabNU1bRiB4rJsTI2nCEbctPGp01upd_pFoywWn9sXVF2mAg7nLlRS7_6d4imqopHBTQjC5BglMPywhzjIolsFtR5KEpSSKDItRNFS_OJzje9XfWE2xbHkqKk_UUtXgKm15EAb--Zl0K_Hl78_b-hxUaYCkCtLMQ5sElT7Q9zm7xiwrj4NVPo9lvzgVaWB7fWOCkYgXE"/>
+<div class="absolute top-4 right-4 bg-surface/90 backdrop-blur-sm px-3 py-1 rounded-full border border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-primary">210 000 000 FCFA</span>
+</div>
+<div class="absolute top-4 left-4 bg-secondary/10 backdrop-blur-sm px-3 py-1 rounded-full border border-secondary/20">
+<span class="font-label-sm text-label-sm text-secondary">Exclusivité</span>
+</div>
+<button class="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-surface/90 backdrop-blur-sm flex items-center justify-center text-on-surface-variant hover:text-error transition-colors border border-outline-variant/50">
+<span class="material-symbols-outlined text-[20px]">favorite</span>
+</button>
+</div>
+<div class="p-6 bg-surface-container flex flex-col flex-grow">
+<div class="flex items-start justify-between mb-2">
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold line-clamp-1">Villa d'Architecte Golf</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span> Yaoundé, Quartier du Golf
+                    </p>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface rounded-full border border-outline-variant font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bed</span> 5 Ch.
+                        </span>
+<span class="px-3 py-1 bg-surface rounded-full border border-outline-variant font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">straighten</span> 450 m²
+                        </span>
+<span class="px-3 py-1 bg-surface rounded-full border border-outline-variant font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">garage</span> Garage double
+                        </span>
+</div>
+</div>
+</article>
+</section>
+<!-- Load More Action -->
+<div class="flex justify-center mt-12">
+<button class="bg-primary text-on-primary font-label-sm text-label-sm px-8 py-4 rounded-[12px] hover:bg-primary/90 transition-colors shadow-sm inline-flex items-center gap-2">
+                Charger plus
+                <span class="material-symbols-outlined text-[18px]">expand_more</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden bg-surface dark:bg-surface-dim text-primary dark:text-primary-fixed-dim font-label-sm text-label-sm uppercase tracking-wider font-headline-md text-headline-md text-primary docked full-width bottom-0 rounded-t-xl border-t border-outline-variant dark:border-outline shadow-sm shadow-[0px_-2px_10px_rgba(82,69,52,0.04)] fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-surface dark:bg-surface-dim">
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="mt-1 text-[10px]">Accueil</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold hover:opacity-80 transition-opacity Active: scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">search</span>
+<span class="mt-1 text-[10px]">Rechercher</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">favorite</span>
+<span class="mt-1 text-[10px]">Favoris</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="mt-1 text-[10px]">Alertes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="mt-1 text-[10px]">Profil</span>
+</a>
+</nav>
+<!-- Footer -->
+<footer class="bg-surface-container dark:bg-surface-container-highest text-primary dark:text-primary-fixed-dim font-body-md text-body-md font-headline-md text-headline-md text-primary full-width bg-surface-container dark:bg-surface-container-highest flat no shadows w-full px-margin-desktop py-section-gap flex flex-col items-center gap-base mt-20 pb-32 md:pb-section-gap">
+<h2 class="font-headline-md text-headline-md text-primary font-bold tracking-tight mb-8">Domilix</h2>
+<div class="flex flex-wrap justify-center gap-8 mb-8">
+<a class="text-on-surface-variant hover:text-primary underline transition-all" href="#">À propos</a>
+<a class="text-on-surface-variant hover:text-primary underline transition-all" href="#">Mentions légales</a>
+<a class="text-on-surface-variant hover:text-primary underline transition-all" href="#">Contact</a>
+<a class="text-on-surface-variant hover:text-primary underline transition-all" href="#">Devenir annonceur</a>
+</div>
+<p class="text-on-surface-variant text-center">© 2024 Domilix. L'excellence immobilière au Cameroun.</p>
+</footer>
+</body></html>

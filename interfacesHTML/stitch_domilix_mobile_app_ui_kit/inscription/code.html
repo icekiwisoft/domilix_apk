@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Créer un compte - Domilix</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#0d1d2b",
+                    "inverse-surface": "#352f29",
+                    "background": "#fff8f4",
+                    "surface-variant": "#ece1d7",
+                    "secondary-fixed": "#d4e4f8",
+                    "surface-bright": "#fff8f4",
+                    "secondary-fixed-dim": "#b8c8dc",
+                    "on-secondary-container": "#556475",
+                    "outline-variant": "#d4c4b2",
+                    "on-tertiary-container": "#afe0ff",
+                    "surface-tint": "#835500",
+                    "on-surface": "#201b15",
+                    "surface-dim": "#e3d8ce",
+                    "primary": "#633f00",
+                    "surface-container-low": "#fdf2e7",
+                    "tertiary-fixed": "#c4e7ff",
+                    "primary-fixed-dim": "#f9bb65",
+                    "on-surface-variant": "#504537",
+                    "primary-container": "#835500",
+                    "on-error": "#ffffff",
+                    "surface-container-highest": "#ece1d7",
+                    "surface": "#fff8f4",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#004d6a",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#004c69",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#faefe5",
+                    "surface-container": "#f7ece2",
+                    "inverse-primary": "#f9bb65",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#f2e6dc",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed-dim": "#88cff9",
+                    "on-primary-container": "#ffd197",
+                    "secondary": "#516071",
+                    "on-secondary-fixed-variant": "#394858",
+                    "tertiary-container": "#03668b",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#d1e1f5",
+                    "primary-fixed": "#ffddb4",
+                    "on-tertiary-fixed": "#001e2c",
+                    "on-background": "#201b15",
+                    "on-primary-fixed": "#291800",
+                    "on-primary-fixed-variant": "#633f00",
+                    "outline": "#827565"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max-width": "1280px",
+                    "base": "8px",
+                    "margin-desktop": "64px",
+                    "gutter": "24px",
+                    "margin-mobile": "20px",
+                    "section-gap": "80px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "caption": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["Plus Jakarta Sans"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "headline-lg": ["40px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                    "caption": ["12px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                    "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "label-sm": ["14px", { "lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                    "headline-md": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                    "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "display-lg": ["60px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined', sans-serif;
+            font-size: 24px;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen">
+<!-- Split Screen Layout for Premium Transactional Experience -->
+<div class="flex min-h-screen">
+<!-- Left Column: Form -->
+<div class="w-full lg:w-[45%] xl:w-[40%] flex flex-col bg-surface shadow-[10px_0px_30px_rgba(82,69,52,0.03)] z-10 overflow-y-auto">
+<div class="w-full max-w-[480px] mx-auto flex flex-col flex-1 px-margin-mobile md:px-12 py-12">
+<!-- Back Action -->
+<div class="mb-16">
+<a class="inline-flex items-center justify-center w-12 h-12 rounded-full border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</a>
+</div>
+<!-- Headline -->
+<div class="mb-10 flex flex-col gap-3">
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Créer un compte</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Rejoignez une communauté d'excellence immobilière.</p>
+</div>
+<!-- Registration Form -->
+<form class="flex flex-col gap-6">
+<!-- Name Field -->
+<div class="flex flex-col gap-2 relative">
+<label class="font-label-sm text-label-sm text-on-surface ml-1">Nom complet</label>
+<input class="w-full px-4 py-4 bg-surface border border-outline-variant rounded-xl text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-on-surface-variant/40" placeholder="Jean Dupont" type="text"/>
+</div>
+<!-- Email Field -->
+<div class="flex flex-col gap-2 relative">
+<label class="font-label-sm text-label-sm text-on-surface ml-1">Adresse e-mail</label>
+<input class="w-full px-4 py-4 bg-surface border border-outline-variant rounded-xl text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-on-surface-variant/40" placeholder="jean.dupont@exemple.com" type="email"/>
+</div>
+<!-- Phone Field -->
+<div class="flex flex-col gap-2 relative">
+<label class="font-label-sm text-label-sm text-on-surface ml-1">Numéro de téléphone</label>
+<div class="flex border border-outline-variant rounded-xl overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors bg-surface h-[58px]">
+<div class="flex items-center justify-center px-4 bg-surface-container text-on-surface-variant font-label-sm text-label-sm border-r border-outline-variant select-none">
+                                +237
+                            </div>
+<input class="w-full px-4 py-4 bg-transparent border-none text-body-md font-body-md focus:ring-0 outline-none placeholder:text-on-surface-variant/40" placeholder="6 00 00 00 00" type="tel"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col gap-2 relative">
+<label class="font-label-sm text-label-sm text-on-surface ml-1">Mot de passe</label>
+<div class="relative flex items-center h-[58px]">
+<input class="w-full h-full px-4 bg-surface border border-outline-variant rounded-xl text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors placeholder:text-on-surface-variant/40 pr-12" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 text-on-surface-variant hover:text-primary transition-colors focus:outline-none" type="button">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Terms Checkbox -->
+<div class="flex items-start gap-3 mt-4">
+<div class="flex items-center h-6">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary bg-surface transition-colors cursor-pointer" id="terms" type="checkbox"/>
+</div>
+<label class="font-body-md text-body-md text-on-surface-variant leading-relaxed cursor-pointer select-none" for="terms">
+                            J'accepte les <a class="text-primary font-bold hover:underline" href="#">conditions d'utilisation</a> et la politique de confidentialité.
+                        </label>
+</div>
+<!-- Primary CTA -->
+<button class="w-full py-4 mt-6 bg-primary text-on-primary rounded-xl font-label-sm text-label-sm uppercase tracking-wider hover:bg-surface-tint transition-all shadow-[0px_4px_14px_rgba(99,63,0,0.15)] hover:shadow-[0px_6px_20px_rgba(99,63,0,0.2)]" type="submit">
+                        S'inscrire
+                    </button>
+</form>
+<!-- Footer Link -->
+<div class="mt-auto pt-12 pb-4 text-center">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Déjà un compte ? <a class="text-primary font-bold hover:underline transition-all" href="#">Se connecter</a>
+</p>
+</div>
+</div>
+</div>
+<!-- Right Column: Editorial Image (Hidden on Mobile) -->
+<div class="hidden lg:block lg:w-[55%] xl:w-[60%] relative bg-surface-container">
+<!-- Overlay gradient to ensure image integrates smoothly with the warm palette -->
+<div class="absolute inset-0 bg-gradient-to-tr from-surface/40 to-transparent z-10 pointer-events-none"></div>
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A sophisticated, high-end architectural interior of a contemporary villa bathed in soft, natural sunlight. The composition is expansive and minimalist, featuring polished marble floors, sleek bespoke wooden paneling in deep amber tones, and a glimpse of an elegant curved staircase. The lighting is bright and warm, reflecting a premium light-mode aesthetic. The mood is tranquil, exclusive, and undeniably luxurious, perfectly aligning with an elite real estate platform." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBpVt1bNkGbJyxBLIU3BvZUY2LD_ObWA1jUWCp1ltyBwGEk6KhR6h_c5sSQNElBoLvLVQwIlU1ofRZ-4577H75IGH-a5MbWjS5FkSzP9vG59dczaPU5ZDnk0EMpbGZmEYdjr1d_BlYAVH9b9dNJOiqp8lDjWTwJ99BH5LJT0l7bLt-uolqDjXI2CalIs8lG2xEilUmI8t12QlX0Nwhpb6YrBk-6jHqZw-mfag9cewWQTsoLhzIMkqdVicRJAXGPeJVdPmevT_Nifp0');">
+</div>
+<!-- Optional subtle brand watermark on image -->
+<div class="absolute bottom-12 right-12 z-20">
+<span class="font-headline-lg text-headline-lg text-surface font-bold tracking-tight opacity-90 drop-shadow-lg">Domilix</span>
+</div>
+</div>
+</div>
+</body></html>

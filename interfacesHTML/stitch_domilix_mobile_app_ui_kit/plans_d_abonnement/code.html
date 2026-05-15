@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Plans d'Abonnement - Domilix</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#0d1d2b",
+                    "inverse-surface": "#352f29",
+                    "background": "#fff8f4",
+                    "surface-variant": "#ece1d7",
+                    "secondary-fixed": "#d4e4f8",
+                    "surface-bright": "#fff8f4",
+                    "secondary-fixed-dim": "#b8c8dc",
+                    "on-secondary-container": "#556475",
+                    "outline-variant": "#d4c4b2",
+                    "on-tertiary-container": "#afe0ff",
+                    "surface-tint": "#835500",
+                    "on-surface": "#201b15",
+                    "surface-dim": "#e3d8ce",
+                    "primary": "#633f00",
+                    "surface-container-low": "#fdf2e7",
+                    "tertiary-fixed": "#c4e7ff",
+                    "primary-fixed-dim": "#f9bb65",
+                    "on-surface-variant": "#504537",
+                    "primary-container": "#835500",
+                    "on-error": "#ffffff",
+                    "surface-container-highest": "#ece1d7",
+                    "surface": "#fff8f4",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#004d6a",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#004c69",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#faefe5",
+                    "surface-container": "#f7ece2",
+                    "inverse-primary": "#f9bb65",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#f2e6dc",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed-dim": "#88cff9",
+                    "on-primary-container": "#ffd197",
+                    "secondary": "#516071",
+                    "on-secondary-fixed-variant": "#394858",
+                    "tertiary-container": "#03668b",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#d1e1f5",
+                    "primary-fixed": "#ffddb4",
+                    "on-tertiary-fixed": "#001e2c",
+                    "on-background": "#201b15",
+                    "on-primary-fixed": "#291800",
+                    "on-primary-fixed-variant": "#633f00",
+                    "outline": "#827565"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max-width": "1280px",
+                    "base": "8px",
+                    "margin-desktop": "64px",
+                    "gutter": "24px",
+                    "margin-mobile": "20px",
+                    "section-gap": "80px"
+            },
+            "fontFamily": {
+                    "headline-lg": [
+                            "Plus Jakarta Sans", "sans-serif"
+                    ],
+                    "caption": [
+                            "Plus Jakarta Sans", "sans-serif"
+                    ],
+                    "body-lg": [
+                            "Plus Jakarta Sans", "sans-serif"
+                    ],
+                    "label-sm": [
+                            "Plus Jakarta Sans", "sans-serif"
+                    ],
+                    "headline-md": [
+                            "Plus Jakarta Sans", "sans-serif"
+                    ],
+                    "body-md": [
+                            "Plus Jakarta Sans", "sans-serif"
+                    ],
+                    "display-lg": [
+                            "Plus Jakarta Sans", "sans-serif"
+                    ]
+            },
+            "fontSize": {
+                    "headline-lg": [
+                            "40px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "caption": [
+                            "12px",
+                            {
+                                    "lineHeight": "1.4",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "1.6",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "1",
+                                    "letterSpacing": "0.08em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-md": [
+                            "32px",
+                            {
+                                    "lineHeight": "1.2",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "1.6",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display-lg": [
+                            "60px",
+                            {
+                                    "lineHeight": "1.1",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar (From JSON - Simplified for Transactional Page, back arrow instead of menu) -->
+<header class="bg-surface dark:bg-surface-dim docked full-width top-0 z-50 sticky">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max-width mx-auto">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim tracking-tight">Domilix</h1>
+<div class="w-6 h-6"></div> <!-- Spacer for balance -->
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max-width mx-auto w-full">
+<!-- Header Section -->
+<div class="text-center mb-16 max-w-2xl mx-auto">
+<h2 class="font-display-lg text-display-lg text-on-surface mb-6">Propulsez vos annonces</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Choisissez le plan qui correspond à votre ambition. Une tarification transparente pour les professionnels de l'immobilier au Cameroun.</p>
+</div>
+<!-- Pricing Cards -->
+<div class="w-full grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-5xl mx-auto">
+<!-- Starter Plan -->
+<div class="bg-surface border border-outline-variant rounded-xl p-8 shadow-[0px_10px_20px_rgba(82,69,52,0.04)] flex flex-col h-full">
+<div class="mb-8">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Starter</h3>
+<div class="font-headline-lg text-headline-lg text-primary mb-1">Gratuit</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Pour débuter et tester la plateforme.</p>
+</div>
+<ul class="flex-grow space-y-4 mb-8">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Jusqu'à 3 annonces actives</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Photos en qualité standard</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Support par email (48h)</span>
+</li>
+</ul>
+<button class="w-full py-4 border border-outline-variant text-on-surface font-label-sm text-label-sm rounded-xl uppercase tracking-wider hover:bg-surface-variant transition-colors">
+                    Plan Actuel
+                </button>
+</div>
+<!-- Pro Plan (Highlighted) -->
+<div class="bg-surface-container border-2 border-primary rounded-xl p-8 shadow-[0px_10px_20px_rgba(82,69,52,0.08)] flex flex-col h-full relative transform md:-translate-y-4">
+<div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-primary text-on-primary font-label-sm text-label-sm px-4 py-1.5 rounded-full uppercase tracking-wider">
+                    Recommandé
+                </div>
+<div class="mb-8 mt-2">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Pro</h3>
+<div class="font-headline-lg text-headline-lg text-primary mb-1">15 000 <span class="font-body-lg text-body-lg text-on-surface-variant">XAF/mois</span></div>
+<p class="font-body-md text-body-md text-on-surface-variant">Pour les agents indépendants ambitieux.</p>
+</div>
+<ul class="flex-grow space-y-4 mb-8">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Annonces illimitées</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Photos Haute Définition</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Mise en avant 1x/semaine</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Statistiques de base</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Support prioritaire WhatsApp</span>
+</li>
+</ul>
+<button class="w-full py-4 bg-primary text-on-primary font-label-sm text-label-sm rounded-xl uppercase tracking-wider hover:opacity-90 transition-opacity shadow-sm">
+                    S'abonner via CamPay
+                </button>
+</div>
+<!-- Business Plan -->
+<div class="bg-surface border border-outline-variant rounded-xl p-8 shadow-[0px_10px_20px_rgba(82,69,52,0.04)] flex flex-col h-full">
+<div class="mb-8">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Business</h3>
+<div class="font-headline-lg text-headline-lg text-primary mb-1">35 000 <span class="font-body-lg text-body-lg text-on-surface-variant">XAF/mois</span></div>
+<p class="font-body-md text-body-md text-on-surface-variant">La solution complète pour les agences.</p>
+</div>
+<ul class="flex-grow space-y-4 mb-8">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Tout du plan Pro</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant font-medium">Mise en avant illimitée</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Tableau de bord avancé</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Marque blanche agence</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Agent de compte dédié</span>
+</li>
+</ul>
+<button class="w-full py-4 border border-outline-variant text-on-surface font-label-sm text-label-sm rounded-xl uppercase tracking-wider hover:bg-surface-variant transition-colors">
+                    Sélectionner
+                </button>
+</div>
+</div>
+</main>
+<!-- Footer (From JSON) -->
+<footer class="bg-surface-container dark:bg-surface-container-highest w-full px-margin-desktop py-section-gap flex flex-col items-center gap-base mt-20">
+<div class="flex flex-col items-center gap-6">
+<h2 class="font-headline-md text-headline-md text-primary">Domilix</h2>
+<nav class="flex flex-wrap justify-center gap-8">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">À propos</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Mentions légales</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Contact</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Devenir annonceur</a>
+</nav>
+<p class="font-body-md text-body-md text-on-surface-variant text-center">© 2024 Domilix. L'excellence immobilière au Cameroun.</p>
+</div>
+</footer>
+</body></html>

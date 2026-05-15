@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Domilix - Announcer Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#0d1d2b",
+                        "inverse-surface": "#352f29",
+                        "background": "#fff8f4",
+                        "surface-variant": "#ece1d7",
+                        "secondary-fixed": "#d4e4f8",
+                        "surface-bright": "#fff8f4",
+                        "secondary-fixed-dim": "#b8c8dc",
+                        "on-secondary-container": "#556475",
+                        "outline-variant": "#d4c4b2",
+                        "on-tertiary-container": "#afe0ff",
+                        "surface-tint": "#835500",
+                        "on-surface": "#201b15",
+                        "surface-dim": "#e3d8ce",
+                        "primary": "#633f00",
+                        "surface-container-low": "#fdf2e7",
+                        "tertiary-fixed": "#c4e7ff",
+                        "primary-fixed-dim": "#f9bb65",
+                        "on-surface-variant": "#504537",
+                        "primary-container": "#835500",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#ece1d7",
+                        "surface": "#fff8f4",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#004d6a",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#004c69",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#faefe5",
+                        "surface-container": "#f7ece2",
+                        "inverse-primary": "#f9bb65",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#f2e6dc",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#88cff9",
+                        "on-primary-container": "#ffd197",
+                        "secondary": "#516071",
+                        "on-secondary-fixed-variant": "#394858",
+                        "tertiary-container": "#03668b",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#d1e1f5",
+                        "primary-fixed": "#ffddb4",
+                        "on-tertiary-fixed": "#001e2c",
+                        "on-background": "#201b15",
+                        "on-primary-fixed": "#291800",
+                        "on-primary-fixed-variant": "#633f00",
+                        "outline": "#827565"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-width": "1280px",
+                        "base": "8px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "section-gap": "80px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "caption": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["40px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-sm": ["14px", {"lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "600"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["60px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-24 md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim docked full-width top-0 flat no shadows sticky z-50">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max-width mx-auto">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors scale-95 duration-200 focus:outline-none">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim tracking-tight">Domilix</h1>
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors scale-95 duration-200 focus:outline-none rounded-full overflow-hidden w-8 h-8 flex items-center justify-center bg-surface-container">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="sr-only">Profil utilisateur</span>
+</button>
+</div>
+</header>
+<main>
+<!-- Hero Profile Section -->
+<section class="bg-surface-container-low pt-12 pb-16 px-margin-mobile md:px-margin-desktop rounded-b-[2rem] md:rounded-b-[4rem] shadow-[0px_10px_20px_rgba(82,69,52,0.04)]">
+<div class="max-w-container-max-width mx-auto flex flex-col items-center text-center">
+<!-- Avatar & Status -->
+<div class="relative mb-6">
+<div class="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-surface overflow-hidden shadow-sm">
+<img alt="Immobilier Prestige Agent Portrait" class="w-full h-full object-cover" data-alt="A professional, high-end portrait of an experienced real estate agent in a well-lit, modern office. The agent is dressed in sophisticated business attire, exuding confidence and trust. The lighting is soft and flattering, highlighting a warm, premium aesthetic consistent with luxury real estate branding. The background is slightly blurred, showing hints of contemporary architecture and warm, natural light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiP9vL5iYDBDyNazLzp6BNc-v6i79UHKedlRI5EDDzGTw-1VYHlglE5TzNPDE25vhOz7HHmRzHf86z67WzES-oGob-E5cFa1nlcPX8aT6tvx8C_suFdQ1NDogMRz0Ih9gEZxLW9jB8sViqCf0BO78aUtiS32U3AVuzKsnx7pvXQA2ECTjJRfgbkerWczy5roDtduiPEbdnRCrOskRG1HNAMWVVT9DrW6lq8f55TbrlWXbjfU9GtPZXeKznxBA_FKjn3nZp1mOf130"/>
+</div>
+<div class="absolute bottom-2 right-2 bg-surface rounded-full p-1 shadow-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<!-- Identity -->
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2">Immobilier Prestige</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-8">
+                    L'excellence immobilière à Douala et Yaoundé depuis 2010.
+                </p>
+<!-- Stats Row -->
+<div class="flex flex-wrap justify-center gap-6 md:gap-12 mb-10">
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-[24px] font-bold text-primary">24</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Annonces</span>
+</div>
+<div class="w-px h-12 bg-outline-variant hidden sm:block"></div>
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-[24px] font-bold text-primary flex items-center gap-1">
+                            4.8 <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Rating</span>
+</div>
+<div class="w-px h-12 bg-outline-variant hidden sm:block"></div>
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-[24px] font-bold text-primary">12k</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Vue/mois</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+<button class="flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-outline-variant text-on-surface font-label-sm text-label-sm uppercase hover:bg-surface-variant transition-colors focus:ring-2 focus:ring-primary focus:outline-none">
+<span class="material-symbols-outlined">chat</span>
+                        WhatsApp
+                    </button>
+<button class="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-primary text-on-primary font-label-sm text-label-sm uppercase hover:bg-primary-container hover:text-on-primary-container transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface focus:outline-none shadow-sm">
+<span class="material-symbols-outlined">call</span>
+                        Appeler
+                    </button>
+</div>
+</div>
+</section>
+<!-- Main Content Area -->
+<section class="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-12">
+<!-- Tabs -->
+<div class="flex border-b border-outline-variant mb-10">
+<button class="px-6 py-4 font-label-sm text-label-sm uppercase border-b-2 border-primary text-primary">
+                    Annonces
+                </button>
+<button class="px-6 py-4 font-label-sm text-label-sm uppercase text-on-surface-variant hover:text-primary transition-colors">
+                    Médias
+                </button>
+</div>
+<!-- Bento Grid Portfolio -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Large Featured Card -->
+<article class="col-span-1 md:col-span-8 bg-surface rounded-[16px] overflow-hidden shadow-[0px_10px_20px_rgba(82,69,52,0.04)] border border-outline-variant group cursor-pointer hover:border-outline transition-colors flex flex-col h-[500px]">
+<div class="relative h-[60%] w-full overflow-hidden">
+<img alt="Villa de luxe à Bonapriso" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A luxurious, modern villa interior featuring expansive floor-to-ceiling windows that let in abundant natural light. The living space is styled with high-end, contemporary furniture in warm neutral tones, contrasting with sleek architectural lines. A serene, premium atmosphere is conveyed, appealing to discerning buyers looking for elegance and comfort." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpi8BrrutwEv7ttyInh4DVC5jzbw5YZ2kZX7EmzobwQ9179SiKc5YvewmA2zn12meHYfkHAEnpVIad3q5fDus7nxsNYKycDKaG5wZJNKdjnO8j12mfxgQXU0wYCIxIqnlpvuQ_ABh8t3TCDWGs292us_2TS2NImcOfdJL4l1deSpzPpPyKXmWE24WG8nnlKE1phXoTTTdP21WmyDeKq4gp2FBgN-rudllU4-OgQlw8_orFdZyNGJ5-z5VfOy1u6nntEyBU64njN_A"/>
+<div class="absolute top-4 left-4 bg-surface/90 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+<span class="font-label-sm text-label-sm text-primary uppercase">Exclusivité</span>
+</div>
+</div>
+<div class="p-6 flex flex-col justify-between flex-grow">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-[24px] font-bold text-on-surface line-clamp-1">Villa Majestueuse - Bonapriso</h3>
+<span class="font-headline-md text-[20px] font-bold text-primary whitespace-nowrap">450M FCFA</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">location_on</span> Douala, Littoral
+                            </p>
+</div>
+<div class="flex gap-4 border-t border-outline-variant pt-4">
+<span class="font-label-sm text-label-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">bed</span> 5 Chambres
+                            </span>
+<span class="font-label-sm text-label-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">square_foot</span> 450 m²
+                            </span>
+</div>
+</div>
+</article>
+<!-- Smaller Grid Card 1 -->
+<article class="col-span-1 md:col-span-4 bg-surface rounded-[16px] overflow-hidden shadow-[0px_10px_20px_rgba(82,69,52,0.04)] border border-outline-variant group cursor-pointer hover:border-outline transition-colors flex flex-col h-[500px]">
+<div class="relative h-[50%] w-full overflow-hidden">
+<img alt="Appartement moderne Bastos" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A stylish, upscale apartment interior in a modern urban setting. The living room features bespoke, mid-century modern inspired furniture arranged on a plush rug. Warm, diffused lighting creates a cozy yet sophisticated ambiance. The color palette is composed of rich creams, soft ambers, and deep wood tones, perfectly aligning with a premium real estate brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJkSYnbLyHo2zKAn8voPxi3IUaovUxAQdRoHqiG7xuo8hW9wuiAvQET6i7BKopFWPjgt9vypO3dT14JMtHEu9vqUIASDLhzqijXU-Bf1LSHIZnRoaXY1aSvSMXmNpJBHFEz6dJvQyATIvzMuI9x5zFEcotwNdy4QvDDAp0lOeU3g1_AfFO6JpcSrYbVfBPRvAflGl2LLSzdgAN819IUzvzf7JPAyTXXs4XsDI3M3SIxKmY4vdDAagz7ydBRxbfg6zhMchNAbsRKGc"/>
+</div>
+<div class="p-6 flex flex-col justify-between flex-grow">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface line-clamp-2 mb-2">Appartement Vue Panoramique - Bastos</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">location_on</span> Yaoundé, Centre
+                            </p>
+</div>
+<div>
+<span class="font-headline-md text-[20px] font-bold text-primary block mb-4">120M FCFA</span>
+<div class="flex gap-4 border-t border-outline-variant pt-4">
+<span class="font-label-sm text-label-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">bed</span> 3 Ch.
+                                </span>
+</div>
+</div>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-surface dark:bg-surface-dim border-t border-outline-variant dark:border-outline shadow-[0px_-2px_10px_rgba(82,69,52,0.04)] rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity focus:outline-none">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider mt-1">Accueil</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity focus:outline-none">
+<span class="material-symbols-outlined">search</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider mt-1">Rechercher</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity focus:outline-none">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider mt-1">Favoris</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity focus:outline-none">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider mt-1">Alertes</span>
+</button>
+<!-- Active Tab: Profile (implied by the screen content) -->
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold scale-90 transition-transform duration-150 focus:outline-none">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider mt-1">Profil</span>
+</button>
+</nav>
+<!-- Footer -->
+<footer class="w-full px-margin-desktop py-section-gap flex flex-col items-center gap-base mt-20 bg-surface-container dark:bg-surface-container-highest flat no shadows hidden md:flex">
+<h2 class="font-headline-md text-headline-md text-primary mb-4">Domilix</h2>
+<nav class="flex gap-6 mb-8">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">À propos</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Mentions légales</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Contact</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline transition-all" href="#">Devenir annonceur</a>
+</nav>
+<p class="font-body-md text-body-md text-on-surface-variant">© 2024 Domilix. L'excellence immobilière au Cameroun.</p>
+</footer>
+</body></html>

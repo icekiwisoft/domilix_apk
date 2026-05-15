@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Notifications - Domilix</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#0d1d2b",
+                        "inverse-surface": "#352f29",
+                        "background": "#fff8f4",
+                        "surface-variant": "#ece1d7",
+                        "secondary-fixed": "#d4e4f8",
+                        "surface-bright": "#fff8f4",
+                        "secondary-fixed-dim": "#b8c8dc",
+                        "on-secondary-container": "#556475",
+                        "outline-variant": "#d4c4b2",
+                        "on-tertiary-container": "#afe0ff",
+                        "surface-tint": "#835500",
+                        "on-surface": "#201b15",
+                        "surface-dim": "#e3d8ce",
+                        "primary": "#633f00",
+                        "surface-container-low": "#fdf2e7",
+                        "tertiary-fixed": "#c4e7ff",
+                        "primary-fixed-dim": "#f9bb65",
+                        "on-surface-variant": "#504537",
+                        "primary-container": "#835500",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#ece1d7",
+                        "surface": "#fff8f4",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#004d6a",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#004c69",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#faefe5",
+                        "surface-container": "#f7ece2",
+                        "inverse-primary": "#f9bb65",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#f2e6dc",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#88cff9",
+                        "on-primary-container": "#ffd197",
+                        "secondary": "#516071",
+                        "on-secondary-fixed-variant": "#394858",
+                        "tertiary-container": "#03668b",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#d1e1f5",
+                        "primary-fixed": "#ffddb4",
+                        "on-tertiary-fixed": "#001e2c",
+                        "on-background": "#201b15",
+                        "on-primary-fixed": "#291800",
+                        "on-primary-fixed-variant": "#633f00",
+                        "outline": "#827565"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-width": "1280px",
+                        "base": "8px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "section-gap": "80px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "caption": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["40px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "caption": ["12px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["14px", { "lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "headline-md": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "display-lg": ["60px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased">
+<!-- TopAppBar Shell (Hidden as Notifications is a sub-page/focused journey, but rendering for completeness if considered top-level tab) -->
+<!-- Assuming Notifications maps to "Alertes" from BottomNavBar JSON, so it IS a top-level destination. -->
+<header class="bg-surface dark:bg-surface-dim docked full-width top-0 z-40 sticky">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-container-max-width mx-auto">
+<div class="flex items-center gap-4">
+<button aria-label="Menu" class="md:hidden text-primary dark:text-primary-fixed-dim hover:text-primary transition-colors scale-95 duration-200">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim tracking-tight">
+                    Domilix
+                </div>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors scale-95 duration-200" href="#">Accueil</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors scale-95 duration-200" href="#">Rechercher</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors scale-95 duration-200" href="#">Favoris</a>
+<a class="font-label-sm text-label-sm text-primary dark:text-primary-fixed-dim font-bold hover:text-primary dark:hover:text-primary-fixed-dim transition-colors scale-95 duration-200 border-b-2 border-primary pb-1" href="#">Alertes</a>
+</nav>
+<div class="flex items-center gap-4">
+<button aria-label="Profil utilisateur" class="hidden md:flex text-on-surface-variant hover:text-primary transition-colors scale-95 duration-200 items-center justify-center w-10 h-10 rounded-full bg-surface-container-high">
+<span class="material-symbols-outlined text-xl">person</span>
+</button>
+<!-- Avatar fallback for mobile leading_avatar requested in JSON, placing trailing -->
+<button aria-label="Profil utilisateur" class="md:hidden text-primary transition-colors scale-95 duration-200 items-center justify-center w-8 h-8 rounded-full bg-surface-container-high">
+<span class="material-symbols-outlined text-lg">person</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12 mb-24 md:mb-0">
+<div class="max-w-3xl mx-auto">
+<h1 class="font-headline-lg text-headline-lg mb-12 text-on-surface">Notifications</h1>
+<!-- Aujourd'hui Section -->
+<section class="mb-12">
+<h2 class="font-label-sm text-label-sm text-on-surface-variant mb-6 uppercase tracking-wider">Aujourd'hui</h2>
+<div class="flex flex-col gap-4">
+<!-- Unlock Item -->
+<div class="bg-surface-container dark:bg-surface-container p-4 md:p-6 rounded-xl flex items-start gap-4 md:gap-6 relative hover:bg-surface-container-high transition-colors cursor-pointer group border border-transparent hover:border-outline-variant">
+<!-- Unread Dot -->
+<div class="absolute top-6 left-2 w-2 h-2 bg-primary rounded-full md:left-4"></div>
+<div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center flex-shrink-0 ml-4 md:ml-2">
+<span class="material-symbols-outlined text-primary-container fill-icon">lock_open</span>
+</div>
+<div class="flex-grow pt-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface group-hover:text-primary transition-colors">Contact débloqué</h3>
+<span class="font-caption text-caption text-on-surface-variant whitespace-nowrap ml-4">2m</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Vous avez débloqué les coordonnées de la Villa Bastos.</p>
+</div>
+</div>
+<!-- Success Item -->
+<div class="bg-surface p-4 md:p-6 rounded-xl flex items-start gap-4 md:gap-6 hover:bg-surface-container transition-colors cursor-pointer group border border-outline-variant">
+<div class="w-12 h-12 rounded-xl bg-secondary-container flex items-center justify-center flex-shrink-0 ml-4 md:ml-2">
+<span class="material-symbols-outlined text-secondary fill-icon">check_circle</span>
+</div>
+<div class="flex-grow pt-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Abonnement Pro activé</h3>
+<span class="font-caption text-caption text-on-surface-variant whitespace-nowrap ml-4">1h</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Bienvenue chez les pros !</p>
+</div>
+</div>
+<!-- Info Item -->
+<div class="bg-surface p-4 md:p-6 rounded-xl flex items-start gap-4 md:gap-6 hover:bg-surface-container transition-colors cursor-pointer group border border-outline-variant">
+<div class="w-12 h-12 rounded-xl bg-tertiary-fixed flex items-center justify-center flex-shrink-0 ml-4 md:ml-2">
+<span class="material-symbols-outlined text-tertiary-container fill-icon">info</span>
+</div>
+<div class="flex-grow pt-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Nouvelle annonce à Douala</h3>
+<span class="font-caption text-caption text-on-surface-variant whitespace-nowrap ml-4">5h</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Une villa correspondant à vos critères vient d'être publiée.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Hier Section -->
+<section>
+<h2 class="font-label-sm text-label-sm text-on-surface-variant mb-6 uppercase tracking-wider border-t border-outline-variant pt-8">Hier</h2>
+<div class="flex flex-col gap-4">
+<!-- Generic Item -->
+<div class="bg-surface p-4 md:p-6 rounded-xl flex items-start gap-4 md:gap-6 hover:bg-surface-container transition-colors cursor-pointer group border border-outline-variant">
+<div class="w-12 h-12 rounded-xl bg-surface-variant flex items-center justify-center flex-shrink-0 ml-4 md:ml-2">
+<span class="material-symbols-outlined text-on-surface-variant">favorite</span>
+</div>
+<div class="flex-grow pt-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Baisse de prix</h3>
+<span class="font-caption text-caption text-on-surface-variant whitespace-nowrap ml-4">Hier</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">L'appartement à Akwa que vous suivez a baissé de 5%.</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar Shell (Mobile Only) -->
+<nav class="md:hidden bg-surface dark:bg-surface-dim docked full-width bottom-0 rounded-t-xl border-t border-outline-variant dark:border-outline shadow-sm shadow-[0px_-2px_10px_rgba(82,69,52,0.04)] fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3">
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity gap-1" href="#">
+<span class="material-symbols-outlined text-[24px]">home</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Accueil</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity gap-1" href="#">
+<span class="material-symbols-outlined text-[24px]">search</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Rechercher</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity gap-1" href="#">
+<span class="material-symbols-outlined text-[24px]">favorite</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Favoris</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold hover:opacity-80 transition-opacity scale-90 transition-transform duration-150 gap-1" href="#">
+<span class="material-symbols-outlined text-[24px] fill-icon">notifications</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Alertes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-secondary-fixed-variant hover:opacity-80 transition-opacity gap-1" href="#">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Profil</span>
+</a>
+</nav>
+</body></html>

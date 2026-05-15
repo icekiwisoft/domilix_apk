@@ -4,7 +4,8 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Wilfried\\\\Documents\\\\GitHub\\\\domiliw-app\\\\domilix\" -Force)",
       "Bash(Select-Object Name, Mode)",
       "Bash(Format-Table -AutoSize)",
-      "PowerShell(head -50)"
+      "PowerShell(head -50)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/zod/package.json'\\).version\\)\")"
     ]
   }
 }

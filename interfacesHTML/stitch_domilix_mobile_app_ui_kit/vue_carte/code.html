@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Domilix - Map View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#0d1d2b",
+                        "inverse-surface": "#352f29",
+                        "background": "#fff8f4",
+                        "surface-variant": "#ece1d7",
+                        "secondary-fixed": "#d4e4f8",
+                        "surface-bright": "#fff8f4",
+                        "secondary-fixed-dim": "#b8c8dc",
+                        "on-secondary-container": "#556475",
+                        "outline-variant": "#d4c4b2",
+                        "on-tertiary-container": "#afe0ff",
+                        "surface-tint": "#835500",
+                        "on-surface": "#201b15",
+                        "surface-dim": "#e3d8ce",
+                        "primary": "#633f00",
+                        "surface-container-low": "#fdf2e7",
+                        "tertiary-fixed": "#c4e7ff",
+                        "primary-fixed-dim": "#f9bb65",
+                        "on-surface-variant": "#504537",
+                        "primary-container": "#835500",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#ece1d7",
+                        "surface": "#fff8f4",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#004d6a",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#004c69",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#faefe5",
+                        "surface-container": "#f7ece2",
+                        "inverse-primary": "#f9bb65",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#f2e6dc",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#88cff9",
+                        "on-primary-container": "#ffd197",
+                        "secondary": "#516071",
+                        "on-secondary-fixed-variant": "#394858",
+                        "tertiary-container": "#03668b",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#d1e1f5",
+                        "primary-fixed": "#ffddb4",
+                        "on-tertiary-fixed": "#001e2c",
+                        "on-background": "#201b15",
+                        "on-primary-fixed": "#291800",
+                        "on-primary-fixed-variant": "#633f00",
+                        "outline": "#827565"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-width": "1280px",
+                        "base": "8px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "section-gap": "80px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "caption": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["40px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-sm": ["14px", {"lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "600"}],
+                        "headline-md": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["60px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background h-screen w-screen overflow-hidden flex flex-col relative">
+<!-- Top Navigation for Desktop (Hidden on Mobile) -->
+<header class="hidden md:flex justify-between items-center w-full px-margin-desktop py-4 max-w-container-max-width mx-auto bg-surface absolute top-0 left-0 right-0 z-40 rounded-b-xl shadow-[0px_10px_20px_rgba(82,69,52,0.04)]">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer hover:text-primary-fixed-dim transition-colors scale-95 duration-200">menu</span>
+<span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Domilix</span>
+</div>
+<nav class="flex gap-8 items-center">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Accueil</a>
+<a class="font-label-sm text-label-sm text-primary font-bold" href="#">Rechercher</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Favoris</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Alertes</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Profil</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-outline-variant">
+<img alt="Profil utilisateur" class="w-full h-full object-cover" data-alt="A professional headshot of an individual, well-lit against a neutral background. The lighting is soft and flattering, creating a premium and trustworthy appearance. The image fits perfectly within a small circular avatar container, typical of modern high-end user interfaces. The warm tones align with an editorial, sophisticated design aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdZmyvhDSIvzE6j7QeVJjpirplwjxps5As-LlE6LnoXh7YwoE4pAlvHgPqM7So9D_J0nwPnAIkvrjIs-8ZYW8iq76jJumJ8KJsPeOdf6rr0buqACOaz5cJLxbT0mJF4yWssrshcSBmvm1FXXt4iXodL6YtRreUcBJnD_2nHvyXfptQa3XLzBeK90U72XNgaKx8pNb8tWRxkzQEcKgr3ZqvAVbYzN6diJxTRgCqhz9Ms7Cfn3YhF4HhpTdYVLwzQr3pnPFqG6v7Tu0"/>
+</div>
+</div>
+</header>
+<!-- Map Canvas -->
+<div class="flex-grow w-full h-full relative z-0">
+<!-- Placeholder for Map Image -->
+<img class="w-full h-full object-cover" data-alt="A clean, modern top-down map view of a city, similar to premium iOS mapping applications. The map utilizes a subtle, warm color palette with soft cream backgrounds, muted green parks, and crisp, minimal road lines. The lighting is bright and flat, emphasizing clarity and luxury. There are no distracting elements, creating an elegant architectural navigation canvas." data-location="Yaoundé" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxDginLFzkYUtp1yoywW4BA2WBRlYtUUIgyuP64x7MrvyCAnPlvZEzPSNBLzNGeK6Nq8lb4YcH9-A3xdtbgNJToDmc5NeWhf8dc8oGWeMTOw7Onaaw2K7LozzZkLnhCQOTH90t8f9WusMi_2nXpWiDmGBSYaIrKCaIKERF0UxXP3kY3DIQNk3Ru7HdHK11xbaiggoKbZHGIiD0vvwbu65E05cQJp9vrP3HXZApJm-yDLAg5MAPNqBckwy377wt5G_XfPgKlTM1RxE"/>
+<!-- Custom Pins -->
+<div class="absolute top-[30%] left-[40%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10">
+<div class="bg-primary text-on-primary font-label-sm text-label-sm px-3 py-1.5 rounded-lg shadow-[0px_10px_20px_rgba(82,69,52,0.15)] flex items-center justify-center whitespace-nowrap">
+                45M FCFA
+            </div>
+<div class="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-primary mx-auto"></div>
+</div>
+<div class="absolute top-[50%] left-[60%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 scale-110 transition-transform">
+<div class="bg-primary text-on-primary font-label-sm text-label-sm px-3 py-1.5 rounded-lg shadow-[0px_10px_20px_rgba(82,69,52,0.25)] flex items-center justify-center whitespace-nowrap ring-2 ring-white">
+                120M FCFA
+            </div>
+<div class="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-primary mx-auto"></div>
+</div>
+<div class="absolute top-[65%] left-[30%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10">
+<div class="bg-primary text-on-primary font-label-sm text-label-sm px-3 py-1.5 rounded-lg shadow-[0px_10px_20px_rgba(82,69,52,0.15)] flex items-center justify-center whitespace-nowrap">
+                85M FCFA
+            </div>
+<div class="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-primary mx-auto"></div>
+</div>
+<!-- Top Floating Search Bar (Mobile & Desktop Overlay) -->
+<div class="absolute top-8 md:top-32 left-0 right-0 px-margin-mobile md:px-margin-desktop z-30 flex justify-center pointer-events-none">
+<div class="w-full max-w-[600px] bg-surface rounded-full shadow-[0px_10px_20px_rgba(82,69,52,0.08)] border border-outline-variant px-4 py-3 flex items-center gap-3 pointer-events-auto">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full font-body-md text-body-md text-on-surface outline-none" placeholder="Rechercher..." type="text" value="Yaoundé, Bastos"/>
+<div class="w-px h-6 bg-outline-variant mx-2"></div>
+<button class="material-symbols-outlined text-primary hover:text-primary-fixed-dim transition-colors">tune</button>
+</div>
+</div>
+<!-- Bottom Overlay: Card Peek -->
+<div class="absolute bottom-[80px] md:bottom-12 left-0 right-0 px-margin-mobile md:px-margin-desktop z-30 flex justify-center pb-4 md:pb-0 pointer-events-none">
+<div class="w-full max-w-[600px] bg-surface rounded-xl shadow-[0px_10px_20px_rgba(82,69,52,0.08)] border border-outline-variant overflow-hidden flex flex-row pointer-events-auto h-[140px] md:h-[160px] cursor-pointer hover:border-outline transition-colors">
+<div class="w-1/3 h-full relative">
+<img alt="Villa Bastos" class="w-full h-full object-cover" data-alt="An exterior view of a modern, luxurious villa. The architecture features clean lines, large glass windows, and warm natural stone materials. The lighting suggests late afternoon, casting soft, elegant shadows. The mood is exclusive, high-end, and serene, fitting an editorial real estate presentation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9yfpZMjy1CcvOSG1UI6v0JS2aOwB0swynhPLm4CzXMdTJtJ1tT1w8KI9L-68dNOtvISzSC5XrK8PJjsKXZeaBtRtV-1mPHipnE2fYZGBhSE_J_XOKTwjQhowa7phAurGRpV96n8cRoDuVhtAh3LxVITT0IrpIm-7AoylBVcNQQ1Hj-njZj-F7ylZN6gKcRRzbRLZV9CcuEz3V556JIqD9oJyvDLnREJLnyMUi-sxJbeo9Uwtysj9TE41wFBSB0nE9QKyH4FVZZYM"/>
+<div class="absolute top-2 left-2 bg-secondary/10 backdrop-blur-sm px-2 py-1 rounded font-label-sm text-label-sm text-secondary">Exclusivité</div>
+</div>
+<div class="w-2/3 p-4 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-md text-[20px] leading-tight font-bold text-on-surface truncate">Villa Contemporaine Bastos</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">location_on</span> Bastos, Yaoundé</p>
+</div>
+<div class="flex justify-between items-end">
+<div class="font-label-sm text-label-sm text-on-surface-variant flex gap-3">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">bed</span> 4</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">shower</span> 3</span>
+</div>
+<p class="font-headline-md text-[20px] font-bold text-primary">120M FCFA</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Action Button: Liste Toggle -->
+<button class="absolute top-24 md:top-32 right-margin-mobile md:right-margin-desktop z-30 bg-primary text-on-primary px-4 py-3 rounded-full shadow-[0px_10px_20px_rgba(82,69,52,0.15)] flex items-center gap-2 hover:bg-primary-container transition-colors font-label-sm text-label-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">list</span>
+            Liste
+        </button>
+</div>
+<!-- Bottom Navigation for Mobile (Hidden on Desktop) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 bg-surface border-t border-outline-variant shadow-[0px_-2px_10px_rgba(82,69,52,0.04)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:opacity-80 transition-opacity gap-1" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Accueil</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold scale-90 transition-transform duration-150 gap-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">search</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Rechercher</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:opacity-80 transition-opacity gap-1" href="#">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Favoris</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:opacity-80 transition-opacity gap-1" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Alertes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container hover:opacity-80 transition-opacity gap-1" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider">Profil</span>
+</a>
+</nav>
+</body></html>

@@ -75,3 +75,11 @@ Expo resolves platform-specific variants automatically:
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Colors } from '@/constants/theme';
 ```
+
+## Design References
+
+Every screen has a pixel-perfect HTML mockup in `interfacesHTML/stitch_domilix_mobile_app_ui_kit/<screen>/code.html` (plus `screen.png`). **Always read the corresponding `code.html` before implementing a screen.** It contains exact French labels, icon names, layout structure, shadow values, and component patterns.
+
+Screens available: `accueil`, `onboarding_1`, `inscription`, `explorer`, `filtres_d_exploration`, `d_tails_de_l_annonce_immobilier`, `d_tails_de_l_annonce_mobilier`, `mes_favoris`, `notifications`, `mon_profil`, `profil_annonceur`, `plans_d_abonnement`, `vue_carte`.
+
+**Icon system:** Google Material Symbols (`font-variation-settings: 'FILL' 0` outline, `'FILL' 1` solid). On React Native, map these through `components/ui/icon-symbol.tsx`.
