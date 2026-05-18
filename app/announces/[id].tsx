@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ListingGallery } from '@/components/listing/listing-gallery';
@@ -8,6 +9,7 @@ import { ListingStatsRow } from '@/components/listing/listing-stats-row';
 import { ListingAmenities } from '@/components/listing/listing-amenities';
 import { ListingActionsBar } from '@/components/listing/listing-actions-bar';
 import { AnnouncerCard } from '@/components/announcer/announcer-card';
+import { AnnounceDetailSkeleton } from '@/components/listing/announce-detail-skeleton';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAnnounce, useToggleLike, useUnlockAnnounce } from '@/hooks/queries/use-announces';
@@ -18,7 +20,7 @@ export default function AnnounceDetailScreen() {
   const C = Colors[scheme ?? 'light'];
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const { data: announce, isLoading } = useAnnounce(id ?? '');
+  const { data: announce, isLoading, isFetching, refetch } = useAnnounce(id ?? '');
   const { data: announcerListingsData } = useAnnounces(
     announce ? { AnnouncerId: announce.announcer_id } : {}
   );
@@ -29,8 +31,8 @@ export default function AnnounceDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: C.background, alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.primary} size="large" />
+      <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
+        <AnnounceDetailSkeleton onBack={() => router.back()} />
       </SafeAreaView>
     );
   }
@@ -51,7 +53,7 @@ export default function AnnounceDetailScreen() {
   const badge =
     announce.category?.name === 'Exclusivité'
       ? 'exclusivite'
-      : (Date.now() - new Date(announce.created_at).getTime() < 7 * 86400_000 ? 'nouveau' : null);
+      : (Date.now() - new Date(announce.creation_date).getTime() < 7 * 86400_000 ? 'nouveau' : null);
 
   function handleUnlock() {
     if (!announce!.unlocked) {
@@ -68,6 +70,14 @@ export default function AnnounceDetailScreen() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching && !isLoading}
+            onRefresh={refetch}
+            tintColor={C.primary}
+            colors={[C.primary]}
+          />
+        }
       >
         {/* Gallery */}
         <View style={styles.galleryWrapper}>

@@ -9,7 +9,7 @@ const IMAGE_HEIGHT = 200;
 
 // Derive badge from created_at (< 7 days = "nouveau")
 function getBadge(announce: Announce): 'nouveau' | 'exclusivite' | null {
-  const created = new Date(announce.created_at).getTime();
+  const created = new Date(announce.creation_date).getTime();
   const now = Date.now();
   if (now - created < 7 * 24 * 60 * 60 * 1000) return 'nouveau';
   return null;
@@ -27,7 +27,7 @@ export function ListingCard({ announce, onPress, onLike, badge }: ListingCardPro
   const C = Colors[scheme ?? 'light'];
 
   const resolvedBadge = badge ?? getBadge(announce);
-  const thumb = announce.medias[0]?.url ?? `https://picsum.photos/seed/${announce.id}/800/600`;
+  const thumb = announce.medias[0]?.thumbnail ?? announce.medias[0]?.file ?? `https://picsum.photos/seed/${announce.id}/800/600`;
 
   return (
     <Pressable

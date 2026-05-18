@@ -12,7 +12,9 @@ export type CategoryType = 'furniture' | 'house';
 
 export interface Media {
   id: string;
-  url: string;
+  file: string;
+  thumbnail?: string;
+  type?: string;
   announce_id?: string;
   announcer_id?: string;
 }
@@ -51,32 +53,34 @@ export interface Announce {
   description: string;
   address: string;
   city: string;
+  neighborhood?: string;
   state?: string;
   country: string;
-  zip?: string;
+  postal_code?: string;
+  contact_phone?: string;
+  contact_email?: string;
   size?: number;
   bedrooms?: number;
   standing?: Standing;
-  // Amenities (boolean flags)
-  wifi: boolean;
-  air_conditioning: boolean;
-  security_24h: boolean;
-  smart_tv: boolean;
-  equipped_kitchen: boolean;
-  gate: boolean;
-  pool: boolean;
+  // Amenities (boolean flags — present on detail endpoint)
+  wifi?: boolean;
+  air_conditioning?: boolean;
+  security_24h?: boolean;
+  smart_tv?: boolean;
+  equipped_kitchen?: boolean;
+  gate?: boolean;
+  pool?: boolean;
   // Relations
-  category_id: string;
+  category_id?: string;
   category?: Category;
-  announcer_id: string;
+  announcer_id?: string;
   announcer: Announcer;
   medias: Media[];
   // User interaction
   liked: boolean;
   unlocked: boolean;
-  likes_count: number;
-  created_at: string;
-  updated_at: string;
+  likes_count?: number;
+  creation_date: string;
 }
 
 // ─── Filters ──────────────────────────────────────────────────────────────────

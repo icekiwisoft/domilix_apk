@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ActivityIndicator, Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AnnouncerHero } from '@/components/announcer/announcer-hero';
@@ -9,6 +10,7 @@ import { ListingCard } from '@/components/listing/listing-card';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAnnouncer } from '@/hooks/queries/use-announcers';
+import { AnnouncerDetailSkeleton } from '@/components/announcer/announcer-detail-skeleton';
 import { useAnnounces } from '@/hooks/queries/use-announces';
 
 type TabName = 'annonces' | 'medias';
@@ -19,13 +21,13 @@ export default function AnnouncerProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabName>('annonces');
 
-  const { data: announcer, isLoading } = useAnnouncer(id ?? '');
+  const { data: announcer, isLoading, isFetching, refetch } = useAnnouncer(id ?? '');
   const { data: listingsData } = useAnnounces(id ? { AnnouncerId: id } : {});
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: C.background, alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.primary} size="large" />
+      <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
+        <AnnouncerDetailSkeleton onBack={() => router.back()} />
       </SafeAreaView>
     );
   }
@@ -45,7 +47,18 @@ export default function AnnouncerProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching && !isLoading}
+            onRefresh={refetch}
+            tintColor={C.primary}
+            colors={[C.primary]}
+          />
+        }
+      >
         {/* Back button */}
         <Pressable
           onPress={() => router.back()}
@@ -117,7 +130,7 @@ export default function AnnouncerProfileScreen() {
             <View style={styles.mediaGrid}>
               {allMedias.map((m) => (
                 <View key={m.id} style={styles.mediaThumb}>
-                  <Image source={{ uri: m.url }} style={styles.mediaImg} resizeMode="cover" />
+                  <Image source={{ uri: m.file }} style={styles.mediaImg} resizeMode="cover" />
                 </View>
               ))}
               {allMedias.length === 0 && (

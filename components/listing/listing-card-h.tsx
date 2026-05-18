@@ -17,7 +17,7 @@ export function ListingCardH({ announce, onPress, onLike }: ListingCardHProps) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
-  const thumb = announce.medias[0]?.url ?? `https://picsum.photos/seed/${announce.id}/300/300`;
+  const thumb = announce.medias[0]?.thumbnail ?? announce.medias[0]?.file ?? `https://picsum.photos/seed/${announce.id}/300/300`;
 
   return (
     <Pressable

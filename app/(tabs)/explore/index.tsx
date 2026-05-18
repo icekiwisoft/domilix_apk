@@ -3,11 +3,12 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  SafeAreaView,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SearchBar } from '@/components/search/search-bar';
 import { FilterBar } from '@/components/search/filter-bar';
@@ -36,7 +37,7 @@ export default function ExploreScreen() {
 
   const { filters, setFilter, clearFilters } = useFilterStore();
 
-  const { data, isLoading } = useAnnounces({
+  const { data, isLoading, isFetching, refetch } = useAnnounces({
     ...filters,
     type: announceType,
     ad_type: adType,
@@ -142,6 +143,14 @@ export default function ExploreScreen() {
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching && !isLoading}
+            onRefresh={refetch}
+            tintColor={C.primary}
+            colors={[C.primary]}
+          />
+        }
       />
 
       {/* Map toggle FAB */}

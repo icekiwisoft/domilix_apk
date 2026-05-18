@@ -26,7 +26,7 @@ export function ListingGallery({ medias, height = DEFAULT_HEIGHT, announceId }: 
   const scrollX = useSharedValue(0);
 
   const sources = medias.length > 0
-    ? medias.map((m) => m.url)
+    ? medias.map((m) => m.file)
     : [`https://picsum.photos/seed/${announceId ?? 'domilix'}/800/600`];
 
   const scrollHandler = useAnimatedScrollHandler((e) => {

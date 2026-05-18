@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   Pressable,
-  SafeAreaView,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography } from '@/constants/theme';
@@ -20,7 +20,7 @@ import { SectionHeader } from '@/components/home/section-header';
 import { SearchBar } from '@/components/search/search-bar';
 import { ListingCard } from '@/components/listing/listing-card';
 import { ListingCardH } from '@/components/listing/listing-card-h';
-import { ListingSkeleton } from '@/components/listing/listing-skeleton';
+import { ListingCardHSkeleton, ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { useAnnounces } from '@/hooks/queries/use-announces';
 import { useBroadcasts } from '@/hooks/queries/use-broadcasts';
 import { useCategories } from '@/hooks/queries/use-categories';
@@ -31,12 +31,19 @@ export default function HomeScreen() {
   const C = Colors[scheme ?? 'light'];
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { data: me } = useMe();
-  const { data: broadcastsData, isLoading: broadcastsLoading } = useBroadcasts();
-  const { data: categoriesData } = useCategories();
-  const { data: recentData, isLoading: recentLoading } = useAnnounces({ type: 'realestate', page: 1 });
-  const { data: furnitureData, isLoading: furnitureLoading } = useAnnounces({ type: 'furniture', page: 1 });
+  const { data: broadcastsData, isLoading: broadcastsLoading, refetch: refetchBroadcasts } = useBroadcasts();
+  const { data: categoriesData, refetch: refetchCategories } = useCategories();
+  const { data: recentData, isLoading: recentLoading, refetch: refetchRecent } = useAnnounces({ type: 'realestate', page: 1 });
+  const { data: furnitureData, isLoading: furnitureLoading, refetch: refetchFurniture } = useAnnounces({ type: 'furniture', page: 1 });
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await Promise.all([refetchBroadcasts(), refetchCategories(), refetchRecent(), refetchFurniture()]);
+    setRefreshing(false);
+  }
 
   const broadcast = broadcastsData?.[0];
   const categories = categoriesData?.data ?? [];
@@ -93,6 +100,14 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={C.primary}
+            colors={[C.primary]}
+          />
+        }
       >
         {/* Search */}
         <View style={styles.section}>
@@ -155,7 +170,15 @@ export default function HomeScreen() {
           />
         </View>
         {furnitureLoading ? (
-          <ActivityIndicator color={C.primary} style={{ marginBottom: Spacing.lg }} />
+          <FlatList
+            data={[1, 2, 3]}
+            keyExtractor={(k) => String(k)}
+            horizontal
+            scrollEnabled={false}
+            showsHorizontalScrollIndicator={false}
+            renderItem={() => <View style={styles.furnitureCard}><ListingCardHSkeleton /></View>}
+            contentContainerStyle={styles.furnitureList}
+          />
         ) : (
           <FlatList
             data={furniture}

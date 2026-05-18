@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DomilixThemeProvider } from '@/providers/theme.provider';
 import { QueryProvider } from '@/providers/query.provider';
@@ -39,6 +40,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
       <QueryProvider>
         <DomilixThemeProvider>
           <AuthProvider>
@@ -58,6 +60,7 @@ export default function RootLayout() {
           </AuthProvider>
         </DomilixThemeProvider>
       </QueryProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

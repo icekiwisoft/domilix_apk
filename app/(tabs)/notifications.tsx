@@ -1,7 +1,9 @@
-import { ActivityIndicator, Pressable, SafeAreaView, SectionList, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NotifItem } from '@/components/notifications/notif-item';
 import { NotifGroup } from '@/components/notifications/notif-group';
+import { NotifSkeleton } from '@/components/notifications/notif-skeleton';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useNotifications, useMarkAllRead, useDeleteNotification } from '@/hooks/queries/use-notifications';
@@ -36,7 +38,7 @@ export default function NotificationsScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
-  const { data, isLoading } = useNotifications();
+  const { data, isLoading, isFetching, refetch } = useNotifications();
   const markAllRead = useMarkAllRead();
   const deleteNotif = useDeleteNotification();
 
@@ -62,8 +64,8 @@ export default function NotificationsScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.empty}>
-          <ActivityIndicator color={C.primary} size="large" />
+        <View>
+          {[1, 2, 3, 4, 5].map((k) => <NotifSkeleton key={k} />)}
         </View>
       ) : notifs.length === 0 ? (
         <View style={styles.empty}>
@@ -86,6 +88,14 @@ export default function NotificationsScreen() {
           stickySectionHeadersEnabled
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetching && !isLoading}
+              onRefresh={refetch}
+              tintColor={C.primary}
+              colors={[C.primary]}
+            />
+          }
         />
       )}
     </SafeAreaView>

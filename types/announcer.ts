@@ -2,13 +2,17 @@ export interface Announcer {
   id: string;
   name: string;
   company_name?: string;
-  bio?: string;
+  bio?: string | null;
   contact?: string;
   professional_phone?: string;
+  email?: string;
   avatar?: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
+  avatar_media_id?: string;
+  user_id?: string;
+  verified?: boolean;
+  houses?: number;
+  furnitures?: number;
+  creation_date: string;
 }
 
 export interface AnnouncerRequest {

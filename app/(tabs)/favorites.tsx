@@ -1,8 +1,10 @@
-import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/button';
 import { ListingCard } from '@/components/listing/listing-card';
+import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAnnounces } from '@/hooks/queries/use-announces';
@@ -11,7 +13,7 @@ export default function FavoritesScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
-  const { data, isLoading } = useAnnounces({ liked: true });
+  const { data, isLoading, isFetching, refetch } = useAnnounces({ liked: true });
   const favorites = data?.data ?? [];
 
   return (
@@ -24,8 +26,8 @@ export default function FavoritesScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.empty}>
-          <ActivityIndicator color={C.primary} size="large" />
+        <View style={[styles.list, { gap: Spacing.md }]}>
+          {[1, 2, 3].map((k) => <ListingSkeleton key={k} />)}
         </View>
       ) : favorites.length === 0 ? (
         <View style={styles.empty}>
@@ -55,6 +57,14 @@ export default function FavoritesScreen() {
           ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetching && !isLoading}
+              onRefresh={refetch}
+              tintColor={C.primary}
+              colors={[C.primary]}
+            />
+          }
         />
       )}
     </SafeAreaView>
