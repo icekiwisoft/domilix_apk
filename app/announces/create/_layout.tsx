@@ -1,0 +1,5 @@
+import { Stack } from 'expo-router';
+
+export default function CreateListingLayout() {
+  return <Stack screenOptions={{ headerShown: false }} />;
+}

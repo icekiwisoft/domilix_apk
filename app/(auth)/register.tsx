@@ -20,6 +20,7 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Input } from '@/components/ui/input';
 import { registerSchema, type RegisterFormValues } from '@/lib/validators/auth.schema';
+import { useRegister } from '@/hooks/queries/use-auth-queries';
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
@@ -27,7 +28,7 @@ export default function RegisterScreen() {
   const C = Colors[scheme ?? 'light'];
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const register = useRegister();
 
   const {
     control,
@@ -38,12 +39,14 @@ export default function RegisterScreen() {
     defaultValues: { name: '', email: '', phone: '', password: '', confirmPassword: '', terms: undefined as any },
   });
 
-  async function onSubmit(data: RegisterFormValues) {
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setLoading(false);
-    // After register → verify phone
-    router.push({ pathname: '/(auth)/verify-phone/[user_id]', params: { user_id: 'mock-user-id' } });
+  function onSubmit(data: RegisterFormValues) {
+    register.mutate(
+      { name: data.name, email: data.email || undefined, phone_number: data.phone || undefined, password: data.password },
+      {
+        onSuccess: (res) =>
+          router.push({ pathname: '/(auth)/verify-phone/[user_id]', params: { user_id: res.user.id } }),
+      }
+    );
   }
 
   return (
@@ -234,13 +237,13 @@ export default function RegisterScreen() {
           {/* Submit */}
           <Pressable
             onPress={handleSubmit(onSubmit)}
-            disabled={loading}
+            disabled={register.isPending}
             style={[
               styles.submitBtn,
-              { backgroundColor: C.primary, opacity: loading ? 0.7 : 1 },
+              { backgroundColor: C.primary, opacity: register.isPending ? 0.7 : 1 },
             ]}
           >
-            {loading ? (
+            {register.isPending ? (
               <ActivityIndicator color={C.onPrimary} />
             ) : (
               <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>

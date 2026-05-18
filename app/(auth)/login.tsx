@@ -7,7 +7,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,14 +18,15 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Input } from '@/components/ui/input';
-import { loginSchema, type LoginFormValues } from '@/lib/validators/auth.schema';
+import { loginSchema, type LoginFormValues, resolveLoginDto } from '@/lib/validators/auth.schema';
+import { useLogin } from '@/hooks/queries/use-auth-queries';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const [showPwd, setShowPwd] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const login = useLogin();
 
   const {
     control,
@@ -34,14 +34,14 @@ export default function LoginScreen() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { phone: '', password: '' },
+    defaultValues: { identifier: '', password: '' },
   });
 
-  async function onSubmit(_data: LoginFormValues) {
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setLoading(false);
-    router.replace('/(tabs)');
+  function onSubmit(data: LoginFormValues) {
+    login.mutate(
+      resolveLoginDto(data.identifier.trim(), data.password),
+      { onSuccess: () => router.replace('/(tabs)') }
+    );
   }
 
   return (
@@ -74,92 +74,81 @@ export default function LoginScreen() {
 
         {/* Form */}
         <View style={styles.form}>
-          {/* Phone */}
-          <View style={styles.fieldGroup}>
-            <Text style={[Typography.labelSm, styles.label, { color: C.onSurface }]}>
-              Numéro de téléphone
-            </Text>
-            <Controller
-              control={control}
-              name="phone"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <View
-                  style={[
-                    styles.phoneRow,
-                    {
-                      borderColor: errors.phone ? C.error : C.outlineVariant,
-                      borderWidth: errors.phone ? 2 : 1,
-                      backgroundColor: C.surface,
-                    },
-                  ]}
-                >
-                  <View style={[styles.prefix, { backgroundColor: C.surfaceContainer, borderRightColor: C.outlineVariant }]}>
-                    <Text style={[Typography.labelSm, { color: C.onSurfaceVariant }]}>+237</Text>
-                  </View>
-                  <TextInput
-                    style={[styles.phoneField, { color: C.onSurface }]}
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    keyboardType="phone-pad"
-                    placeholder="6 00 00 00 00"
-                    placeholderTextColor={C.onSurfaceVariant + '66'}
-                  />
-                </View>
-              )}
-            />
-            {errors.phone && (
-              <Text style={[Typography.caption, { color: C.error, marginTop: Spacing.xs, marginLeft: Spacing.md }]}>
-                {errors.phone.message}
-              </Text>
+          {/* Identifiant */}
+          <Controller
+            control={control}
+            name="identifier"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Email ou numéro de téléphone"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                placeholder="email@exemple.com ou +237 6XX XXX XXX"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                error={errors.identifier?.message}
+                leftElement={
+                  <MaterialIcons name="person-outline" size={20} color={C.onSurfaceVariant} />
+                }
+              />
             )}
-          </View>
+          />
 
-          {/* Password */}
-          <View style={styles.fieldGroup}>
-            <Text style={[Typography.labelSm, styles.label, { color: C.onSurface }]}>
-              Mot de passe
-            </Text>
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Mot de passe"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  secureTextEntry={!showPwd}
-                  error={errors.password?.message}
-                  rightElement={
-                    <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={8}>
-                      <MaterialIcons
-                        name={showPwd ? 'visibility' : 'visibility-off'}
-                        size={22}
-                        color={C.onSurfaceVariant}
-                      />
-                    </Pressable>
-                  }
-                />
-              )}
-            />
-          </View>
+          {/* Mot de passe */}
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Mot de passe"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                secureTextEntry={!showPwd}
+                error={errors.password?.message}
+                leftElement={
+                  <MaterialIcons name="lock-outline" size={20} color={C.onSurfaceVariant} />
+                }
+                rightElement={
+                  <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={8}>
+                    <MaterialIcons
+                      name={showPwd ? 'visibility' : 'visibility-off'}
+                      size={22}
+                      color={C.onSurfaceVariant}
+                    />
+                  </Pressable>
+                }
+              />
+            )}
+          />
 
-          {/* Forgot password */}
+          {/* Mot de passe oublié */}
           <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotRow}>
             <Text style={[Typography.caption, { color: C.primary }]}>Mot de passe oublié ?</Text>
           </Pressable>
 
-          {/* Submit */}
+          {/* Erreur serveur */}
+          {login.error && (
+            <View style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}>
+              <MaterialIcons name="error-outline" size={16} color={C.error} />
+              <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
+                Identifiant ou mot de passe incorrect.
+              </Text>
+            </View>
+          )}
+
+          {/* Bouton */}
           <Pressable
             onPress={handleSubmit(onSubmit)}
-            disabled={loading}
+            disabled={login.isPending}
             style={[
               styles.submitBtn,
-              { backgroundColor: C.primary, opacity: loading ? 0.7 : 1 },
+              { backgroundColor: C.primary, opacity: login.isPending ? 0.7 : 1 },
             ]}
           >
-            {loading ? (
+            {login.isPending ? (
               <ActivityIndicator color={C.onPrimary} />
             ) : (
               <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
@@ -206,32 +195,17 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.lg,
   },
-  fieldGroup: {
-    gap: Spacing.xs,
-  },
-  label: {
-    marginLeft: Spacing.xs,
-  },
-  phoneRow: {
-    flexDirection: 'row',
-    borderRadius: Radius.md,
-    overflow: 'hidden',
-    height: 58,
-    alignItems: 'center',
-  },
-  prefix: {
-    paddingHorizontal: Spacing.md,
-    height: '100%',
-    justifyContent: 'center',
-    borderRightWidth: 1,
-  },
-  phoneField: {
-    flex: 1,
-    paddingHorizontal: Spacing.md,
-    ...Typography.bodyMd,
-  },
   forgotRow: {
     alignSelf: 'flex-end',
+    marginTop: -Spacing.sm,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
   },
   submitBtn: {
     paddingVertical: Spacing.md,

@@ -1,10 +1,7 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  phone: z
-    .string()
-    .min(9, 'Numéro invalide')
-    .regex(/^[0-9]+$/, 'Numéro invalide'),
+  identifier: z.string().min(3, 'Identifiant requis'),
   password: z.string().min(6, 'Mot de passe trop court'),
 });
 
@@ -41,6 +38,13 @@ export const resetPasswordSchema = z
   });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
+// helper utilisé dans onSubmit pour router vers email ou phone_number
+export function resolveLoginDto(identifier: string, password: string) {
+  const isEmail = identifier.includes('@');
+  return isEmail
+    ? { email: identifier, password }
+    : { phone_number: identifier, password };
+}
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;

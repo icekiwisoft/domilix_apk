@@ -20,10 +20,11 @@ interface InputProps extends TextInputProps {
   label: string;
   error?: string;
   containerStyle?: ViewStyle;
+  leftElement?: React.ReactNode;
   rightElement?: React.ReactNode;
 }
 
-export function Input({ label, error, containerStyle, rightElement, onFocus, onBlur, value, ...rest }: InputProps) {
+export function Input({ label, error, containerStyle, leftElement, rightElement, onFocus, onBlur, value, placeholder, ...rest }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const floatAnim = useSharedValue(value ? 1 : 0);
 
@@ -59,16 +60,24 @@ export function Input({ label, error, containerStyle, rightElement, onFocus, onB
   return (
     <View style={containerStyle}>
       <View style={[styles.container, { backgroundColor: surface, borderColor, borderWidth }]}>
-        <Animated.Text style={[styles.label, { color: labelColor }, labelAnimStyle]}>
+        <Animated.Text
+          style={[
+            styles.label,
+            { color: labelColor, left: leftElement ? Spacing.md + 28 : Spacing.md },
+            labelAnimStyle,
+          ]}
+        >
           {label}
         </Animated.Text>
         <View style={styles.inputRow}>
+          {leftElement && <View style={styles.leftElement}>{leftElement}</View>}
           <TextInput
             style={[styles.input, { color: onSurface }]}
             onFocus={handleFocus}
             onBlur={handleBlur}
             value={value}
-            placeholderTextColor={onSurfaceVariant}
+            placeholder={isFocused ? placeholder : undefined}
+            placeholderTextColor={onSurfaceVariant + '99'}
             {...rest}
           />
           {rightElement}
@@ -99,6 +108,9 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  leftElement: {
+    marginRight: Spacing.sm,
   },
   input: {
     ...Typography.bodyMd,
