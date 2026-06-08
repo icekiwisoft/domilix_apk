@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(node -e \"const p=require\\('/dev/stdin'\\); console.log\\(JSON.stringify\\({...p.dependencies,...p.devDependencies}, null, 2\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); const d={...p.dependencies,...p.devDependencies}; Object.keys\\(d\\).sort\\(\\).forEach\\(k=>console.log\\(k+': '+d[k]\\)\\)\")",
+      "WebFetch(domain:docs.expo.dev)",
+      "Bash(gh api *)",
+      "Bash(npm show *)",
+      "Bash(npx uipro-cli *)",
+      "Bash(npx @21st-dev/cli@latest install claude --api-key 21st_sk_33e52606923111bad2b640d9165b5c41d436e2c6d0c1653fdd1d5d11e2b94938)",
+      "PowerShell(Get-Content \"$env:USERPROFILE\\\\.claude\\\\claude_desktop_config.json\" -ErrorAction SilentlyContinue; Get-Content \"$env:APPDATA\\\\Claude\\\\claude_desktop_config.json\" -ErrorAction SilentlyContinue; Get-Content \"$env:USERPROFILE\\\\.claude\\\\settings.json\" -ErrorAction SilentlyContinue)",
+      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"real estate mobile app luxury premium cameroon\" --design-system -p \"Domilix\" -f markdown)",
+      "Bash(py --version)",
+      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"real estate mobile app luxury premium\" --design-system -p \"Domilix\" -f markdown)",
+      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"mobile app interaction animation touch\" --domain ux -n 8)",
+      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"button card shadow elevation\" --stack react-native)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Wilfreid\\.claude"
+    ]
+  }
+}
