@@ -1,42 +1,42 @@
 ---
-name: Domilix Editorial System
+name: Warm Marketplace Narrative
 colors:
   surface: '#fff8f4'
-  surface-dim: '#e3d8ce'
+  surface-dim: '#e7d7ca'
   surface-bright: '#fff8f4'
   surface-container-lowest: '#ffffff'
-  surface-container-low: '#fdf2e7'
-  surface-container: '#f7ece2'
-  surface-container-high: '#f2e6dc'
-  surface-container-highest: '#ece1d7'
-  on-surface: '#201b15'
-  on-surface-variant: '#504537'
-  inverse-surface: '#352f29'
-  inverse-on-surface: '#faefe5'
-  outline: '#827565'
-  outline-variant: '#d4c4b2'
-  surface-tint: '#835500'
-  primary: '#633f00'
+  surface-container-low: '#fff1e6'
+  surface-container: '#fbebde'
+  surface-container-high: '#f5e5d8'
+  surface-container-highest: '#f0e0d3'
+  on-surface: '#221a12'
+  on-surface-variant: '#534435'
+  inverse-surface: '#382f26'
+  inverse-on-surface: '#feeee1'
+  outline: '#867462'
+  outline-variant: '#d9c3af'
+  surface-tint: '#885200'
+  primary: '#885200'
   on-primary: '#ffffff'
-  primary-container: '#835500'
-  on-primary-container: '#ffd197'
-  inverse-primary: '#f9bb65'
+  primary-container: '#e8921a'
+  on-primary-container: '#573300'
+  inverse-primary: '#ffb869'
   secondary: '#516071'
   on-secondary: '#ffffff'
   secondary-container: '#d1e1f5'
   on-secondary-container: '#556475'
-  tertiary: '#004d6a'
+  tertiary: '#01658a'
   on-tertiary: '#ffffff'
-  tertiary-container: '#03668b'
-  on-tertiary-container: '#afe0ff'
+  tertiary-container: '#66aed6'
+  on-tertiary-container: '#004059'
   error: '#ba1a1a'
   on-error: '#ffffff'
   error-container: '#ffdad6'
   on-error-container: '#93000a'
-  primary-fixed: '#ffddb4'
-  primary-fixed-dim: '#f9bb65'
-  on-primary-fixed: '#291800'
-  on-primary-fixed-variant: '#633f00'
+  primary-fixed: '#ffdcbb'
+  primary-fixed-dim: '#ffb869'
+  on-primary-fixed: '#2b1700'
+  on-primary-fixed-variant: '#673d00'
   secondary-fixed: '#d4e4f8'
   secondary-fixed-dim: '#b8c8dc'
   on-secondary-fixed: '#0d1d2b'
@@ -46,124 +46,127 @@ colors:
   on-tertiary-fixed: '#001e2c'
   on-tertiary-fixed-variant: '#004c69'
   background: '#fff8f4'
-  on-background: '#201b15'
-  surface-variant: '#ece1d7'
+  on-background: '#221a12'
+  surface-variant: '#f0e0d3'
 typography:
-  display-lg:
+  display-xl:
     fontFamily: Plus Jakarta Sans
     fontSize: 60px
     fontWeight: '700'
-    lineHeight: '1.1'
+    lineHeight: 72px
     letterSpacing: -0.02em
   headline-lg:
     fontFamily: Plus Jakarta Sans
     fontSize: 40px
     fontWeight: '700'
-    lineHeight: '1.2'
+    lineHeight: 48px
   headline-md:
     fontFamily: Plus Jakarta Sans
     fontSize: 32px
     fontWeight: '700'
-    lineHeight: '1.2'
-  body-lg:
+    lineHeight: 40px
+  headline-sm:
     fontFamily: Plus Jakarta Sans
+    fontSize: 24px
+    fontWeight: '600'
+    lineHeight: 32px
+  body-lg:
+    fontFamily: Manrope
     fontSize: 18px
     fontWeight: '400'
-    lineHeight: '1.6'
+    lineHeight: 28px
   body-md:
-    fontFamily: Plus Jakarta Sans
+    fontFamily: Manrope
     fontSize: 16px
     fontWeight: '400'
-    lineHeight: '1.6'
-  label-sm:
-    fontFamily: Plus Jakarta Sans
+    lineHeight: 24px
+  body-sm:
+    fontFamily: Manrope
+    fontSize: 14px
+    fontWeight: '400'
+    lineHeight: 20px
+  label-md:
+    fontFamily: Manrope
     fontSize: 14px
     fontWeight: '600'
-    lineHeight: '1'
-    letterSpacing: 0.08em
+    lineHeight: 20px
+    letterSpacing: 0.01em
   caption:
-    fontFamily: Plus Jakarta Sans
+    fontFamily: Manrope
     fontSize: 12px
     fontWeight: '500'
-    lineHeight: '1.4'
+    lineHeight: 16px
 rounded:
-  sm: 0.25rem
-  DEFAULT: 0.5rem
-  md: 0.75rem
-  lg: 1rem
-  xl: 1.5rem
+  sm: 0.125rem
+  DEFAULT: 0.25rem
+  md: 0.375rem
+  lg: 0.5rem
+  xl: 0.75rem
   full: 9999px
 spacing:
-  base: 8px
-  container-max-width: 1280px
-  gutter: 24px
-  margin-mobile: 20px
-  margin-desktop: 64px
-  section-gap: 80px
+  xs: 4px
+  sm: 8px
+  md: 12px
+  lg: 16px
+  xl: 24px
+  xxl: 32px
+  huge: 48px
 ---
 
 ## Brand & Style
 
-This design system is anchored in **Editorial Minimalism**, blending the sophistication of high-end architectural journals with the functional clarity of a modern marketplace. It targets a discerning Cameroonian clientele in Douala and Yaoundé, evoking a sense of curated luxury, stability, and local pride.
+This design system is built for a vibrant real estate and furniture marketplace, specifically tailored to the Cameroonian market. The brand personality is **warm, professional, and trustworthy**, bridging the gap between high-value property investments and personal home styling. 
 
-The aesthetic is "Confident Premium." It avoids clutter, favoring expansive whitespace that allows high-resolution photography of properties and bespoke furniture to breathe. The visual narrative is quiet but authoritative, using a sophisticated warm palette to distance the product from the coldness of typical tech platforms, creating an atmosphere of comfort and exclusivity.
+The visual style follows a **Corporate Modern** approach with **Tactile** warmth. It leverages a "sun-drenched" palette to evoke a sense of home and comfort, while maintaining rigorous professional standards through precise typography and structured layouts. The emotional goal is to make users feel secure in their financial decisions while feeling inspired by the lifestyle possibilities of the marketplace.
 
 ## Colors
 
-The palette is rooted in earth tones and warmth, reflecting both the premium positioning and the natural textures of high-end real estate.
+The color strategy centers on a vivid orange primary tone to drive action and energy, balanced by deep blue-greys and teals that ground the experience in reliability. 
 
-- **Primary (Deep Amber):** Used for brand presence and key structural elements. It conveys maturity and value.
-- **Primary Container (Bright Orange):** Reserved strictly for high-priority Call to Actions (CTAs) and urgent status indicators. Use sparingly to maintain the editorial "calm."
-- **Surface & Container:** The interaction between Warm White and Cream creates a subtle tonal hierarchy without relying on harsh lines.
-- **Secondary & Tertiary:** Cool-toned slates and blues are used for utility features, secondary information, or specific furniture categories to provide visual relief from the warm base.
+- **Primary & Containers:** Used for high-priority CTAs (Buy, Book, Contact). The Amber container is reserved for highlighting premium listings or special offers.
+- **Secondary & Tertiary:** Used for secondary actions and categorization (e.g., distinguishing between 'Rent' and 'Buy' or 'Furniture' and 'Real Estate').
+- **Surface & Background:** A warm cream background replaces sterile whites to create a welcoming, "homely" atmosphere. 
+- **Text:** Dark brown is used instead of pure black to maintain softness and readability against the cream background.
 
 ## Typography
 
-The design system utilizes **Plus Jakarta Sans** across all levels to maintain a contemporary, clean look. 
+This design system uses a dual-font strategy: **Plus Jakarta Sans** for headlines and navigation to provide a friendly, optimistic personality, and **Manrope** for body copy to ensure maximum legibility and a modern, professional feel.
 
-Editorial impact is achieved through the **Display** and **Headline** scales, which should be set with tight line height and slight negative letter spacing to feel "locked" and confident. **Body** text is optimized for readability with a generous 1.6 line height, ensuring descriptions of properties remain inviting. **Labels** are utilized for metadata (e.g., "DISPONIBLE", "VENDU") and must always be tracked out for a premium, architectural feel.
+- **Scale:** Large display sizes are intended for marketing splashes and hero property details. 
+- **Hierarchy:** Use Headline Small for card titles. Body Large is preferred for property descriptions to enhance readability on mobile devices.
+- **Weights:** Use 600/700 for headlines to ensure they stand out against the rich background colors. Manrope's 500 weight is the default for interactive elements like input labels.
 
 ## Layout & Spacing
 
-The layout philosophy follows a **Fixed Grid** model for desktop to preserve the editorial composition, transitioning to a flexible fluid system for mobile.
+The layout utilizes a **fluid grid** optimized for mobile-first consumption. 
 
-- **Desktop:** A 12-column grid with a maximum width of 1280px. Margins are intentionally wide (64px) to enforce the "Generous Whitespace" narrative.
-- **Mobile:** A 4-column grid with 20px side margins. 
-- **Vertical Rhythm:** A base 8px unit is used. Sections should be separated by significant gaps (80px+) to ensure the UI never feels crowded, prioritizing the "premium" feel over information density.
+- **Grid:** A 4-column layout for mobile devices with a 16px outer margin and 12px gutters.
+- **Rhythm:** An 8px base unit drives all spatial relationships. 
+- **Density:** High-density lists (like search results) should use `sm` (8px) spacing between items, while content-heavy detail pages should use `xl` (24px) to allow the "Warm Cream" surface to provide breathing room.
 
 ## Elevation & Depth
 
-Depth in this design system is communicated through **Tonal Layering** and **Ambient Shadows**.
+Visual hierarchy is established using **Tonal Layers** and **Ambient Shadows**.
 
-- **Surface Tiers:** Use the `Surface Container` (Cream) to group content against the `Surface` (Warm White). This creates a "paper-on-table" effect.
-- **Shadows:** Avoid heavy, dark shadows. Use a single "Soft Ambient" elevation for floating cards: `0px 10px 20px rgba(82, 69, 52, 0.04)`. This subtle tinting of the shadow with the Muted Text color ensures it feels integrated into the warm environment rather than a sterile grey.
-- **Interactive States:** On hover, a card should not necessarily lift higher; instead, the 1px border may slightly darken to `Outline` strength.
+- **Surfaces:** Use the secondary container color (light blue-grey) to define "sunken" areas like search bars or filter chips.
+- **Shadows:** 
+    - **Soft Elevation (Cards):** Use a very diffused shadow `(0 4px 20px rgba(0,0,0,0.04))` to lift property cards off the warm background without creating harsh edges.
+    - **Structural Elevation (Navigation):** Use a tight shadow `(0 1px 4px rgba(0,0,0,0.06))` for bottom navigation bars and top app bars to signify they are fixed in the Z-space.
+- **Borders:** Use the `border` token (#D7C3AE) for structural separation where shadows might cause too much visual noise, such as in form sections or list dividers.
 
 ## Shapes
 
-The shape language is approachable yet structured. 
+The shape language is **Soft** but geometric, reflecting architectural precision. 
 
-- **Buttons & Inputs:** 12px radius. This provides a soft, modern touch without becoming overly "bubbly" or playful, maintaining a professional air.
-- **Cards:** 16px radius. The larger radius on cards helps them feel like distinct, premium objects on the canvas.
-- **Avatars:** Strictly circular to contrast against the predominantly rectangular grid.
-- **Selection Indicators:** Use pill-shapes (fully rounded) for tags or chips to differentiate them from functional buttons.
+- **Default (4px):** Used for small UI elements like checkboxes, tags, and badges.
+- **Cards (8px):** Property and furniture cards use a slightly larger radius to feel approachable and modern.
+- **Interactive (12px):** Buttons and Text Inputs use the largest radius to create a distinct, tactile area for user interaction, making them easy to "hit" on mobile screens.
 
 ## Components
 
-### Buttons
-- **Primary:** Deep Amber background, white text. 12px radius.
-- **CTA:** Bright Orange background. Used only for "Contacter l'agent" or "Réserver."
-- **Ghost:** 1px `Outline Variant` border with `Text` color.
-
-### Input Fields
-- **Default State:** 1px border using `Outline Variant`. 12px radius. Background is `Surface`.
-- **Focus State:** 2px border using `Primary` (Deep Amber). Label shifts to a floating position using `Label-sm` styles.
-
-### Cards
-- **Property/Furniture Card:** 16px radius, Soft Ambient shadow. Image should occupy the top 60% of the card. Content area uses `Surface Container` if placed on `Surface`.
-
-### Chips & Status
-- Use `Label-sm` typography. Status indicators (e.g., "Nouveau", "Exclusivité") use a subtle background of `Secondary` or `Tertiary` at 10% opacity with full-strength text.
-
-### Navigation
-- Top navigation should be airy. Use uppercase `Label-sm` for menu items to maintain the editorial feel. The language used throughout must be formal French (e.g., "Découvrir la collection" instead of "Voir plus").
+- **Buttons:** Primary buttons use `#E8921A` with white text and a 12px radius. Secondary buttons should use an outline style with the `Secondary` blue-grey.
+- **Input Fields:** Use a 12px radius with the `border` token. On focus, the border shifts to `Primary` orange. Labels use Manrope 600 in `Main Text`.
+- **Property Cards:** Must include the 8px radius and the Card Shadow. The price should be highlighted using `Headline Small` in `Primary` orange.
+- **Chips/Filters:** Use `Secondary Container` background with `Secondary` text color for an unselected state; fill with `Primary` for the active state.
+- **Navigation Bar:** A fixed bottom bar with a white background and the Navigation Shadow. Icons should use `Secondary` (inactive) and `Primary` (active).
+- **Status Badges:** For "For Rent" or "For Sale," use small capsules with 4px radius, utilizing `Tertiary` and `Tertiary Container` to distinguish from CTAs.
