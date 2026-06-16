@@ -61,6 +61,11 @@
   },
   "private": true,
   "overrides": {
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "@react-native/community-cli-plugin": "0.81.5",
+    "@react-native/dev-middleware": "0.81.5",
+    "@react-native/debugger-frontend": "0.81.5",
+    "@react-native/debugger-shell": "0.81.5",
+    "@react-native/virtualized-lists": "0.81.5"
   }
 }
