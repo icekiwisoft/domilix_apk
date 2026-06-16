@@ -1,5 +1,12 @@
 import { Tabs } from 'expo-router';
+import { useEffect, type ComponentProps } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -7,39 +14,112 @@ import { Colors, Radius, Shadows } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUnreadCount } from '@/hooks/queries/use-notifications';
 
+const ICON_SPRING = { damping: 14, stiffness: 200 };
+const INDICATOR_SPRING = { damping: 16, stiffness: 220 };
+const LABEL_SPRING = { damping: 15, stiffness: 280 };
+
+function useTabAnimation(focused: boolean) {
+  const scale = useSharedValue(focused ? 1.15 : 1);
+  const translateY = useSharedValue(focused ? -2 : 0);
+  const indicatorWidth = useSharedValue(focused ? 16 : 0);
+  const indicatorOpacity = useSharedValue(focused ? 1 : 0);
+
+  useEffect(() => {
+    scale.value = withSpring(focused ? 1.15 : 1, ICON_SPRING);
+    translateY.value = withSpring(focused ? -2 : 0, ICON_SPRING);
+    indicatorWidth.value = withSpring(focused ? 16 : 0, INDICATOR_SPRING);
+    indicatorOpacity.value = withTiming(focused ? 1 : 0, { duration: focused ? 120 : 80 });
+  }, [focused]);
+
+  const iconAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }, { translateY: translateY.value }],
+  }));
+
+  const indicatorAnimStyle = useAnimatedStyle(() => ({
+    width: indicatorWidth.value,
+    opacity: indicatorOpacity.value,
+  }));
+
+  return { iconAnimStyle, indicatorAnimStyle };
+}
+
 function TabIcon({
   name,
   color,
   focused,
   size = 24,
 }: {
-  name: React.ComponentProps<typeof IconSymbol>['name'];
+  name: ComponentProps<typeof IconSymbol>['name'];
   color: string;
   focused: boolean;
   size?: number;
 }) {
+  const { iconAnimStyle, indicatorAnimStyle } = useTabAnimation(focused);
+
   return (
     <View style={styles.iconPill}>
-      <IconSymbol name={name} size={size} color={color} />
-      <View style={[styles.indicator, { backgroundColor: focused ? color : 'transparent' }]} />
+      <Animated.View style={iconAnimStyle}>
+        <IconSymbol name={name} size={size} color={color} />
+      </Animated.View>
+      <Animated.View style={[styles.indicator, { backgroundColor: color }, indicatorAnimStyle]} />
     </View>
+  );
+}
+
+function TabLabel({
+  focused,
+  color,
+  children,
+}: {
+  focused: boolean;
+  color: string;
+  children: React.ReactNode;
+}) {
+  const scale = useSharedValue(focused ? 1 : 0.92);
+
+  useEffect(() => {
+    scale.value = withSpring(focused ? 1 : 0.92, LABEL_SPRING);
+  }, [focused]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.Text
+      style={[
+        {
+          fontFamily: focused ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
+          fontSize: 12,
+          textTransform: 'capitalize',
+          letterSpacing: 0.6,
+          color,
+          marginTop: 3,
+        },
+        animStyle,
+      ]}
+    >
+      {children}
+    </Animated.Text>
   );
 }
 
 function NotifTabIcon({ color, focused }: { color: string; focused: boolean }) {
   const { data } = useUnreadCount();
   const count = data?.count ?? 0;
+  const { iconAnimStyle, indicatorAnimStyle } = useTabAnimation(focused);
+
   return (
     <View style={styles.iconPill}>
-      <View style={styles.iconWrapper}>
+      <Animated.View style={[styles.iconWrapper, iconAnimStyle]}>
         <IconSymbol name={focused ? 'bell.fill' : 'bell'} size={24} color={color} />
         {count > 0 && (
           <View style={[styles.badge, { backgroundColor: Colors.light.error }]}>
             <Text style={styles.badgeText}>{count > 9 ? '9+' : String(count)}</Text>
           </View>
         )}
-      </View>
-      <View style={[styles.indicator, { backgroundColor: focused ? color : 'transparent' }]} />
+      </Animated.View>
+      <Animated.View style={[styles.indicator, { backgroundColor: color }, indicatorAnimStyle]} />
     </View>
   );
 }
@@ -69,16 +149,7 @@ export default function TabLayout() {
           ...Shadows.md,
         },
         tabBarLabel: ({ focused, color, children }) => (
-          <Text style={{
-            fontFamily: focused ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
-            fontSize: 12,
-            textTransform: 'capitalize',
-            letterSpacing: 0.6,
-            color,
-            marginTop: 3,
-          }}>
-            {children}
-          </Text>
+          <TabLabel focused={focused} color={color}>{children}</TabLabel>
         ),
         tabBarIconStyle: {
           marginBottom: 0,
