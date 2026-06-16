@@ -3,21 +3,43 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadows } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useUnreadCount } from '@/hooks/queries/use-notifications';
+
+function TabIcon({
+  name,
+  color,
+  focused,
+  size = 24,
+}: {
+  name: React.ComponentProps<typeof IconSymbol>['name'];
+  color: string;
+  focused: boolean;
+  size?: number;
+}) {
+  return (
+    <View style={styles.iconPill}>
+      <IconSymbol name={name} size={size} color={color} />
+      <View style={[styles.indicator, { backgroundColor: focused ? color : 'transparent' }]} />
+    </View>
+  );
+}
 
 function NotifTabIcon({ color, focused }: { color: string; focused: boolean }) {
   const { data } = useUnreadCount();
   const count = data?.count ?? 0;
   return (
-    <View style={styles.iconWrapper}>
-      <IconSymbol name={focused ? 'bell.fill' : 'bell'} size={24.5} color={color} />
-      {count > 0 && (
-        <View style={[styles.badge, { backgroundColor: Colors.light.error }]}>
-          <Text style={styles.badgeText}>{count > 9 ? '9+' : String(count)}</Text>
-        </View>
-      )}
+    <View style={styles.iconPill}>
+      <View style={styles.iconWrapper}>
+        <IconSymbol name={focused ? 'bell.fill' : 'bell'} size={24} color={color} />
+        {count > 0 && (
+          <View style={[styles.badge, { backgroundColor: Colors.light.error }]}>
+            <Text style={styles.badgeText}>{count > 9 ? '9+' : String(count)}</Text>
+          </View>
+        )}
+      </View>
+      <View style={[styles.indicator, { backgroundColor: focused ? color : 'transparent' }]} />
     </View>
   );
 }
@@ -27,9 +49,8 @@ export default function TabLayout() {
   const C = Colors[scheme ?? 'light'];
   const insets = useSafeAreaInsets();
 
-  // On remonte la tab bar de 15px au-dessus de l'encoche native
   const LIFT = 5;
-  const tabBarHeight = 64 + Math.max(0, insets.bottom - LIFT);
+  const tabBarHeight = 68 + Math.max(0, insets.bottom - LIFT);
 
   return (
     <Tabs
@@ -69,9 +90,7 @@ export default function TabLayout() {
         options={{
           title: 'Accueil',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill]}>
-              <IconSymbol size={22.5} name={focused ? 'house.fill' : 'house.fill'} color={color} />
-            </View>
+            <TabIcon name="house.fill" color={color} focused={focused} />
           ),
         }}
       />
@@ -79,10 +98,8 @@ export default function TabLayout() {
         name="explore"
         options={{
           title: 'Explorer',
-          tabBarIcon: ({ color }) => (
-            <View style={styles.iconPill}>
-              <IconSymbol size={22.5} name="magnifyingglass" color={color} />
-            </View>
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="magnifyingglass" color={color} focused={focused} />
           ),
         }}
       />
@@ -91,9 +108,7 @@ export default function TabLayout() {
         options={{
           title: 'Favoris',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill]}>
-              <IconSymbol size={22.5} name={focused ? 'heart.fill' : 'heart'} color={color} />
-            </View>
+            <TabIcon name={focused ? 'heart.fill' : 'heart'} color={color} focused={focused} />
           ),
         }}
       />
@@ -102,9 +117,7 @@ export default function TabLayout() {
         options={{
           title: 'Alertes',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill]}>
-              <NotifTabIcon color={color} focused={focused} />
-            </View>
+            <NotifTabIcon color={color} focused={focused} />
           ),
         }}
       />
@@ -113,9 +126,11 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill]}>
-              <IconSymbol size={22.5} name={focused ? 'person.crop.circle.fill' : 'person.crop.circle'} color={color} />
-            </View>
+            <TabIcon
+              name={focused ? 'person.crop.circle.fill' : 'person.crop.circle'}
+              color={color}
+              focused={focused}
+            />
           ),
         }}
       />
@@ -126,10 +141,16 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   iconPill: {
     width: 48,
-    height: 28,
-    borderRadius: Radius.full,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  indicator: {
+    position: 'absolute',
+    bottom: 0,
+    width: 16,
+    height: 3,
+    borderRadius: 2,
   },
   iconWrapper: {
     position: 'relative',
