@@ -1,120 +1,101 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { ListingPriceTag } from './listing-price-tag';
 import type { Announce } from '@/types/announce';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
-const IMAGE_HEIGHT = 200;
+const IMAGE_HEIGHT = 128;
 
-// Derive badge from created_at (< 7 days = "nouveau")
-function getBadge(announce: Announce): 'nouveau' | 'exclusivite' | null {
-  const created = new Date(announce.creation_date).getTime();
-  const now = Date.now();
-  if (now - created < 7 * 24 * 60 * 60 * 1000) return 'nouveau';
-  return null;
+function formatPrice(price: number): string {
+  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(1).replace('.0', '')}M`;
+  if (price >= 1_000) return `${Math.round(price / 1_000)}k`;
+  return price.toLocaleString('fr-FR');
 }
 
 interface ListingCardProps {
   announce: Announce;
   onPress?: () => void;
   onLike?: (id: string, liked: boolean) => void;
-  badge?: 'nouveau' | 'exclusivite';
 }
 
-export function ListingCard({ announce, onPress, onLike, badge }: ListingCardProps) {
+export function ListingCard({ announce, onPress, onLike }: ListingCardProps) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
-  const resolvedBadge = badge ?? getBadge(announce);
-  const thumb = announce.medias[0]?.thumbnail ?? announce.medias[0]?.file ?? `https://picsum.photos/seed/${announce.id}/800/600`;
+  const thumb = announce.medias[0]?.thumbnail ?? announce.medias[0]?.file
+    ?? `https://picsum.photos/seed/${announce.id}/800/600`;
+
+  const isLocation = announce.ad_type === 'location';
+  const chipBg = isLocation ? C.tertiary : C.tertiaryContainer;
+  const chipColor = isLocation ? C.onTertiary : C.onTertiaryContainer;
+  const chipLabel = isLocation ? 'À Louer' : 'À Vendre';
+
+  const locationIcon: React.ComponentProps<typeof MaterialIcons>['name'] =
+    announce.type === 'furniture' ? 'storefront' : 'location-on';
+  const locationText = announce.neighborhood ?? announce.address ?? announce.city;
+
+  const currency = announce.devise === 'XAF' ? 'FCFA' : announce.devise;
+  const periodSuffix =
+    announce.period === 'month' ? '/mois'
+    : announce.period === 'year' ? '/an'
+    : announce.period === 'day' ? '/jour'
+    : '';
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        {
-          backgroundColor: C.surface,
-          borderColor: C.outlineVariant,
-          opacity: pressed ? 0.95 : 1,
-        },
+        { backgroundColor: C.surfaceContainerLowest, borderColor: C.outlineVariant + '55' },
+        pressed && { opacity: 0.93, transform: [{ scale: 0.985 }] },
       ]}
     >
       {/* Image */}
       <View style={styles.imageWrapper}>
         <Image source={{ uri: thumb }} style={styles.image} resizeMode="cover" />
 
-        {/* Badge */}
-        {resolvedBadge === 'nouveau' && (
-          <View style={[styles.badge, styles.badgeNew, { backgroundColor: C.surfaceContainerLowest + 'E6', borderColor: C.outlineVariant }]}>
-            <View style={[styles.badgeDot, { backgroundColor: C.primaryFixedDim }]} />
-            <Text style={[Typography.caption, styles.badgeText, { color: C.onSurface }]}>NOUVEAU</Text>
-          </View>
-        )}
-        {resolvedBadge === 'exclusivite' && (
-          <View style={[styles.badge, styles.badgeExclu, { backgroundColor: C.tertiaryContainer + 'E6', borderColor: C.onTertiaryContainer + '33' }]}>
-            <Text style={[Typography.caption, styles.badgeText, { color: C.onTertiaryContainer }]}>EXCLUSIVITÉ</Text>
-          </View>
-        )}
+        {/* Ad-type chip — top left */}
+        <View style={[styles.adChip, { backgroundColor: chipBg }]}>
+          <Text style={[styles.adChipText, { color: chipColor }]}>{chipLabel}</Text>
+        </View>
 
-        {/* Favorite */}
+        {/* Fav button — top right */}
         <Pressable
           onPress={() => onLike?.(announce.id, announce.liked)}
-          hitSlop={8}
-          style={[styles.favBtn, { backgroundColor: C.surfaceContainerLowest + 'E6' }]}
+          hitSlop={4}
+          style={({ pressed }) => [
+            styles.favBtn,
+            { backgroundColor: pressed ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.8)' },
+          ]}
         >
           <MaterialIcons
             name={announce.liked ? 'favorite' : 'favorite-border'}
-            size={18}
-            color={announce.liked ? C.error : C.onSurface}
+            size={20}
+            color={announce.liked ? '#e53935' : C.secondary}
           />
         </Pressable>
       </View>
 
       {/* Body */}
       <View style={styles.body}>
-        <View style={styles.titleRow}>
-          <Text style={[Typography.bodyLg, styles.bold, styles.title, { color: C.onSurface }]} numberOfLines={1}>
-            {announce.description.split('.')[0]}
-          </Text>
-          <ListingPriceTag price={announce.price} devise={announce.devise} period={announce.period} size="sm" />
-        </View>
-
-        <View style={styles.addressRow}>
-          <MaterialIcons name="location-on" size={14} color={C.onSurfaceVariant} />
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, flex: 1 }]} numberOfLines={1}>
-            {announce.address}, {announce.city}
+        <Text style={[styles.title, { color: C.onSurface }]} numberOfLines={1}>
+          {announce.description.split('.')[0]}
+        </Text>
+        <View style={styles.locationRow}>
+          <MaterialIcons name={locationIcon} size={13} color={C.secondary} />
+          <Text style={[Typography.caption, { color: C.secondary, flex: 1 }]} numberOfLines={1}>
+            {locationText}, {announce.city}
           </Text>
         </View>
-
-        {/* Stats footer */}
-        {announce.type === 'realestate' && (
-          <View style={[styles.statsRow, { borderTopColor: C.outlineVariant }]}>
-            {announce.bedrooms != null && (
-              <View style={styles.stat}>
-                <MaterialIcons name="bed" size={14} color={C.onSurfaceVariant} />
-                <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>{announce.bedrooms} Lits</Text>
-              </View>
-            )}
-            {announce.size != null && (
-              <View style={styles.stat}>
-                <MaterialIcons name="square-foot" size={14} color={C.onSurfaceVariant} />
-                <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>{announce.size} m²</Text>
-              </View>
-            )}
-            <View style={styles.stat}>
-              <MaterialIcons
-                name={announce.ad_type === 'location' ? 'vpn-key' : 'sell'}
-                size={14}
-                color={C.onSurfaceVariant}
-              />
-              <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-                {announce.ad_type === 'location' ? 'Location' : 'Vente'}
-              </Text>
-            </View>
-          </View>
-        )}
+        <View style={{ flex: 1 }} />
+        <View style={styles.priceRow}>
+          <Text style={[styles.priceMain, { color: C.primary }]}>
+            {formatPrice(announce.price)}{' '}
+            <Text style={[Typography.caption, { color: C.secondary }]}>
+              {currency}{periodSuffix}
+            </Text>
+          </Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -122,10 +103,14 @@ export function ListingCard({ announce, onPress, onLike, badge }: ListingCardPro
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     borderWidth: 1,
     overflow: 'hidden',
-    ...Shadows.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 20,
+    elevation: 1,
   },
   imageWrapper: {
     height: IMAGE_HEIGHT,
@@ -135,74 +120,51 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  badge: {
+  adChip: {
     position: 'absolute',
-    top: Spacing.md,
-    left: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    borderWidth: 1,
+    top: Spacing.sm,
+    left: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
-  badgeNew: {},
-  badgeExclu: {},
-  badgeDot: {
-    width: 7,
-    height: 7,
-    borderRadius: Radius.full,
-  },
-  badgeText: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    letterSpacing: 0.8,
+  adChipText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 11,
+    lineHeight: 16,
   },
   favBtn: {
     position: 'absolute',
-    top: Spacing.md,
-    right: Spacing.md,
+    top: Spacing.sm,
+    right: Spacing.sm,
     width: 32,
     height: 32,
-    borderRadius: Radius.full,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   body: {
-    padding: Spacing.md,
-    gap: Spacing.xs,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-  },
-  bold: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    flex: 1,
+    padding: Spacing.sm,
+    gap: 2,
   },
   title: {
-    flex: 1,
-    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 0.1,
   },
-  addressRow: {
+  locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 2,
     marginTop: 2,
+    marginBottom: Spacing.sm,
   },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    borderTopWidth: 1,
-    paddingTop: Spacing.sm,
-    marginTop: Spacing.xs,
-    flexWrap: 'wrap',
-  },
-  stat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
+  priceRow: {},
+  priceMain: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 22,
+    lineHeight: 28,
   },
 });

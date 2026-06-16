@@ -1,28 +1,28 @@
-import { useRef, useState } from 'react';
+import { router } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import {
-  Dimensions,
-  FlatList,
-  Image,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type ListRenderItemInfo,
-  type ViewToken,
+    Dimensions,
+    FlatList,
+    Image,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+    type ListRenderItemInfo,
+    type ViewToken,
 } from 'react-native';
 import Animated, {
-  interpolate,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  type SharedValue,
+    interpolate,
+    useAnimatedScrollHandler,
+    useAnimatedStyle,
+    useSharedValue,
+    type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppStorage } from '@/lib/app-storage';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<Slide>);
@@ -74,11 +74,16 @@ export default function OnboardingScreen() {
     }
   ).current;
 
+  const markSeenAndGo = useCallback(async (destination: Parameters<typeof router.replace>[0]) => {
+    await AppStorage.markOnboardingSeen();
+    router.replace(destination);
+  }, []);
+
   function goNext() {
     if (activeIndex < SLIDES.length - 1) {
       flatRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true });
     } else {
-      router.replace('/(auth)/login');
+      markSeenAndGo('/(auth)/login');
     }
   }
 
@@ -89,10 +94,18 @@ export default function OnboardingScreen() {
           <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover" />
         </View>
         <View style={styles.textBlock}>
-          <Text style={[Typography.headlineLg, styles.headline, { color: C.onSurface }]}>
+          <Text 
+            style={[Typography.headlineLg, styles.headline, { color: C.onSurface }]}
+            numberOfLines={undefined}
+            allowFontScaling
+          >
             {item.headline}
           </Text>
-          <Text style={[Typography.bodyMd, styles.sub, { color: C.onSurfaceVariant }]}>
+          <Text 
+            style={[Typography.bodyMd, styles.sub, { color: C.onSurfaceVariant }]}
+            numberOfLines={undefined}
+            allowFontScaling
+          >
             {item.sub}
           </Text>
         </View>
@@ -123,14 +136,18 @@ export default function OnboardingScreen() {
         {/* dots */}
         <View style={styles.dots}>
           {SLIDES.map((_, i) => (
-            <Dot key={i} index={i} scrollX={scrollX} color={C.primaryContainer} inactive={C.surfaceVariant} />
+            <Dot key={i} index={i} scrollX={scrollX} color={C.primary} inactive={C.surfaceVariant} />
           ))}
         </View>
 
         {/* primary CTA */}
         <Pressable
           onPress={goNext}
-          style={[styles.btn, styles.btnPrimary, { backgroundColor: C.primaryContainer }]}
+          style={({ pressed }) => [
+            styles.btn, styles.btnPrimary,
+            { backgroundColor: C.primary },
+            pressed && { opacity: 0.87, transform: [{ scale: 0.97 }] },
+          ]}
         >
           <Text style={[Typography.labelSm, styles.btnLabel, { color: C.onPrimary }]}>
             {activeIndex < SLIDES.length - 1 ? 'Suivant' : 'Commencer'}
@@ -139,11 +156,22 @@ export default function OnboardingScreen() {
 
         {/* ghost CTA */}
         <Pressable
-          onPress={() => router.push('/(auth)/login')}
-          style={[styles.btn, styles.btnGhost, { borderColor: C.outlineVariant }]}
+          onPress={() => markSeenAndGo('/(auth)/login')}
+          style={({ pressed }) => [
+            styles.btn, styles.btnGhost,
+            { borderColor: C.outlineVariant },
+            pressed && { opacity: 0.7 },
+          ]}
         >
           <Text style={[Typography.labelSm, styles.btnLabel, { color: C.onSurface }]}>
             {"J'ai déjà un compte"}
+          </Text>
+        </Pressable>
+
+        {/* guest link */}
+        <Pressable onPress={() => markSeenAndGo('/(tabs)')} hitSlop={12} style={{ paddingVertical: 4 }}>
+          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', fontSize: 13 }]}>
+            Continuer sans compte
           </Text>
         </Pressable>
       </View>
@@ -187,12 +215,14 @@ const styles = StyleSheet.create({
   slide: {
     paddingHorizontal: Spacing.marginMobile,
     flex: 1,
+    justifyContent: 'space-between',
   },
   imageContainer: {
     width: '100%',
-    aspectRatio: 4 / 5,
+    aspectRatio: 3 / 4,
     borderRadius: Radius.xl,
     overflow: 'hidden',
+    flexShrink: 0,
     ...{
       shadowColor: 'rgb(82,69,52)',
       shadowOffset: { width: 0, height: 10 },
@@ -208,13 +238,18 @@ const styles = StyleSheet.create({
   textBlock: {
     marginTop: Spacing.xl,
     gap: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
   },
   headline: {
     textAlign: 'center',
+    flexWrap: 'wrap',
+    numberOfLines: undefined,
   },
   sub: {
     textAlign: 'center',
     marginTop: Spacing.xs,
+    flexWrap: 'wrap',
+    numberOfLines: undefined,
   },
   bottom: {
     paddingHorizontal: Spacing.marginMobile,
@@ -238,7 +273,24 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: 'center',
   },
-  btnPrimary: {},
+  onboardingBtn: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    shadowColor: 'rgb(232, 146, 26)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  btnPrimary: {
+    shadowColor: 'rgb(232, 146, 26)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 4,
+  },
   btnGhost: {
     borderWidth: 1,
     backgroundColor: 'transparent',

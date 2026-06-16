@@ -1,26 +1,27 @@
-import { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useForm, Controller } from 'react-hook-form';
+import { MaterialIcons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import {
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Linking,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Input } from '@/components/ui/input';
-import { registerSchema, type RegisterFormValues } from '@/lib/validators/auth.schema';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useRegister } from '@/hooks/queries/use-auth-queries';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { registerSchema, type RegisterFormValues } from '@/lib/validators/auth.schema';
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
@@ -61,13 +62,6 @@ export default function RegisterScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Back */}
-        <Pressable
-          onPress={() => router.back()}
-          style={[styles.backBtn, { borderColor: C.outlineVariant }]}
-        >
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurfaceVariant} />
-        </Pressable>
 
         {/* Headline */}
         <View style={styles.header}>
@@ -223,7 +217,14 @@ export default function RegisterScreen() {
                   <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}>
                     {"conditions d'utilisation"}
                   </Text>
-                  {' et la politique de confidentialité.'}
+                  {' et la '}
+                  <Text
+                    style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
+                    onPress={() => Linking.openURL('https://www.privacypolicies.com/live/8afdd5ff-63d9-4381-9f5b-a8222d7bd121')}
+                  >
+                    politique de confidentialité
+                  </Text>
+                  {'.'}
                 </Text>
               </View>
             )}
@@ -334,9 +335,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: 'center',
     marginTop: Spacing.sm,
-    shadowColor: '#633f00',
+    shadowColor: 'rgb(232, 146, 26)',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.18,
     shadowRadius: 14,
     elevation: 4,
   },

@@ -41,7 +41,7 @@ export function ListingActionsBar({ unlocked, loading, onShare, onUnlock }: List
         disabled={loading}
         style={[
           styles.primaryBtn,
-          { backgroundColor: unlocked ? C.surfaceTint : C.primary, opacity: loading ? 0.7 : 1 },
+          { backgroundColor: unlocked ? C.primaryContainer : C.primary, opacity: loading ? 0.7 : 1 },
         ]}
       >
         {loading ? (

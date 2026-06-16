@@ -1,18 +1,17 @@
-import { Dimensions, Image, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  interpolate,
+  useAnimatedReaction,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
   useSharedValue,
-  type SharedValue,
+  runOnJS,
 } from 'react-native-reanimated';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Media } from '@/types/announce';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const DEFAULT_HEIGHT = 280;
-const PLACEHOLDER = 'https://picsum.photos/seed/domilix-placeholder/800/600';
 
 interface ListingGalleryProps {
   medias: Media[];
@@ -24,14 +23,25 @@ export function ListingGallery({ medias, height = DEFAULT_HEIGHT, announceId }: 
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const scrollX = useSharedValue(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const sources = medias.length > 0
     ? medias.map((m) => m.file)
     : [`https://picsum.photos/seed/${announceId ?? 'domilix'}/800/600`];
 
+  const total = sources.length;
+
   const scrollHandler = useAnimatedScrollHandler((e) => {
     scrollX.value = e.contentOffset.x;
   });
+
+  useAnimatedReaction(
+    () => Math.round(scrollX.value / SCREEN_W),
+    (index) => {
+      const clamped = Math.min(Math.max(index, 0), total - 1);
+      runOnJS(setCurrentIndex)(clamped);
+    },
+  );
 
   return (
     <View style={{ height }}>
@@ -49,41 +59,17 @@ export function ListingGallery({ medias, height = DEFAULT_HEIGHT, announceId }: 
         ))}
       </Animated.ScrollView>
 
-      {/* Dots */}
-      {sources.length > 1 && (
-        <View style={styles.dots}>
-          {sources.map((_, i) => (
-            <GalleryDot key={i} index={i} scrollX={scrollX} />
-          ))}
+      {/* Pagination counter — only if multiple images */}
+      {total > 1 && (
+        <View style={[styles.counter, { backgroundColor: 'rgba(32,27,21,0.62)' }]}>
+          <Text style={[styles.counterText, { color: '#ffffff' }]}>
+            <Text style={styles.counterCurrent}>{currentIndex + 1}</Text>
+            <Text style={styles.counterSep}> / </Text>
+            <Text>{total}</Text>
+          </Text>
         </View>
       )}
     </View>
-  );
-}
-
-function GalleryDot({
-  index,
-  scrollX,
-}: {
-  index: number;
-  scrollX: SharedValue<number>;
-}) {
-  const style = useAnimatedStyle(() => {
-    const inputRange = [(index - 1) * SCREEN_W, index * SCREEN_W, (index + 1) * SCREEN_W];
-    const width = interpolate(scrollX.value, inputRange, [8, 10, 8], 'clamp');
-    const height = interpolate(scrollX.value, inputRange, [8, 10, 8], 'clamp');
-    const opacity = interpolate(scrollX.value, inputRange, [0.6, 1, 0.6], 'clamp');
-    return { width, height, opacity };
-  });
-
-  return (
-    <Animated.View
-      style={[
-        styles.dot,
-        { backgroundColor: '#ffffff' },
-        style,
-      ]}
-    />
   );
 }
 
@@ -92,22 +78,25 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  dots: {
+  counter: {
     position: 'absolute',
-    bottom: Spacing.lg,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  dot: {
+    bottom: Spacing.md,
+    right: Spacing.md,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: Radius.full,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 1,
+  },
+  counterText: {
+    fontFamily: 'PlusJakartaSans_500Medium',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  counterCurrent: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 13,
+  },
+  counterSep: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    opacity: 0.7,
   },
 });

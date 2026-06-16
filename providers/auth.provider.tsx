@@ -40,11 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const inAuthGroup = segments[0] === '(auth)';
 
-    if (!accessToken && !inAuthGroup) {
-      router.replace('/(auth)');
-    } else if (accessToken && inAuthGroup) {
+    // Authenticated users landing on auth screens are sent to the app
+    if (accessToken && inAuthGroup) {
       router.replace('/(tabs)');
     }
+    // Unauthenticated users can browse freely — protected routes handle their own gate
   }, [accessToken, hydrated, segments, router]);
 
   return <>{children}</>;

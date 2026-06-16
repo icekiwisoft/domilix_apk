@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe } from '@/hooks/queries/use-auth-queries';
 import { useUnlockAnnounce } from '@/hooks/queries/use-announces';
+import { useToast } from '@/components/ui/toast';
 
 export default function UnlockConfirmScreen() {
   const scheme = useColorScheme();
@@ -13,12 +14,21 @@ export default function UnlockConfirmScreen() {
   const { announceId } = useLocalSearchParams<{ announceId: string }>();
   const { data: me } = useMe();
   const unlockAnnounce = useUnlockAnnounce();
+  const toast = useToast();
+
+  const userCredits = me?.credits ?? 0;
+  const hasEnoughCredits = userCredits >= 1;
 
   function handleConfirm() {
-    if (!announceId) return;
+    if (!announceId || !hasEnoughCredits) return;
     unlockAnnounce.mutate(announceId, {
-      onSuccess: () => router.back(),
-      onError: () => router.back(),
+      onSuccess: () => {
+        toast.show('Annonce débloquée avec succès !', 'success');
+        router.back();
+      },
+      onError: () => {
+        toast.show('Impossible de débloquer cette annonce.', 'error');
+      },
     });
   }
 
@@ -44,8 +54,11 @@ export default function UnlockConfirmScreen() {
           Déverrouiller cette annonce utilisera{' '}
           <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}>1 crédit</Text>.
           {'\n'}Il vous reste{' '}
-          <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}>
-            {me?.credits_count ?? 0} crédits
+          <Text style={{
+            color: hasEnoughCredits ? C.primary : C.error,
+            fontFamily: 'PlusJakartaSans_700Bold',
+          }}>
+            {userCredits} crédit{userCredits > 1 ? 's' : ''}
           </Text>.
         </Text>
 
@@ -56,6 +69,16 @@ export default function UnlockConfirmScreen() {
             Vous aurez accès au numéro de téléphone de l'annonceur.
           </Text>
         </View>
+
+        {/* Insufficient credits warning */}
+        {!hasEnoughCredits && (
+          <View style={[styles.warningRow, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '55' }]}>
+            <MaterialIcons name="warning-amber" size={16} color={C.error} />
+            <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
+              Crédits insuffisants. Rechargez votre solde pour débloquer cette annonce.
+            </Text>
+          </View>
+        )}
 
         {/* Buttons */}
         <View style={styles.actions}>
@@ -69,13 +92,33 @@ export default function UnlockConfirmScreen() {
           </Pressable>
           <Pressable
             onPress={handleConfirm}
-            disabled={unlockAnnounce.isPending}
-            style={[styles.btn, { backgroundColor: C.primary, opacity: unlockAnnounce.isPending ? 0.6 : 1 }]}
+            disabled={unlockAnnounce.isPending || !hasEnoughCredits}
+            style={[
+              styles.btn,
+              {
+                backgroundColor: hasEnoughCredits ? C.primary : C.surfaceVariant,
+                opacity: unlockAnnounce.isPending ? 0.6 : 1,
+              },
+            ]}
           >
-            <MaterialIcons name="lock-open" size={16} color={C.onPrimary} />
-            <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-              Confirmer (1 crédit)
-            </Text>
+            {unlockAnnounce.isPending ? (
+              <ActivityIndicator size="small" color={C.onPrimary} />
+            ) : (
+              <>
+                <MaterialIcons
+                  name="lock-open"
+                  size={16}
+                  color={hasEnoughCredits ? C.onPrimary : C.onSurfaceVariant}
+                />
+                <Text style={[Typography.labelSm, {
+                  color: hasEnoughCredits ? C.onPrimary : C.onSurfaceVariant,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.8,
+                }]}>
+                  Confirmer (1 crédit)
+                </Text>
+              </>
+            )}
           </Pressable>
         </View>
       </View>
@@ -137,12 +180,23 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     padding: Spacing.md,
     width: '100%',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.sm,
+  },
+  warningRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    width: '100%',
+    marginBottom: Spacing.lg,
   },
   actions: {
     flexDirection: 'row',
     gap: Spacing.md,
     width: '100%',
+    marginTop: Spacing.lg,
   },
   btn: {
     flex: 1,

@@ -1,25 +1,25 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
 
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Input } from '@/components/ui/input';
-import { loginSchema, type LoginFormValues, resolveLoginDto } from '@/lib/validators/auth.schema';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useLogin } from '@/hooks/queries/use-auth-queries';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { loginSchema, resolveLoginDto, type LoginFormValues } from '@/lib/validators/auth.schema';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -27,6 +27,7 @@ export default function LoginScreen() {
   const C = Colors[scheme ?? 'light'];
   const [showPwd, setShowPwd] = useState(false);
   const login = useLogin();
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
 
   const {
     control,
@@ -40,7 +41,7 @@ export default function LoginScreen() {
   function onSubmit(data: LoginFormValues) {
     login.mutate(
       resolveLoginDto(data.identifier.trim(), data.password),
-      { onSuccess: () => router.replace('/(tabs)') }
+      { onSuccess: () => redirect ? router.replace(redirect as never) : router.replace('/(tabs)') }
     );
   }
 
@@ -57,12 +58,14 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Back */}
-        <Pressable
-          onPress={() => router.back()}
-          style={[styles.backBtn, { borderColor: C.outlineVariant }]}
-        >
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurfaceVariant} />
-        </Pressable>
+        {router.canGoBack() && (
+          <Pressable
+            onPress={() => router.back()}
+            style={[styles.backBtn, { borderColor: C.outlineVariant }]}
+          >
+            <MaterialIcons name="arrow-back" size={24} color={C.onSurfaceVariant} />
+          </Pressable>
+        )}
 
         {/* Headline */}
         <View style={styles.header}>
@@ -143,9 +146,10 @@ export default function LoginScreen() {
           <Pressable
             onPress={handleSubmit(onSubmit)}
             disabled={login.isPending}
-            style={[
+            style={({ pressed }) => [
               styles.submitBtn,
-              { backgroundColor: C.primary, opacity: login.isPending ? 0.7 : 1 },
+              { backgroundColor: C.primary, opacity: login.isPending ? 0.7 : pressed ? 0.88 : 1 },
+              pressed && { transform: [{ scale: 0.97 }] },
             ]}
           >
             {login.isPending ? (
@@ -212,9 +216,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: 'center',
     marginTop: Spacing.sm,
-    shadowColor: '#633f00',
+    shadowColor: 'rgb(232, 146, 26)',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.18,
     shadowRadius: 14,
     elevation: 4,
   },

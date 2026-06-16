@@ -1,10 +1,14 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe, useLogout } from '@/hooks/queries/use-auth-queries';
+import { useSubscriptions } from '@/hooks/queries/use-subscriptions';
+import { useAuthStore } from '@/stores/auth.store';
+import { LoginGate } from '@/components/ui/login-gate';
+import { isAnnouncerToken } from '@/lib/decode-token';
 
 interface MenuRowProps {
   icon: React.ComponentProps<typeof MaterialIcons>['name'];
@@ -17,25 +21,30 @@ interface MenuRowProps {
 function MenuRow({ icon, label, subtitle, onPress, destructive }: MenuRowProps) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
-  const color = destructive ? C.error : C.onSurfaceVariant;
+  const iconBg = destructive ? C.errorContainer + '55' : C.primaryFixed + '88';
+  const iconColor = destructive ? C.error : C.primary;
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.menuRow, { borderBottomColor: C.outlineVariant + '4D' }]}
+      style={({ pressed }) => [
+        styles.menuRow,
+        { borderBottomColor: C.outlineVariant + '44' },
+        pressed && { backgroundColor: C.surfaceContainerLow },
+      ]}
     >
-      <View style={[styles.menuIcon, { backgroundColor: destructive ? C.errorContainer + '33' : C.surfaceContainerLow }]}>
-        <MaterialIcons name={icon} size={20} color={color} />
+      <View style={[styles.menuIcon, { backgroundColor: iconBg }]}>
+        <MaterialIcons name={icon} size={19} color={iconColor} />
       </View>
       <View style={styles.menuText}>
         <Text style={[Typography.bodyMd, { color: destructive ? C.error : C.onSurface, fontFamily: 'PlusJakartaSans_500Medium' }]}>
           {label}
         </Text>
         {subtitle && (
-          <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>{subtitle}</Text>
+          <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 1 }]}>{subtitle}</Text>
         )}
       </View>
       {!destructive && (
-        <MaterialIcons name="chevron-right" size={20} color={C.onSurfaceVariant} />
+        <MaterialIcons name="chevron-right" size={18} color={C.outlineVariant} />
       )}
     </Pressable>
   );
@@ -59,8 +68,24 @@ function MenuSection({ title, children }: { title: string; children: React.React
 export default function ProfileScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+  const accessToken = useAuthStore((s) => s.accessToken);
   const { data: user } = useMe();
   const logout = useLogout();
+  const { data: subs = [] } = useSubscriptions();
+  const activeSub = subs.find((s) => s.status === 'active');
+  const activePlanLabel = activeSub ? `Membre ${activeSub.plan_name}` : null;
+  const isAnnouncer = isAnnouncerToken(accessToken) || !!user?.is_announcer || !!user?.announcer;
+
+  if (!accessToken) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
+        <LoginGate
+          title="Votre espace personnel"
+          subtitle="Connectez-vous pour gérer votre profil, vos annonces et vos abonnements."
+        />
+      </SafeAreaView>
+    );
+  }
 
   function handleLogout() {
     logout.mutate(undefined, {
@@ -105,7 +130,15 @@ export default function ProfileScreen() {
             {user?.email ?? user?.phone_number ?? ''}
           </Text>
 
-          {user?.is_announcer && (
+          {activePlanLabel && (
+            <View style={[styles.announcerBadge, { backgroundColor: C.primaryFixed + 'AA', borderColor: C.primary + '30' }]}>
+              <MaterialIcons name="workspace-premium" size={14} color={C.primary} />
+              <Text style={[Typography.caption, { color: C.primary, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
+                {activePlanLabel}
+              </Text>
+            </View>
+          )}
+          {isAnnouncer && (
             <View style={[styles.announcerBadge, { backgroundColor: C.primary + '15', borderColor: C.primary + '30' }]}>
               <MaterialIcons name="verified" size={14} color={C.primary} />
               <Text style={[Typography.caption, { color: C.primary, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
@@ -118,7 +151,7 @@ export default function ProfileScreen() {
           <View style={[styles.creditsRow, { backgroundColor: C.surface, borderColor: C.outlineVariant }]}>
             <MaterialIcons name="toll" size={18} color={C.primary} />
             <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
-              {user?.credits_count ?? 0} crédits
+              {user?.credits ?? 0} crédits
             </Text>
             <Pressable
               style={[styles.rechargeBtn, { backgroundColor: C.primary }]}
@@ -137,7 +170,11 @@ export default function ProfileScreen() {
             icon="home-work"
             label="Mes annonces"
             subtitle="Gérer vos publications"
-            onPress={() => router.push('/(tabs)/explore')}
+            onPress={() =>
+              user?.announcer
+                ? router.push(`/announcers/${user.announcer.id}`)
+                : router.push('/(tabs)/explore')
+            }
           />
           <MenuRow
             icon="favorite-border"
@@ -151,16 +188,24 @@ export default function ProfileScreen() {
           <MenuRow
             icon="workspace-premium"
             label="Mon abonnement"
-            subtitle="Plan Pro actif"
+            subtitle={activeSub ? `Plan ${activeSub.plan_name} actif` : 'Découvrir les plans'}
             onPress={() => router.push('/(tabs)/profile/subscriptions')}
           />
-          {user?.is_announcer ? (
-            <MenuRow
-              icon="storefront"
-              label="Profil annonceur"
-              subtitle="Modifier vos informations"
-              onPress={() => router.push('/(tabs)/profile/announcer-profile')}
-            />
+          {isAnnouncer ? (
+            <>
+              <MenuRow
+                icon="add-circle-outline"
+                label="Publier une annonce"
+                subtitle="Mettre en ligne un bien ou un meuble"
+                onPress={() => router.push('/(tabs)/profile/publish')}
+              />
+              <MenuRow
+                icon="storefront"
+                label="Profil annonceur"
+                subtitle="Modifier vos informations"
+                onPress={() => router.push('/(tabs)/profile/announcer-profile')}
+              />
+            </>
           ) : (
             <MenuRow
               icon="add-business"
@@ -175,6 +220,11 @@ export default function ProfileScreen() {
           <MenuRow
             icon="help-outline"
             label="Aide & Support"
+          />
+          <MenuRow
+            icon="privacy-tip"
+            label="Politique de confidentialité"
+            onPress={() => Linking.openURL('https://www.privacypolicies.com/live/8afdd5ff-63d9-4381-9f5b-a8222d7bd121')}
           />
         </MenuSection>
 
@@ -202,6 +252,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xxl,
     paddingBottom: Spacing.xl,
     paddingHorizontal: Spacing.marginMobile,
+    borderRadius: 0,
   },
   editBtn: {
     position: 'absolute',
@@ -250,10 +301,11 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginTop: Spacing.lg,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    borderWidth: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
     width: '100%',
+    ...Shadows.xs,
   },
   rechargeBtn: {
     paddingHorizontal: Spacing.md,

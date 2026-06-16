@@ -8,10 +8,27 @@ import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAnnounces } from '@/hooks/queries/use-announces';
+import { useAuthStore } from '@/stores/auth.store';
+import { LoginGate } from '@/components/ui/login-gate';
 
 export default function FavoritesScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+  const accessToken = useAuthStore((s) => s.accessToken);
+
+  if (!accessToken) {
+    return (
+      <SafeAreaView style={[{ flex: 1 }, { backgroundColor: C.background }]}>
+        <View style={[styles.header, { borderBottomColor: C.outlineVariant }]}>
+          <Text style={[Typography.headlineMd, styles.title, { color: C.onSurface }]}>Mes Favoris</Text>
+        </View>
+        <LoginGate
+          title="Accédez à vos favoris"
+          subtitle={"Connectez-vous pour retrouver toutes les annonces que vous avez sauvegardées."}
+        />
+      </SafeAreaView>
+    );
+  }
 
   const { data, isLoading, isFetching, refetch } = useAnnounces({ liked: true });
   const favorites = data?.data ?? [];

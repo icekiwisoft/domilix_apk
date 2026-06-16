@@ -14,7 +14,11 @@ export function useSubscriptions() {
 export function useCreateSubscription() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: SubscriptionsService.create,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['subscriptions'] }),
+    mutationFn: (dto: { plan_name: string; method: string; payment_info: { phone_number: string } }) =>
+      SubscriptionsService.create(dto),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['subscriptions'] });
+      qc.invalidateQueries({ queryKey: ['me'] });
+    },
   });
 }

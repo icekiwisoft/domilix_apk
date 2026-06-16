@@ -10,10 +10,17 @@ export const AuthService = {
 
   logout: () => client.post('/auth/logout').then((r) => r.data),
 
-  me: () => client.get<User>('/auth/me').then((r) => r.data),
+  me: () =>
+    client.get<unknown>('/auth/me').then((r) => {
+      const data = r.data as Record<string, unknown>;
+      return ((data.user ?? data) as User);
+    }),
 
   updateProfile: (dto: { name?: string; email?: string; phone_number?: string }) =>
-    client.put<User>('/auth/me', dto).then((r) => r.data),
+    client.put<unknown>('/auth/me', dto).then((r) => {
+      const data = r.data as Record<string, unknown>;
+      return ((data.user ?? data) as User);
+    }),
 
   updateAnnouncerProfile: (formData: FormData) =>
     client

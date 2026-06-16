@@ -94,7 +94,7 @@ export default function AnnouncerProfileEditScreen() {
           <AnnouncerForm
             defaultValues={{
               company_name: user?.announcer?.company_name,
-              bio: user?.announcer?.bio,
+              bio: user?.announcer?.bio ?? undefined,
               professional_phone: user?.announcer?.professional_phone,
             }}
             onSubmit={handleSave}

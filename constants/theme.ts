@@ -2,36 +2,36 @@ export const Colors = {
   light: {
     // Surfaces
     surface: '#fff8f4',
-    surfaceDim: '#e3d8ce',
+    surfaceDim: '#e7d7ca',
     surfaceBright: '#fff8f4',
     surfaceContainerLowest: '#ffffff',
-    surfaceContainerLow: '#fdf2e7',
-    surfaceContainer: '#f7ece2',
-    surfaceContainerHigh: '#f2e6dc',
-    surfaceContainerHighest: '#ece1d7',
-    onSurface: '#201b15',
-    onSurfaceVariant: '#504537',
-    inverseSurface: '#352f29',
-    inverseOnSurface: '#faefe5',
+    surfaceContainerLow: '#fff1e6',
+    surfaceContainer: '#fbebde',
+    surfaceContainerHigh: '#f5e5d8',
+    surfaceContainerHighest: '#f0e0d3',
+    onSurface: '#221a12',
+    onSurfaceVariant: '#534435',
+    inverseSurface: '#382f26',
+    inverseOnSurface: '#feeee1',
     // Outlines
-    outline: '#827565',
-    outlineVariant: '#d4c4b2',
-    // Primary – Deep Amber
-    primary: '#633f00',
+    outline: '#867462',
+    outlineVariant: '#d9c3af',
+    // Primary – Warm Amber/Orange
+    primary: '#e8921a',
     onPrimary: '#ffffff',
-    primaryContainer: '#835500',
-    onPrimaryContainer: '#ffd197',
-    inversePrimary: '#f9bb65',
+    primaryContainer: '#885200',
+    onPrimaryContainer: '#ffffff',
+    inversePrimary: '#ffb869',
     // Secondary – Cool Slate
     secondary: '#516071',
     onSecondary: '#ffffff',
     secondaryContainer: '#d1e1f5',
     onSecondaryContainer: '#556475',
-    // Tertiary – Blue
-    tertiary: '#004d6a',
+    // Tertiary – Teal
+    tertiary: '#01658a',
     onTertiary: '#ffffff',
-    tertiaryContainer: '#03668b',
-    onTertiaryContainer: '#afe0ff',
+    tertiaryContainer: '#66aed6',
+    onTertiaryContainer: '#004059',
     // Error
     error: '#ba1a1a',
     onError: '#ffffff',
@@ -39,18 +39,18 @@ export const Colors = {
     onErrorContainer: '#93000a',
     // Background
     background: '#fff8f4',
-    onBackground: '#201b15',
-    surfaceVariant: '#ece1d7',
-    surfaceTint: '#835500',
+    onBackground: '#221a12',
+    surfaceVariant: '#f0e0d3',
+    surfaceTint: '#885200',
     // Fixed
-    primaryFixed: '#ffddb4',
-    primaryFixedDim: '#f9bb65',
+    primaryFixed: '#ffdcbb',
+    primaryFixedDim: '#ffb869',
     // Legacy aliases for navigation/tab components
-    text: '#201b15',
-    tint: '#633f00',
-    icon: '#504537',
-    tabIconDefault: '#827565',
-    tabIconSelected: '#633f00',
+    text: '#221a12',
+    tint: '#885200',
+    icon: '#534435',
+    tabIconDefault: '#867462',
+    tabIconSelected: '#885200',
   },
   dark: {
     // Surfaces
@@ -62,19 +62,19 @@ export const Colors = {
     surfaceContainer: '#252018',
     surfaceContainerHigh: '#2f281f',
     surfaceContainerHighest: '#3a3229',
-    onSurface: '#ece1d7',
-    onSurfaceVariant: '#d4c4b2',
-    inverseSurface: '#ece1d7',
-    inverseOnSurface: '#352f29',
+    onSurface: '#feeee1',
+    onSurfaceVariant: '#d9c3af',
+    inverseSurface: '#f0e0d3',
+    inverseOnSurface: '#382f26',
     // Outlines
     outline: '#9d8b77',
-    outlineVariant: '#504537',
+    outlineVariant: '#534435',
     // Primary
-    primary: '#f9bb65',
-    onPrimary: '#352100',
-    primaryContainer: '#4e3000',
-    onPrimaryContainer: '#ffddb4',
-    inversePrimary: '#835500',
+    primary: '#ffb869',
+    onPrimary: '#2b1700',
+    primaryContainer: '#885200',
+    onPrimaryContainer: '#ffdcbb',
+    inversePrimary: '#e8921a',
     // Secondary
     secondary: '#b8c8dc',
     onSecondary: '#223040',
@@ -92,18 +92,18 @@ export const Colors = {
     onErrorContainer: '#ffdad6',
     // Background
     background: '#18120c',
-    onBackground: '#ece1d7',
-    surfaceVariant: '#504537',
-    surfaceTint: '#f9bb65',
-    // Fixed (same in both modes per MD3 spec)
-    primaryFixed: '#ffddb4',
-    primaryFixedDim: '#f9bb65',
+    onBackground: '#feeee1',
+    surfaceVariant: '#534435',
+    surfaceTint: '#ffb869',
+    // Fixed
+    primaryFixed: '#ffdcbb',
+    primaryFixedDim: '#ffb869',
     // Legacy aliases
-    text: '#ece1d7',
-    tint: '#f9bb65',
-    icon: '#d4c4b2',
-    tabIconDefault: '#9d8b77',
-    tabIconSelected: '#f9bb65',
+    text: '#feeee1',
+    tint: '#ffb869',
+    icon: '#d9c3af',
+    tabIconDefault: '#867462',
+    tabIconSelected: '#ffb869',
   },
 } as const;
 
@@ -128,6 +128,12 @@ export const Typography = {
     fontSize: 32,
     fontWeight: '700' as const,
     lineHeight: 38,
+  },
+  headlineSm: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 24,
+    fontWeight: '600' as const,
+    lineHeight: 32,
   },
   bodyLg: {
     fontFamily: 'PlusJakartaSans_400Regular',
@@ -180,13 +186,48 @@ export const Radius = {
   full: 9999,
 } as const;
 
-// Soft ambient shadow from DESIGN.md
+// Shadow system — amber-tinted ambient shadows
 export const Shadows = {
+  xs: {
+    shadowColor: 'rgb(82, 69, 52)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
+  },
   card: {
     shadowColor: 'rgb(82, 69, 52)',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.04,
-    shadowRadius: 20,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
+  md: {
+    shadowColor: 'rgb(99, 63, 0)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 5,
+  },
+  button: {
+    shadowColor: 'rgb(99, 63, 0)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  floating: {
+    shadowColor: 'rgb(82, 69, 52)',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.18,
+    shadowRadius: 40,
+    elevation: 8,
+  },
+} as const;
+
+// Gradient stops for image overlays
+export const Gradients = {
+  imageOverlay: ['transparent', 'rgba(34,26,18,0.55)'],
+  imageOverlayStrong: ['transparent', 'rgba(34,26,18,0.80)'],
+  primaryFade: ['rgba(136,82,0,0)', 'rgba(136,82,0,0.08)'],
 } as const;

@@ -8,7 +8,7 @@ export interface User {
   phone_verified: boolean;
   is_admin: boolean;
   is_announcer?: boolean;
-  credits_count?: number;
+  credits?: number;
   announcer?: Announcer;
   created_at: string;
   updated_at: string;

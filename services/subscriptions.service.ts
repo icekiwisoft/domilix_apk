@@ -8,7 +8,7 @@ export const SubscriptionsService = {
   show: (id: string) =>
     client.get<Subscription>(`/subscriptions/${id}`).then((r) => r.data),
 
-  create: (dto: { plan_name: string; method: string; phone?: string }) =>
+  create: (dto: { plan_name: string; method: string; payment_info: { phone_number: string } }) =>
     client.post<Subscription>('/subscriptions', dto).then((r) => r.data),
 
   destroy: (id: string) =>

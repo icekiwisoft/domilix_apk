@@ -71,7 +71,7 @@ export default function ExploreScreen() {
               { label: 'Mobilier', value: 'furniture' },
             ]}
             value={announceType}
-            onChange={(v) => { setAnnounceType(v); setPage(1); }}
+            onChange={(v) => { setAnnounceType(v as AnnounceType); setPage(1); }}
           />
           {announceType === 'realestate' && (
             <ToggleSwitch
@@ -80,7 +80,7 @@ export default function ExploreScreen() {
                 { label: 'Vente', value: 'sale' },
               ]}
               value={adType}
-              onChange={(v) => { setAdType(v); setPage(1); }}
+              onChange={(v) => { setAdType(v as AdType); setPage(1); }}
             />
           )}
         </View>
@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
   toggleRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
+    alignItems: 'center',
     flexWrap: 'wrap',
   },
   listHeader: {

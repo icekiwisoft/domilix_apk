@@ -40,7 +40,14 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Domilix a besoin de votre position pour pré-remplir la ville et l'adresse de votre annonce.",
+          "locationAlwaysAndWhenInUsePermission": "Domilix a besoin de votre position pour pré-remplir la ville et l'adresse de votre annonce."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
