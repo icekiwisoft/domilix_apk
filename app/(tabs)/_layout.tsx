@@ -12,7 +12,7 @@ function NotifTabIcon({ color, focused }: { color: string; focused: boolean }) {
   const count = data?.count ?? 0;
   return (
     <View style={styles.iconWrapper}>
-      <IconSymbol name={focused ? 'bell.fill' : 'bell'} size={24} color={color} />
+      <IconSymbol name={focused ? 'bell.fill' : 'bell'} size={24.5} color={color} />
       {count > 0 && (
         <View style={[styles.badge, { backgroundColor: Colors.light.error }]}>
           <Text style={styles.badgeText}>{count > 9 ? '9+' : String(count)}</Text>
@@ -69,8 +69,8 @@ export default function TabLayout() {
         options={{
           title: 'Accueil',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill, focused && { backgroundColor: C.primary + '18' }]}>
-              <IconSymbol size={22} name={focused ? 'house.fill' : 'house.fill'} color={color} />
+            <View style={[styles.iconPill]}>
+              <IconSymbol size={22.5} name={focused ? 'house.fill' : 'house.fill'} color={color} />
             </View>
           ),
         }}
@@ -79,9 +79,9 @@ export default function TabLayout() {
         name="explore"
         options={{
           title: 'Explorer',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill, focused && { backgroundColor: C.primary + '18' }]}>
-              <IconSymbol size={22} name="magnifyingglass" color={color} />
+          tabBarIcon: ({ color }) => (
+            <View style={styles.iconPill}>
+              <IconSymbol size={22.5} name="magnifyingglass" color={color} />
             </View>
           ),
         }}
@@ -91,8 +91,8 @@ export default function TabLayout() {
         options={{
           title: 'Favoris',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill, focused && { backgroundColor: C.primary + '18' }]}>
-              <IconSymbol size={22} name={focused ? 'heart.fill' : 'heart'} color={color} />
+            <View style={[styles.iconPill]}>
+              <IconSymbol size={22.5} name={focused ? 'heart.fill' : 'heart'} color={color} />
             </View>
           ),
         }}
@@ -102,7 +102,7 @@ export default function TabLayout() {
         options={{
           title: 'Alertes',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill, focused && { backgroundColor: C.primary + '18' }]}>
+            <View style={[styles.iconPill]}>
               <NotifTabIcon color={color} focused={focused} />
             </View>
           ),
@@ -113,8 +113,8 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconPill, focused && { backgroundColor: C.primary + '18' }]}>
-              <IconSymbol size={22} name={focused ? 'person.crop.circle.fill' : 'person.crop.circle'} color={color} />
+            <View style={[styles.iconPill]}>
+              <IconSymbol size={22.5} name={focused ? 'person.crop.circle.fill' : 'person.crop.circle'} color={color} />
             </View>
           ),
         }}
