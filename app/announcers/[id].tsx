@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Image, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -20,6 +20,7 @@ export default function AnnouncerProfileScreen() {
   const C = Colors[scheme ?? 'light'];
   const { id } = useLocalSearchParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabName>('annonces');
+  const scrollRef = useRef<ScrollView>(null);
 
   const { data: announcer, isLoading, isFetching, refetch } = useAnnouncer(id ?? '');
   const { data: listingsData } = useAnnounces(id ? { AnnouncerId: id } : {});
@@ -35,19 +36,57 @@ export default function AnnouncerProfileScreen() {
   if (!announcer) {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-        <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, padding: Spacing.lg }]}>
-          Profil introuvable.
-        </Text>
+        <Pressable
+          onPress={() => router.back()}
+          style={[styles.backBtn, { backgroundColor: C.surface + 'CC', top: Spacing.md, left: Spacing.md }]}
+        >
+          <MaterialIcons name="arrow-back" size={22} color={C.onSurface} />
+        </Pressable>
+        <View style={styles.errorState}>
+          <MaterialIcons name="person-off" size={52} color={C.onSurfaceVariant + '88'} />
+          <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 18, textAlign: 'center', marginTop: Spacing.md }]}>
+            Profil introuvable
+          </Text>
+          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm, lineHeight: 22 }]}>
+            Ce profil n'existe pas ou n'est plus disponible.
+          </Text>
+          <Pressable
+            onPress={() => router.back()}
+            style={[styles.errorBtn, { backgroundColor: C.primary }]}
+          >
+            <MaterialIcons name="arrow-back" size={16} color={C.onPrimary} />
+            <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
+              Retour
+            </Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     );
   }
 
   const listings = listingsData?.data ?? [];
-  const allMedias = listings.flatMap((a) => a.medias).slice(0, 12);
+  const totalListings = listingsData?.total
+    ?? ((announcer.houses ?? 0) + (announcer.furnitures ?? 0))
+    || listings.length;
+  const allMedias = listings.flatMap((a) => a.medias);
+
+  const phone = announcer.professional_phone ?? announcer.contact;
+
+  function handleContact() {
+    if (!phone) return;
+    const digits = phone.replace(/\D/g, '');
+    Linking.openURL(`https://wa.me/${digits}`);
+  }
+
+  function handleViewListings() {
+    setActiveTab('annonces');
+    scrollRef.current?.scrollTo({ y: 420, animated: true });
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
         refreshControl={
@@ -71,9 +110,10 @@ export default function AnnouncerProfileScreen() {
         <View style={[styles.heroSection, { backgroundColor: C.surfaceContainerLow }]}>
           <AnnouncerHero
             announcer={announcer}
-            announcesCount={listings.length}
-            rating={4.8}
-            viewsPerMonth={12000}
+            announcesCount={totalListings}
+            verified={announcer.verified}
+            onContact={handleContact}
+            onViewListings={handleViewListings}
           />
           <View style={[styles.contactWrapper, { paddingBottom: Spacing.xl }]}>
             <AnnouncerContact announcer={announcer} />
@@ -153,14 +193,28 @@ const styles = StyleSheet.create({
   scroll: {},
   backBtn: {
     position: 'absolute',
-    top: Spacing.md,
-    left: Spacing.md,
     zIndex: 10,
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  errorState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  errorBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    height: 48,
+    borderRadius: Radius.md,
   },
   heroSection: {
     paddingTop: 0,

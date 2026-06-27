@@ -170,11 +170,13 @@ export default function ProfileScreen() {
             icon="home-work"
             label="Mes annonces"
             subtitle="Gérer vos publications"
-            onPress={() =>
-              user?.announcer
-                ? router.push(`/announcers/${user.announcer.id}`)
-                : router.push('/(tabs)/explore')
-            }
+            onPress={() => {
+              if (isAnnouncer) {
+                router.push('/(tabs)/profile/my-listings');
+              } else {
+                router.push('/(tabs)/explore');
+              }
+            }}
           />
           <MenuRow
             icon="favorite-border"

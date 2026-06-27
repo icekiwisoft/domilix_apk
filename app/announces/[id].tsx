@@ -54,7 +54,7 @@ export default function AnnounceDetailScreen() {
 
   const { data: announce, isLoading, isFetching, refetch } = useAnnounce(id ?? '');
   const { data: announcerListingsData } = useAnnounces(
-    announce ? { AnnouncerId: announce.announcer_id } : {}
+    announce?.announcer?.id ? { AnnouncerId: announce.announcer.id } : {}
   );
   const toggleLike = useToggleLike();
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -239,7 +239,7 @@ export default function AnnounceDetailScreen() {
 
           {/* ── Host row (Airbnb "Stay with Rosa") ── */}
           <Pressable
-            onPress={() => router.push(`/announcers/${announce.announcer_id}`)}
+            onPress={() => router.push(`/announcers/${announce.announcer?.id}`)}
             style={styles.hostRow}
           >
             {/* Avatar */}
@@ -360,7 +360,7 @@ export default function AnnounceDetailScreen() {
             <AnnouncerCard
               announcer={announce.announcer}
               announcesCount={announcerListingsCount}
-              onPress={() => router.push(`/announcers/${announce.announcer_id}`)}
+              onPress={() => router.push(`/announcers/${announce.announcer?.id}`)}
             />
           </View>
         </View>

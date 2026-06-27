@@ -57,6 +57,17 @@ export function useUnlockAnnounce() {
   });
 }
 
+export function useDeleteAnnounce() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => AnnouncesService.destroy(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['announces'] });
+      qc.invalidateQueries({ queryKey: ['announces-infinite'] });
+    },
+  });
+}
+
 export function useCities(params?: Parameters<typeof AnnouncesService.cities>[0]) {
   return useQuery({
     queryKey: ['cities', params],

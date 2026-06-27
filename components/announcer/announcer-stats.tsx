@@ -6,23 +6,27 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 interface AnnouncerStatsProps {
   announcesCount: number;
   rating?: number;
-  viewsPerMonth?: number;
+  memberSince?: string;
 }
 
-export function AnnouncerStats({ announcesCount, rating, viewsPerMonth }: AnnouncerStatsProps) {
+export function AnnouncerStats({ announcesCount, rating, memberSince }: AnnouncerStatsProps) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+
+  const sinceYear = memberSince
+    ? new Date(memberSince).getFullYear().toString()
+    : null;
 
   const stats = [
     { value: String(announcesCount), label: 'Annonces', icon: null as null },
     rating != null && {
       value: rating.toFixed(1),
-      label: 'Rating',
+      label: 'Évaluation',
       icon: 'star' as const,
     },
-    viewsPerMonth != null && {
-      value: viewsPerMonth >= 1000 ? `${(viewsPerMonth / 1000).toFixed(0)}k` : String(viewsPerMonth),
-      label: 'Vue/mois',
+    sinceYear != null && {
+      value: sinceYear,
+      label: 'Membre depuis',
       icon: null as null,
     },
   ].filter(Boolean) as { value: string; label: string; icon: keyof typeof MaterialIcons.glyphMap | null }[];

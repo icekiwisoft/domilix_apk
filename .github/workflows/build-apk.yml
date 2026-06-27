@@ -1,6 +1,10 @@
 name: Build and Release APK
 
 on:
+  push:
+    branches:
+      - main
+      - master
   pull_request:
     types: [closed]
     branches:
@@ -12,7 +16,10 @@ jobs:
   build:
     name: Install and build
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'develop')
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'develop')
     permissions:
       contents: write
     steps:

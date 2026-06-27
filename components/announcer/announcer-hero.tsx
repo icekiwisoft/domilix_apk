@@ -9,7 +9,7 @@ interface AnnouncerHeroProps {
   announcer: Announcer;
   announcesCount?: number;
   rating?: number;
-  viewsPerMonth?: number;
+  verified?: boolean;
   onContact?: () => void;
   onViewListings?: () => void;
 }
@@ -18,7 +18,7 @@ export function AnnouncerHero({
   announcer,
   announcesCount = 0,
   rating,
-  viewsPerMonth,
+  verified,
   onContact,
   onViewListings,
 }: AnnouncerHeroProps) {
@@ -40,9 +40,11 @@ export function AnnouncerHero({
             </View>
           )}
         </View>
-        <View style={[styles.verifiedBadge, { backgroundColor: C.surface }]}>
-          <MaterialIcons name="verified" size={20} color={C.primary} />
-        </View>
+        {verified && (
+          <View style={[styles.verifiedBadge, { backgroundColor: C.surface }]}>
+            <MaterialIcons name="verified" size={20} color={C.primary} />
+          </View>
+        )}
       </View>
 
       {/* Identity */}
@@ -60,7 +62,7 @@ export function AnnouncerHero({
         <AnnouncerStats
           announcesCount={announcesCount}
           rating={rating}
-          viewsPerMonth={viewsPerMonth}
+          memberSince={announcer.creation_date}
         />
       </View>
 
