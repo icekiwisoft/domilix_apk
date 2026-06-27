@@ -27,6 +27,26 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: 💾 Cache npm
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: npm-codeql-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+        restore-keys: npm-codeql-${{ runner.os }}-
+
+    - name: 💾 Cache CodeQL tools
+      uses: actions/cache@v4
+      with:
+        path: ~/.codeql/tools
+        key: codeql-tools-${{ runner.os }}-${{ matrix.language }}
+        restore-keys: codeql-tools-${{ runner.os }}-
+
+    - name: ⚡ Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
