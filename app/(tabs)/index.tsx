@@ -3,14 +3,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-    FlatList,
-    Image,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -174,7 +174,7 @@ export default function HomeScreen() {
               data={featured}
               keyExtractor={(a) => a.id}
               renderItem={({ item }) => (
-                <View style={{ flex: 1, paddingHorizontal: Spacing.marginMobile / 2.5 }}>
+                <View style={{ flex: 1, paddingHorizontal: Spacing.marginMobile / 3 }}>
                   <ListingCard announce={item} onPress={() => handleCardPress(item.id)} />
                 </View>
               )}
