@@ -5,6 +5,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface PlanCardProps {
   title: string;
+  tagline?: string;
   price: number | null;
   period?: string;
   features: string[];
@@ -16,6 +17,7 @@ interface PlanCardProps {
 
 export function PlanCard({
   title,
+  tagline,
   price,
   period = '/mois',
   features,
@@ -27,22 +29,32 @@ export function PlanCard({
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
-  const borderColor = recommended ? C.primary : C.outlineVariant;
-  const bg = recommended ? C.primaryContainer + '1A' : C.surface;
+  const borderColor = current ? C.primary : recommended ? C.primary : C.outlineVariant;
+  const bg = current
+    ? C.primaryContainer + '22'
+    : recommended
+    ? C.primaryContainer + '1A'
+    : C.surface;
 
   return (
-    <View style={[styles.card, { backgroundColor: bg, borderColor, borderWidth: recommended ? 2 : 1 }]}>
-      {recommended && (
-        <View style={[styles.recommendedBadge, { backgroundColor: C.primary }]}>
+    <View style={[styles.card, { backgroundColor: bg, borderColor, borderWidth: current || recommended ? 2 : 1 }]}>
+      {recommended && !current && (
+        <View style={[styles.badge, { backgroundColor: C.primary }]}>
           <Text style={[Typography.caption, { color: C.onPrimary, fontFamily: 'PlusJakartaSans_700Bold', letterSpacing: 0.8, textTransform: 'uppercase' }]}>
             Recommandé
           </Text>
         </View>
       )}
 
-      <Text style={[Typography.headlineMd, styles.planTitle, { color: C.onSurface, fontSize: 20 }]}>
+      <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>
         {title}
       </Text>
+
+      {tagline ? (
+        <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 2, lineHeight: 18 }]}>
+          {tagline}
+        </Text>
+      ) : null}
 
       <View style={styles.priceRow}>
         {price === null ? (
@@ -66,7 +78,7 @@ export function PlanCard({
       <View style={styles.features}>
         {features.map((f, i) => (
           <View key={i} style={styles.featureRow}>
-            <MaterialIcons name="check-circle" size={16} color={C.primary} />
+            <MaterialIcons name="check-circle" size={16} color={current ? C.primary : C.primary} />
             <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, lineHeight: 20 }]}>
               {f}
             </Text>
@@ -75,20 +87,21 @@ export function PlanCard({
       </View>
 
       <Pressable
-        onPress={onPress}
+        onPress={current ? undefined : onPress}
         style={[
           styles.cta,
           {
-            backgroundColor: recommended ? C.primary : 'transparent',
-            borderColor: current ? C.outlineVariant : C.primary,
+            backgroundColor: recommended && !current ? C.primary : 'transparent',
+            borderColor: current ? C.outlineVariant : recommended ? C.primary : C.outlineVariant,
             borderWidth: 1.5,
           },
         ]}
       >
+        {current && <MaterialIcons name="check-circle" size={15} color={C.onSurfaceVariant} style={{ marginRight: 4 }} />}
         <Text style={[
           Typography.labelSm,
           {
-            color: recommended ? C.onPrimary : C.primary,
+            color: recommended && !current ? C.onPrimary : current ? C.onSurfaceVariant : C.primary,
             textTransform: 'uppercase',
             letterSpacing: 0.8,
           },
@@ -105,30 +118,24 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     overflow: 'hidden',
+    gap: Spacing.md,
   },
-  recommendedBadge: {
+  badge: {
     alignSelf: 'flex-start',
     paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
     borderRadius: Radius.full,
-    marginBottom: Spacing.md,
-  },
-  planTitle: {
-    marginBottom: Spacing.xs,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 2,
-    marginBottom: Spacing.md,
   },
   divider: {
     height: 1,
-    marginBottom: Spacing.md,
   },
   features: {
     gap: Spacing.sm,
-    marginBottom: Spacing.lg,
   },
   featureRow: {
     flexDirection: 'row',
@@ -138,6 +145,7 @@ const styles = StyleSheet.create({
   cta: {
     height: 48,
     borderRadius: Radius.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },

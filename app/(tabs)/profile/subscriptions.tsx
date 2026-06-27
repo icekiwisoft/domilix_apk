@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -14,13 +14,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useSubscriptions, useCreateSubscription } from '@/hooks/queries/use-subscriptions';
 import { useToast } from '@/components/ui/toast';
+import { PlanCard } from '@/components/ui/plan-card';
 import type { Subscription } from '@/types/notification';
 
-// ─── Plan definitions (from Domilix mockup) ──────────────────────────────────
+// ─── Plans ────────────────────────────────────────────────────────────────────
 
 type PlanId = 'starter' | 'pro' | 'business';
 
@@ -72,9 +73,26 @@ const PLANS: Plan[] = [
   },
 ];
 
+// ─── Payment methods ──────────────────────────────────────────────────────────
+
+type MethodId = 'mtn_money' | 'orange_money' | 'campay';
+
+interface PaymentMethod {
+  id: MethodId;
+  label: string;
+  icon: React.ComponentProps<typeof MaterialIcons>['name'];
+  accent: string;
+}
+
+const PAYMENT_METHODS: PaymentMethod[] = [
+  { id: 'mtn_money',    label: 'MTN Mobile Money', icon: 'phone-android',   accent: '#FFCB05' },
+  { id: 'orange_money', label: 'Orange Money',      icon: 'phone-android',   accent: '#FF6600' },
+  { id: 'campay',       label: 'CamPay',            icon: 'account-balance', accent: '#1A73E8' },
+];
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getActivePlan(subs: Subscription[]): PlanId | null {
+function getActivePlanId(subs: Subscription[]): PlanId | null {
   const active = subs.find((s) => s.status === 'active');
   if (!active) return null;
   const name = active.plan_name.toLowerCase();
@@ -84,117 +102,68 @@ function getActivePlan(subs: Subscription[]): PlanId | null {
   return null;
 }
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('fr-FR').format(price);
+function formatExpiry(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
-// ─── PlanCard ─────────────────────────────────────────────────────────────────
+// ─── Active subscription banner ───────────────────────────────────────────────
 
-function PlanCard({
-  plan,
-  isActive,
-  isRecommended,
-  onSubscribe,
-}: {
-  plan: Plan;
-  isActive: boolean;
-  isRecommended: boolean;
-  onSubscribe: (plan: Plan) => void;
-}) {
+function ActiveSubBanner({ sub }: { sub: Subscription }) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: isActive ? C.primaryContainer + '22' : C.surface,
-          borderColor: isActive ? C.primary : isRecommended ? C.primary + '66' : C.outlineVariant,
-          borderWidth: isActive || isRecommended ? 2 : 1,
-        },
-      ]}
-    >
-      {isRecommended && (
-        <View style={[styles.recommendedBadge, { backgroundColor: C.primary }]}>
-          <Text style={[Typography.caption, { color: C.onPrimary, fontFamily: 'PlusJakartaSans_700Bold', letterSpacing: 0.8 }]}>
-            RECOMMANDÉ
-          </Text>
+    <View style={[banner.wrap, { backgroundColor: C.primaryContainer + '22', borderColor: C.primary + '55' }]}>
+      <View style={banner.row}>
+        <View style={[banner.iconCircle, { backgroundColor: C.primary + '22' }]}>
+          <MaterialIcons name="workspace-premium" size={20} color={C.primary} />
         </View>
-      )}
-
-      {/* Header */}
-      <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
-          <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_700Bold' }]}>
-            {plan.title}
+          <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
+            Plan actif
           </Text>
-          <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 2, lineHeight: 18 }]}>
-            {plan.tagline}
+          <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 1 }]}>
+            {sub.plan_name}
           </Text>
         </View>
-        <View style={styles.priceCol}>
-          {plan.price === null ? (
-            <Text style={[Typography.headlineMd, { color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }]}>
-              Gratuit
-            </Text>
-          ) : (
-            <>
-              <Text style={[Typography.headlineMd, { color: C.primary, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 20 }]}>
-                {formatPrice(plan.price)}
-              </Text>
-              <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>XAF/mois</Text>
-            </>
-          )}
-        </View>
-      </View>
-
-      {/* Features */}
-      <View style={styles.featureList}>
-        {plan.features.map((f) => (
-          <View key={f} style={styles.featureRow}>
-            <MaterialIcons name="check-circle" size={16} color={C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontSize: 14 }]}>
-              {f}
+        {sub.expires_at ? (
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>Expire le</Text>
+            <Text style={[Typography.caption, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 1 }]}>
+              {formatExpiry(sub.expires_at)}
             </Text>
           </View>
-        ))}
+        ) : null}
       </View>
-
-      {/* CTA */}
-      {isActive ? (
-        <View style={[styles.ctaBtn, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant, borderWidth: 1 }]}>
-          <MaterialIcons name="check-circle" size={16} color={C.primary} />
-          <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-            Plan actuel
-          </Text>
-        </View>
-      ) : plan.price === null ? (
-        <View style={[styles.ctaBtn, { backgroundColor: C.surfaceContainerLow }]}>
-          <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-            Plan de base
-          </Text>
-        </View>
-      ) : (
-        <Pressable
-          onPress={() => onSubscribe(plan)}
-          style={[styles.ctaBtn, { backgroundColor: isRecommended ? C.primary : C.surfaceContainer }]}
-        >
-          <MaterialIcons name="workspace-premium" size={16} color={isRecommended ? C.onPrimary : C.onSurface} />
-          <Text style={[Typography.labelSm, {
-            color: isRecommended ? C.onPrimary : C.onSurface,
-            textTransform: 'uppercase',
-            letterSpacing: 0.8,
-          }]}>
-            Passer au {plan.title}
-          </Text>
-        </Pressable>
-      )}
     </View>
   );
 }
 
-// ─── Payment Modal ─────────────────────────────────────────────────────────────
+const banner = StyleSheet.create({
+  wrap: {
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    padding: Spacing.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+// ─── Payment modal ─────────────────────────────────────────────────────────────
 
 function PaymentModal({
   plan,
@@ -206,99 +175,172 @@ function PaymentModal({
   plan: Plan | null;
   visible: boolean;
   onClose: () => void;
-  onConfirm: (phone: string) => void;
+  onConfirm: (phone: string, method: MethodId) => void;
   loading: boolean;
 }) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+
+  const [step, setStep] = useState<'method' | 'phone'>('method');
+  const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [phone, setPhone] = useState('');
+
+  useEffect(() => {
+    if (visible) {
+      setStep('method');
+      setMethod(null);
+      setPhone('');
+    }
+  }, [visible]);
+
+  function handleClose() {
+    onClose();
+  }
+
+  function handleMethodSelect(m: PaymentMethod) {
+    setMethod(m);
+    setStep('phone');
+  }
 
   function handleConfirm() {
     const cleaned = phone.replace(/\s/g, '');
-    if (cleaned.length < 9) return;
-    onConfirm(cleaned.startsWith('+') ? cleaned : `+237${cleaned}`);
+    if (cleaned.length < 9 || !method) return;
+    onConfirm(cleaned.startsWith('+') ? cleaned : `+237${cleaned}`, method.id);
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         style={styles.modalOverlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <View style={[styles.modalSheet, { backgroundColor: C.surface }]}>
           {/* Handle */}
           <View style={styles.handleWrapper}>
-            <View style={[styles.handle, { backgroundColor: C.surfaceVariant }]} />
+            <View style={[styles.handle, { backgroundColor: C.outlineVariant }]} />
           </View>
 
+          {/* Icon */}
           <View style={[styles.modalIconCircle, { backgroundColor: C.primaryFixed }]}>
             <MaterialIcons name="payment" size={28} color={C.primary} />
           </View>
 
-          <Text style={[Typography.headlineMd, { color: C.onSurface, textAlign: 'center', marginBottom: Spacing.xs }]}>
-            Payer avec Mobile Money
+          <Text style={[Typography.headlineMd, { color: C.onSurface, textAlign: 'center', fontSize: 20, marginBottom: Spacing.xs }]}>
+            {step === 'method' ? 'Méthode de paiement' : 'Numéro Mobile Money'}
           </Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginBottom: Spacing.lg }]}>
-            Plan {plan?.title} — {plan?.price ? `${formatPrice(plan.price)} XAF/mois` : 'Gratuit'}
+          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginBottom: Spacing.lg, fontSize: 14 }]}>
+            Plan {plan?.title} — {plan?.price ? `${plan.price.toLocaleString('fr-FR')} FCFA/mois` : 'Gratuit'}
           </Text>
 
-          {/* Phone field */}
-          <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: Spacing.xs }]}>
-            Numéro Mobile Money
-          </Text>
-          <View style={[styles.phoneInput, { borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow }]}>
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>+237</Text>
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              placeholder="6XX XXX XXX"
-              placeholderTextColor={C.onSurfaceVariant + '88'}
-              style={[Typography.bodyMd, { color: C.onSurface, flex: 1 }]}
-              maxLength={12}
-              autoFocus
-            />
-          </View>
+          {step === 'method' ? (
+            /* ── Step 1 : method selection ─── */
+            <View style={{ gap: Spacing.sm }}>
+              {PAYMENT_METHODS.map((m) => (
+                <Pressable
+                  key={m.id}
+                  onPress={() => handleMethodSelect(m)}
+                  style={({ pressed }) => [
+                    styles.methodBtn,
+                    {
+                      backgroundColor: pressed ? C.surfaceContainerLow : C.surfaceContainer,
+                      borderColor: C.outlineVariant,
+                    },
+                  ]}
+                >
+                  <View style={[styles.methodIconWrap, { backgroundColor: m.accent + '22' }]}>
+                    <MaterialIcons name={m.icon} size={20} color={m.accent} />
+                  </View>
+                  <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
+                    {m.label}
+                  </Text>
+                  <MaterialIcons name="chevron-right" size={20} color={C.onSurfaceVariant} />
+                </Pressable>
+              ))}
 
-          {/* Operators note */}
-          <View style={[styles.operatorsRow, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }]}>
-            <MaterialIcons name="info-outline" size={14} color={C.onSurfaceVariant} />
-            <Text style={[Typography.caption, { color: C.onSurfaceVariant, flex: 1 }]}>
-              Compatible MTN Mobile Money et Orange Money via CamPay.
-            </Text>
-          </View>
-
-          {/* Confirm */}
-          <Pressable
-            onPress={handleConfirm}
-            disabled={loading || phone.replace(/\s/g, '').length < 9}
-            style={[
-              styles.ctaBtn,
-              {
-                backgroundColor: C.primary,
-                opacity: loading || phone.replace(/\s/g, '').length < 9 ? 0.5 : 1,
-                marginTop: Spacing.lg,
-              },
-            ]}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color={C.onPrimary} />
-            ) : (
-              <>
-                <MaterialIcons name="lock" size={16} color={C.onPrimary} />
-                <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-                  Confirmer le paiement
+              <Pressable onPress={handleClose} style={{ marginTop: Spacing.sm, alignItems: 'center', padding: Spacing.sm }}>
+                <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
+                  Annuler
                 </Text>
-              </>
-            )}
-          </Pressable>
+              </Pressable>
+            </View>
+          ) : (
+            /* ── Step 2 : phone input ─── */
+            <View>
+              {/* Selected method badge */}
+              {method && (
+                <Pressable
+                  onPress={() => setStep('method')}
+                  style={[styles.selectedMethodRow, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }]}
+                >
+                  <View style={[styles.methodIconWrap, { backgroundColor: method.accent + '22' }]}>
+                    <MaterialIcons name={method.icon} size={18} color={method.accent} />
+                  </View>
+                  <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }]}>
+                    {method.label}
+                  </Text>
+                  <Text style={[Typography.caption, { color: C.primary }]}>Changer</Text>
+                </Pressable>
+              )}
 
-          <Pressable onPress={onClose} style={{ marginTop: Spacing.md, alignItems: 'center', padding: Spacing.sm }}>
-            <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-              Annuler
-            </Text>
-          </Pressable>
+              {/* Phone field */}
+              <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: Spacing.xs, marginTop: Spacing.md }]}>
+                Numéro associé
+              </Text>
+              <View style={[styles.phoneInput, { borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow }]}>
+                <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>+237</Text>
+                <TextInput
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  placeholder="6XX XXX XXX"
+                  placeholderTextColor={C.onSurfaceVariant + '88'}
+                  style={[Typography.bodyMd, { color: C.onSurface, flex: 1 }]}
+                  maxLength={12}
+                  autoFocus
+                />
+              </View>
+
+              <View style={[styles.operatorsNote, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }]}>
+                <MaterialIcons name="info-outline" size={14} color={C.onSurfaceVariant} />
+                <Text style={[Typography.caption, { color: C.onSurfaceVariant, flex: 1 }]}>
+                  Un code de confirmation vous sera envoyé par votre opérateur.
+                </Text>
+              </View>
+
+              {/* Confirm */}
+              <Pressable
+                onPress={handleConfirm}
+                disabled={loading || phone.replace(/\s/g, '').length < 9}
+                style={[
+                  styles.confirmBtn,
+                  {
+                    backgroundColor: C.primary,
+                    opacity: loading || phone.replace(/\s/g, '').length < 9 ? 0.5 : 1,
+                    marginTop: Spacing.lg,
+                    ...Shadows.button,
+                  },
+                ]}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color={C.onPrimary} />
+                ) : (
+                  <>
+                    <MaterialIcons name="lock" size={16} color={C.onPrimary} />
+                    <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
+                      Confirmer le paiement
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+
+              <Pressable onPress={handleClose} style={{ marginTop: Spacing.md, alignItems: 'center', padding: Spacing.sm }}>
+                <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
+                  Annuler
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -315,7 +357,9 @@ export default function SubscriptionsScreen() {
   const { data: subs = [] } = useSubscriptions();
   const createSub = useCreateSubscription();
 
-  const activePlan = getActivePlan(subs);
+  const activePlanId = getActivePlanId(subs);
+  const activeSub = subs.find((s) => s.status === 'active') ?? null;
+
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -324,21 +368,21 @@ export default function SubscriptionsScreen() {
     setModalVisible(true);
   }
 
-  function handleConfirmPayment(phone: string) {
+  function handleConfirmPayment(phone: string, method: MethodId) {
     if (!selectedPlan) return;
     createSub.mutate(
       {
         plan_name: selectedPlan.title,
-        method: 'campay',
+        method,
         payment_info: { phone_number: phone },
       },
       {
         onSuccess: () => {
           setModalVisible(false);
-          toast.show('Demande de paiement envoyée. Confirmez sur votre téléphone.', 'success');
+          toast.show('Demande envoyée. Confirmez sur votre téléphone.', 'success');
         },
         onError: () => {
-          toast.show('Échec de la demande de paiement. Réessayez.', 'error');
+          toast.show('Échec du paiement. Réessayez.', 'error');
         },
       }
     );
@@ -359,7 +403,7 @@ export default function SubscriptionsScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Intro */}
-        <View style={styles.intro}>
+        <View>
           <Text style={[Typography.headlineLg, { color: C.onSurface, textAlign: 'center', fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold' }]}>
             Propulsez vos annonces
           </Text>
@@ -368,22 +412,29 @@ export default function SubscriptionsScreen() {
           </Text>
         </View>
 
+        {/* Active subscription banner */}
+        {activeSub && <ActiveSubBanner sub={activeSub} />}
+
         {/* Plans */}
         {PLANS.map((plan) => (
           <PlanCard
             key={plan.id}
-            plan={plan}
-            isActive={activePlan === plan.id}
-            isRecommended={plan.id === 'pro'}
-            onSubscribe={handleSubscribe}
+            title={plan.title}
+            tagline={plan.tagline}
+            price={plan.price}
+            features={plan.features}
+            recommended={plan.id === 'pro'}
+            current={activePlanId === plan.id}
+            ctaLabel={`Passer au ${plan.title}`}
+            onPress={() => handleSubscribe(plan)}
           />
         ))}
 
-        {/* CamPay note */}
-        <View style={[styles.campayNote, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}>
+        {/* Security note */}
+        <View style={[styles.securityNote, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}>
           <MaterialIcons name="verified-user" size={18} color={C.onSurfaceVariant} />
           <Text style={[Typography.caption, { color: C.onSurfaceVariant, flex: 1, lineHeight: 18 }]}>
-            Paiement sécurisé via CamPay · MTN Mobile Money · Orange Money
+            Paiement sécurisé · MTN Mobile Money · Orange Money · CamPay
           </Text>
         </View>
 
@@ -401,6 +452,8 @@ export default function SubscriptionsScreen() {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
@@ -416,48 +469,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xl,
     gap: Spacing.lg,
   },
-  intro: {
-    marginBottom: Spacing.sm,
-  },
-  card: {
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    gap: Spacing.md,
-    overflow: 'hidden',
-  },
-  recommendedBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
-    borderBottomLeftRadius: Radius.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.md,
-  },
-  priceCol: {
-    alignItems: 'flex-end',
-  },
-  featureList: {
-    gap: Spacing.sm,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  ctaBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    height: 48,
-    borderRadius: Radius.md,
-  },
-  campayNote: {
+  securityNote: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
@@ -472,8 +484,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalSheet: {
-    borderTopLeftRadius: Radius.lg,
-    borderTopRightRadius: Radius.lg,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
     padding: Spacing.marginMobile,
     paddingBottom: Spacing.xxl,
   },
@@ -484,7 +496,7 @@ const styles = StyleSheet.create({
   },
   handle: {
     width: 48,
-    height: 6,
+    height: 5,
     borderRadius: Radius.full,
   },
   modalIconCircle: {
@@ -496,6 +508,29 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: Spacing.md,
   },
+  methodBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  methodIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.sm + 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedMethodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
   phoneInput: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -504,14 +539,22 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     height: 52,
-    marginBottom: Spacing.sm,
   },
-  operatorsRow: {
+  operatorsNote: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
     padding: Spacing.sm,
     borderRadius: Radius.sm,
     borderWidth: 1,
+    marginTop: Spacing.sm,
+  },
+  confirmBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    height: 52,
+    borderRadius: Radius.md,
   },
 });
