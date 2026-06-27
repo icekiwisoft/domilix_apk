@@ -1,51 +1,78 @@
-﻿name: Build and Release APK
+name: Build and Release APK
 
 on:
   push:
     branches:
       - main
-      - develop
-    tags:
-      - 'v*'
+      - master
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Install and build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
       - name: 🏗 Checkout
         uses: actions/checkout@v4
 
+      - name: 💾 Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: 💾 Cache EAS local build
+        uses: actions/cache@v4
+        with:
+          path: ~/.eas-build-local
+          key: eas-local-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: eas-local-${{ runner.os }}-
+
       - name: ⚡ Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 20.x
           cache: 'npm'
 
-      - name: 🏗 Setup Expo
+      - name: 🏗 Setup Expo and EAS
         uses: expo/expo-github-action@v8
         with:
           expo-version: latest
+          eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🛠️ Install EAS CLI
-        run: npm install -g eas-cli
-
       - name: 🚀 Build APK
-        run: eas build --platform android --profile preview --local --non-interactive
+        run: eas build --platform android --profile preview --non-interactive --local
+        env:
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
 
-      - name: 📥 Upload APK
+      - name: 📥 Get APK filename
+        id: get-apk
+        run: echo "path=$(ls *.apk)" >> $GITHUB_OUTPUT
+
+      - name: 📥 Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: domilix-apk
-          path: ./*.apk
+          path: ${{ steps.get-apk.outputs.path }}
 
-      - name: 🚀 Create Release
+      - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ./*.apk
+          tag_name: v${{ github.run_number }}
+          name: Domilix v${{ github.run_number }}
+          files: ${{ steps.get-apk.outputs.path }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
