@@ -1,7 +1,8 @@
 ﻿name: Build and Release APK
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
       - develop
@@ -11,6 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'develop')
     permissions:
       contents: write # <--- INDISPENSABLE POUR CRÉER UNE RELEASE
     steps:

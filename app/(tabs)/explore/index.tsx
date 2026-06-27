@@ -154,9 +154,9 @@ export default function ExploreScreen() {
       />
 
       {/* Map toggle FAB */}
-      <View style={styles.fab} pointerEvents="box-none">
+      {/* <View style={styles.fab} pointerEvents="box-none">
         <MapListToggle mode="list" onToggle={() => router.push('/(tabs)/explore/map')} />
-      </View>
+      </View> */}
     </SafeAreaView>
   );
 }
