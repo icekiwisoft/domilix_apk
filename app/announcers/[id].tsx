@@ -65,8 +65,8 @@ export default function AnnouncerProfileScreen() {
   }
 
   const listings = listingsData?.data ?? [];
-  const totalListings = listingsData?.total
-    ?? ((announcer.houses ?? 0) + (announcer.furnitures ?? 0))
+  const totalListings = (listingsData?.total
+    ?? ((announcer.houses ?? 0) + (announcer.furnitures ?? 0)))
     || listings.length;
   const allMedias = listings.flatMap((a) => a.medias);
 
