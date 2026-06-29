@@ -81,6 +81,31 @@
                 ]
             }
         },
+        "/auth/firebase": {
+            "post": {
+                "operationId": "AuthController_firebaseLogin",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FirebaseAuthDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authentication successful"
+                    }
+                },
+                "summary": "Authenticate a user with Firebase Auth",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
         "/auth/refresh": {
             "post": {
                 "operationId": "AuthController_refresh",
@@ -156,6 +181,56 @@
                 ]
             }
         },
+        "/auth/sendEmailVerification": {
+            "post": {
+                "operationId": "AuthController_sendEmailVerification",
+                "parameters": [],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Send email verification code to current user",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/auth/verifyEmail": {
+            "post": {
+                "operationId": "AuthController_verifyEmail",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyEmailDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Verify current user email using code",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
         "/auth/logout": {
             "post": {
                 "operationId": "AuthController_logout",
@@ -222,6 +297,34 @@
                 "tags": [
                     "Auth"
                 ]
+            },
+            "delete": {
+                "operationId": "AuthController_deleteAccount",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeleteAccountDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete current authenticated account",
+                "tags": [
+                    "Auth"
+                ]
             }
         },
         "/auth/announcer-profile": {
@@ -245,6 +348,10 @@
                                         "type": "string"
                                     },
                                     "avatar": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "presentation": {
                                         "type": "string",
                                         "format": "binary"
                                     }
@@ -288,6 +395,10 @@
                                         "type": "string"
                                     },
                                     "avatar": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "presentation": {
                                         "type": "string",
                                         "format": "binary"
                                     }
@@ -392,9 +503,733 @@
                 ]
             }
         },
-        "/broadcasts": {
+        "/admin/announcer-requests": {
             "get": {
-                "operationId": "BroadcastsController_index",
+                "operationId": "AdminAnnouncerRequestsController_index",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List announcer requests (admin)",
+                "tags": [
+                    "Admin Announcer Requests"
+                ]
+            }
+        },
+        "/admin/announcer-requests/{id}": {
+            "get": {
+                "operationId": "AdminAnnouncerRequestsController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get announcer request by id (admin)",
+                "tags": [
+                    "Admin Announcer Requests"
+                ]
+            },
+            "put": {
+                "operationId": "AdminAnnouncerRequestsController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAnnouncerRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update announcer request status (admin)",
+                "tags": [
+                    "Admin Announcer Requests"
+                ]
+            },
+            "delete": {
+                "operationId": "AdminAnnouncerRequestsController_destroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete announcer request (admin)",
+                "tags": [
+                    "Admin Announcer Requests"
+                ]
+            }
+        },
+        "/admin/announcers": {
+            "get": {
+                "operationId": "AdminAnnouncersController_index",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/Object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List announcers (admin)",
+                "tags": [
+                    "Admin Announcers"
+                ]
+            },
+            "post": {
+                "operationId": "AdminAnnouncersController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "user_id": {
+                                        "type": "string"
+                                    },
+                                    "bio": {
+                                        "type": "string"
+                                    },
+                                    "contact": {
+                                        "type": "string"
+                                    },
+                                    "avatar": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create an announcer (admin)",
+                "tags": [
+                    "Admin Announcers"
+                ]
+            }
+        },
+        "/admin/announcers/{id}": {
+            "get": {
+                "operationId": "AdminAnnouncersController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "announcer-uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get announcer details (admin)",
+                "tags": [
+                    "Admin Announcers"
+                ]
+            },
+            "put": {
+                "operationId": "AdminAnnouncersController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "announcer-uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "user_id": {
+                                        "type": "string"
+                                    },
+                                    "bio": {
+                                        "type": "string"
+                                    },
+                                    "contact": {
+                                        "type": "string"
+                                    },
+                                    "avatar": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update an announcer (admin)",
+                "tags": [
+                    "Admin Announcers"
+                ]
+            },
+            "delete": {
+                "operationId": "AdminAnnouncersController_destroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "announcer-uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete an announcer (admin)",
+                "tags": [
+                    "Admin Announcers"
+                ]
+            }
+        },
+        "/admin/announces": {
+            "get": {
+                "operationId": "AdminAnnouncesController_index",
+                "parameters": [
+                    {
+                        "name": "AnnouncerId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "announcer-uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "Douala",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "furniture",
+                                "realestate"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "orderBy",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "price",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "liked",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "budget_min",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "50000",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "budget_max",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "300000",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": [
+                                "1",
+                                "2"
+                            ],
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    {
+                        "name": "ad_type",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "location",
+                                "sale"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "Douala",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "address",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "Bonapriso",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "adress",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "Bonapriso",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "devise",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "XOF",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "month",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "bedroom_min",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "bedroom_max",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "4",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "amenities",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": [
+                                "garage",
+                                "pool"
+                            ],
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    {
+                        "name": "standing",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "standard",
+                                "confort",
+                                "haut_standing"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "unlocked",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "likeAdmin",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/Object"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": 13,
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List announces with filters and pagination (admin)",
+                "tags": [
+                    "Admin Announces"
+                ]
+            },
+            "post": {
+                "operationId": "AdminAnnouncesController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "realestate",
+                                            "furniture"
+                                        ]
+                                    },
+                                    "price": {
+                                        "type": "string"
+                                    },
+                                    "ad_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "location",
+                                            "sale"
+                                        ]
+                                    },
+                                    "category_id": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "city": {
+                                        "type": "string"
+                                    },
+                                    "neighbourhood": {
+                                        "type": "string"
+                                    },
+                                    "state": {
+                                        "type": "string"
+                                    },
+                                    "country": {
+                                        "type": "string"
+                                    },
+                                    "zip": {
+                                        "type": "string"
+                                    },
+                                    "location_source": {
+                                        "type": "string",
+                                        "enum": [
+                                            "auto",
+                                            "manual",
+                                            "mixed"
+                                        ]
+                                    },
+                                    "hide_on_map": {
+                                        "type": "string",
+                                        "enum": [
+                                            "0",
+                                            "1"
+                                        ]
+                                    },
+                                    "medias[]": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a new announce (admin)",
+                "tags": [
+                    "Admin Announces"
+                ]
+            }
+        },
+        "/admin/announces/{id}": {
+            "get": {
+                "operationId": "AdminAnnouncesController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get announce details (admin)",
+                "tags": [
+                    "Admin Announces"
+                ]
+            },
+            "put": {
+                "operationId": "AdminAnnouncesController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update an announce (admin)",
+                "tags": [
+                    "Admin Announces"
+                ]
+            },
+            "delete": {
+                "operationId": "AdminAnnouncesController_destroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete an announce (admin)",
+                "tags": [
+                    "Admin Announces"
+                ]
+            }
+        },
+        "/admin/broadcasts": {
+            "get": {
+                "operationId": "AdminBroadcastsController_index",
                 "parameters": [
                     {
                         "name": "include_inactive",
@@ -412,13 +1247,18 @@
                         "description": ""
                     }
                 },
-                "summary": "List homepage broadcasts",
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List broadcasts (admin)",
                 "tags": [
-                    "Broadcasts"
+                    "Admin Broadcasts"
                 ]
             },
             "post": {
-                "operationId": "BroadcastsController_create",
+                "operationId": "AdminBroadcastsController_create",
                 "parameters": [],
                 "requestBody": {
                     "required": true,
@@ -442,13 +1282,13 @@
                 ],
                 "summary": "Create a broadcast (admin)",
                 "tags": [
-                    "Broadcasts"
+                    "Admin Broadcasts"
                 ]
             }
         },
-        "/broadcasts/{id}": {
+        "/admin/broadcasts/{id}": {
             "get": {
-                "operationId": "BroadcastsController_show",
+                "operationId": "AdminBroadcastsController_show",
                 "parameters": [
                     {
                         "name": "id",
@@ -465,13 +1305,18 @@
                         "description": ""
                     }
                 },
-                "summary": "Get broadcast details",
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get broadcast details (admin)",
                 "tags": [
-                    "Broadcasts"
+                    "Admin Broadcasts"
                 ]
             },
             "put": {
-                "operationId": "BroadcastsController_update",
+                "operationId": "AdminBroadcastsController_update",
                 "parameters": [
                     {
                         "name": "id",
@@ -505,11 +1350,11 @@
                 ],
                 "summary": "Update a broadcast (admin)",
                 "tags": [
-                    "Broadcasts"
+                    "Admin Broadcasts"
                 ]
             },
             "delete": {
-                "operationId": "BroadcastsController_destroy",
+                "operationId": "AdminBroadcastsController_destroy",
                 "parameters": [
                     {
                         "name": "id",
@@ -533,7 +1378,1244 @@
                 ],
                 "summary": "Delete a broadcast (admin)",
                 "tags": [
-                    "Broadcasts"
+                    "Admin Broadcasts"
+                ]
+            }
+        },
+        "/admin/campaigns": {
+            "get": {
+                "operationId": "AdminCampaignsController_index",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Per page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "Recherche par sujet",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List all campaigns (admin)",
+                "tags": [
+                    "Admin Campaigns"
+                ]
+            },
+            "post": {
+                "operationId": "AdminCampaignsController_store",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCampaignDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a campaign (admin)",
+                "tags": [
+                    "Admin Campaigns"
+                ]
+            }
+        },
+        "/admin/campaigns/{id}": {
+            "get": {
+                "operationId": "AdminCampaignsController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get campaign details (admin)",
+                "tags": [
+                    "Admin Campaigns"
+                ]
+            },
+            "put": {
+                "operationId": "AdminCampaignsController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCampaignDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a campaign (admin)",
+                "tags": [
+                    "Admin Campaigns"
+                ]
+            },
+            "delete": {
+                "operationId": "AdminCampaignsController_destroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a campaign (admin)",
+                "tags": [
+                    "Admin Campaigns"
+                ]
+            }
+        },
+        "/admin/campaigns/{id}/send": {
+            "post": {
+                "operationId": "AdminCampaignsController_send",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Send a campaign to verified subscribers (admin)",
+                "tags": [
+                    "Admin Campaigns"
+                ]
+            }
+        },
+        "/admin/categories": {
+            "get": {
+                "operationId": "AdminCategoriesController_index",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "Apartment",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "furniture",
+                                "house"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "orderBy",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "name",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/Object"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/Object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List categories (admin)",
+                "tags": [
+                    "Admin Categories"
+                ]
+            },
+            "post": {
+                "operationId": "AdminCategoriesController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCategoryDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create category (admin)",
+                "tags": [
+                    "Admin Categories"
+                ]
+            }
+        },
+        "/admin/categories/{id}": {
+            "get": {
+                "operationId": "AdminCategoriesController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get category by id (admin)",
+                "tags": [
+                    "Admin Categories"
+                ]
+            },
+            "put": {
+                "operationId": "AdminCategoriesController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCategoryDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update category (admin)",
+                "tags": [
+                    "Admin Categories"
+                ]
+            },
+            "delete": {
+                "operationId": "AdminCategoriesController_destroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete category (admin)",
+                "tags": [
+                    "Admin Categories"
+                ]
+            }
+        },
+        "/admin/medias": {
+            "get": {
+                "operationId": "AdminMediasController_index",
+                "parameters": [
+                    {
+                        "name": "AnnounceId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "AnnouncerId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "kind",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "enum": [
+                                "image",
+                                "video",
+                                "document"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List medias filtered by announce or announcer (admin)",
+                "tags": [
+                    "Admin Medias"
+                ]
+            }
+        },
+        "/admin/medias/{id}": {
+            "get": {
+                "operationId": "AdminMediasController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "media-uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get media by id (admin)",
+                "tags": [
+                    "Admin Medias"
+                ]
+            },
+            "delete": {
+                "operationId": "AdminMediasController_destroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "media-uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "AdId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a media or detach it from an announce (admin)",
+                "tags": [
+                    "Admin Medias"
+                ]
+            }
+        },
+        "/admin/medias/{id}/regenerate-thumbnail": {
+            "post": {
+                "operationId": "AdminMediasController_regenerateThumbnail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "media-uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Regenerate media thumbnail from original file",
+                "tags": [
+                    "Admin Medias"
+                ]
+            }
+        },
+        "/admin/newsletters": {
+            "get": {
+                "operationId": "AdminNewslettersController_index",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "20",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": "client@example.com",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "all",
+                                "verified",
+                                "pending"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List newsletter subscribers (admin)",
+                "tags": [
+                    "Admin Newsletters"
+                ]
+            }
+        },
+        "/admin/newsletters/{id}": {
+            "get": {
+                "operationId": "AdminNewslettersController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get newsletter subscriber by id (admin)",
+                "tags": [
+                    "Admin Newsletters"
+                ]
+            },
+            "put": {
+                "operationId": "AdminNewslettersController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateNewsletterDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update newsletter subscriber (admin)",
+                "tags": [
+                    "Admin Newsletters"
+                ]
+            },
+            "delete": {
+                "operationId": "AdminNewslettersController_destroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete newsletter subscriber (admin)",
+                "tags": [
+                    "Admin Newsletters"
+                ]
+            }
+        },
+        "/admin/publications": {
+            "get": {
+                "operationId": "AdminPublicationsController_index",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "schema": {}
+                    },
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "schema": {}
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {}
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Facebook publications",
+                "tags": [
+                    "Admin Publications"
+                ]
+            },
+            "post": {
+                "operationId": "AdminPublicationsController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreatePublicationDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a Facebook publication draft",
+                "tags": [
+                    "Admin Publications"
+                ]
+            }
+        },
+        "/admin/publications/{id}": {
+            "get": {
+                "operationId": "AdminPublicationsController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Facebook publication details",
+                "tags": [
+                    "Admin Publications"
+                ]
+            },
+            "patch": {
+                "operationId": "AdminPublicationsController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreatePublicationDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a Facebook publication draft",
+                "tags": [
+                    "Admin Publications"
+                ]
+            }
+        },
+        "/admin/publications/{id}/publish": {
+            "post": {
+                "operationId": "AdminPublicationsController_publish",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Queue a Facebook publication",
+                "tags": [
+                    "Admin Publications"
+                ]
+            }
+        },
+        "/admin/subscriptions": {
+            "get": {
+                "operationId": "AdminSubscriptionsController_index",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List all subscriptions with user information (admin)",
+                "tags": [
+                    "Admin Subscriptions"
+                ]
+            }
+        },
+        "/admin/subscriptions/plans": {
+            "get": {
+                "operationId": "AdminSubscriptionsController_plans",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Domicoin purchase plans (admin)",
+                "tags": [
+                    "Admin Subscriptions"
+                ]
+            }
+        },
+        "/admin/subscriptions/plans/{id}": {
+            "put": {
+                "operationId": "AdminSubscriptionsController_updatePlan",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a Domicoin purchase plan (admin)",
+                "tags": [
+                    "Admin Subscriptions"
+                ]
+            }
+        },
+        "/admin/subscriptions/{id}": {
+            "get": {
+                "operationId": "AdminSubscriptionsController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a subscription with user information (admin)",
+                "tags": [
+                    "Admin Subscriptions"
+                ]
+            },
+            "delete": {
+                "operationId": "AdminSubscriptionsController_destroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a subscription (admin)",
+                "tags": [
+                    "Admin Subscriptions"
+                ]
+            }
+        },
+        "/admin/users": {
+            "post": {
+                "operationId": "AdminUsersController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUserDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a user (admin)",
+                "tags": [
+                    "Admin Users"
+                ]
+            },
+            "get": {
+                "operationId": "AdminUsersController_index",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List users (admin)",
+                "tags": [
+                    "Admin Users"
+                ]
+            }
+        },
+        "/admin/users/{id}": {
+            "get": {
+                "operationId": "AdminUsersController_show",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get a user by id (admin)",
+                "tags": [
+                    "Admin Users"
+                ]
+            },
+            "put": {
+                "operationId": "AdminUsersController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update a user (admin)",
+                "tags": [
+                    "Admin Users"
+                ]
+            },
+            "delete": {
+                "operationId": "AdminUsersController_destroy",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Soft delete a user (admin)",
+                "tags": [
+                    "Admin Users"
+                ]
+            }
+        },
+        "/admin/users/{id}/become-announcer": {
+            "patch": {
+                "operationId": "AdminUsersController_becomeAnnouncer",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a request for user to become announcer (admin)",
+                "tags": [
+                    "Admin Users"
+                ]
+            }
+        },
+        "/admin/users/{id}/promote": {
+            "patch": {
+                "operationId": "AdminUsersController_promote",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "1",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Promote a user to admin (admin)",
+                "tags": [
+                    "Admin Users"
                 ]
             }
         },
@@ -750,6 +2832,15 @@
                         "schema": {
                             "$ref": "#/components/schemas/Object"
                         }
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": 13,
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -801,6 +2892,9 @@
                                     "city": {
                                         "type": "string"
                                     },
+                                    "neighbourhood": {
+                                        "type": "string"
+                                    },
                                     "state": {
                                         "type": "string"
                                     },
@@ -809,6 +2903,21 @@
                                     },
                                     "zip": {
                                         "type": "string"
+                                    },
+                                    "location_source": {
+                                        "type": "string",
+                                        "enum": [
+                                            "auto",
+                                            "manual",
+                                            "mixed"
+                                        ]
+                                    },
+                                    "hide_on_map": {
+                                        "type": "string",
+                                        "enum": [
+                                            "0",
+                                            "1"
+                                        ]
                                     },
                                     "wifi": {
                                         "type": "string",
@@ -1248,7 +3357,7 @@
                         "description": "Address suggestions"
                     }
                 },
-                "summary": "Search addresses with Mapbox geocoding",
+                "summary": "Search addresses with geocoding provider",
                 "tags": [
                     "Addresses"
                 ]
@@ -1288,150 +3397,7 @@
                 ]
             }
         },
-        "/users": {
-            "get": {
-                "operationId": "UsersController_index",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "required": true,
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "List users",
-                "tags": [
-                    "Users"
-                ]
-            }
-        },
-        "/users/{id}": {
-            "get": {
-                "operationId": "UsersController_show",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "1",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "Get a user by id",
-                "tags": [
-                    "Users"
-                ]
-            },
-            "put": {
-                "operationId": "UsersController_update",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "1",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/UpdateUserDto"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "Update a user",
-                "tags": [
-                    "Users"
-                ]
-            },
-            "delete": {
-                "operationId": "UsersController_destroy",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "1",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "Soft delete a user",
-                "tags": [
-                    "Users"
-                ]
-            }
-        },
-        "/users/{id}/become-announcer": {
-            "patch": {
-                "operationId": "UsersController_becomeAnnouncer",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "1",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "Create a request for user to become announcer",
-                "tags": [
-                    "Users"
-                ]
-            }
-        },
         "/announcer-requests": {
-            "get": {
-                "operationId": "AnnouncerRequestsController_index",
-                "parameters": [],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "List announcer requests",
-                "tags": [
-                    "Announcer Requests"
-                ]
-            },
             "post": {
                 "operationId": "AnnouncerRequestsController_store",
                 "parameters": [],
@@ -1451,17 +3417,16 @@
                 ]
             }
         },
-        "/announcer-requests/{id}": {
+        "/announcers": {
             "get": {
-                "operationId": "AnnouncerRequestsController_show",
+                "operationId": "AnnouncersController_index",
                 "parameters": [
                     {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
                         "schema": {
-                            "example": "1",
-                            "type": "string"
+                            "$ref": "#/components/schemas/Object"
                         }
                     }
                 ],
@@ -1470,46 +3435,66 @@
                         "description": ""
                     }
                 },
-                "summary": "Get announcer request by id",
+                "summary": "List announcers",
                 "tags": [
-                    "Announcer Requests"
+                    "Announcers"
                 ]
-            },
-            "put": {
-                "operationId": "AnnouncerRequestsController_update",
+            }
+        },
+        "/announcers/{id}": {
+            "get": {
+                "operationId": "AnnouncersController_show",
                 "parameters": [
                     {
                         "name": "id",
                         "required": true,
                         "in": "path",
                         "schema": {
-                            "example": "1",
+                            "example": "announcer-uuid",
                             "type": "string"
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/UpdateAnnouncerRequestDto"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": ""
                     }
                 },
-                "summary": "Update announcer request status",
+                "summary": "Get announcer details",
                 "tags": [
-                    "Announcer Requests"
+                    "Announcers"
                 ]
-            },
-            "delete": {
-                "operationId": "AnnouncerRequestsController_destroy",
+            }
+        },
+        "/broadcasts": {
+            "get": {
+                "operationId": "BroadcastsController_index",
+                "parameters": [
+                    {
+                        "name": "include_inactive",
+                        "required": false,
+                        "in": "query",
+                        "description": "Set true to include inactive broadcasts",
+                        "schema": {
+                            "example": false,
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "List homepage broadcasts",
+                "tags": [
+                    "Broadcasts"
+                ]
+            }
+        },
+        "/broadcasts/{id}": {
+            "get": {
+                "operationId": "BroadcastsController_show",
                 "parameters": [
                     {
                         "name": "id",
@@ -1526,9 +3511,9 @@
                         "description": ""
                     }
                 },
-                "summary": "Delete announcer request",
+                "summary": "Get broadcast details",
                 "tags": [
-                    "Announcer Requests"
+                    "Broadcasts"
                 ]
             }
         },
@@ -1573,6 +3558,14 @@
                         "schema": {
                             "$ref": "#/components/schemas/Object"
                         }
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "$ref": "#/components/schemas/Object"
+                        }
                     }
                 ],
                 "responses": {
@@ -1608,185 +3601,6 @@
                 "summary": "Get a category by id",
                 "tags": [
                     "Categories"
-                ]
-            }
-        },
-        "/announcers": {
-            "get": {
-                "operationId": "AnnouncersController_index",
-                "parameters": [
-                    {
-                        "name": "page",
-                        "required": false,
-                        "in": "query",
-                        "schema": {
-                            "$ref": "#/components/schemas/Object"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "List announcers",
-                "tags": [
-                    "Announcers"
-                ]
-            },
-            "post": {
-                "operationId": "AnnouncersController_create",
-                "parameters": [],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "user_id": {
-                                        "type": "string"
-                                    },
-                                    "bio": {
-                                        "type": "string"
-                                    },
-                                    "contact": {
-                                        "type": "string"
-                                    },
-                                    "avatar": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": ""
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Create an announcer (admin)",
-                "tags": [
-                    "Announcers"
-                ]
-            }
-        },
-        "/announcers/{id}": {
-            "get": {
-                "operationId": "AnnouncersController_show",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "announcer-uuid",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "Get announcer details",
-                "tags": [
-                    "Announcers"
-                ]
-            },
-            "put": {
-                "operationId": "AnnouncersController_update",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "announcer-uuid",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "user_id": {
-                                        "type": "string"
-                                    },
-                                    "bio": {
-                                        "type": "string"
-                                    },
-                                    "contact": {
-                                        "type": "string"
-                                    },
-                                    "avatar": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Update an announcer (admin)",
-                "tags": [
-                    "Announcers"
-                ]
-            },
-            "delete": {
-                "operationId": "AnnouncersController_destroy",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "announcer-uuid",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "security": [
-                    {
-                        "bearer": []
-                    }
-                ],
-                "summary": "Delete an announcer (admin)",
-                "tags": [
-                    "Announcers"
                 ]
             }
         },
@@ -1871,37 +3685,6 @@
                 "tags": [
                     "Medias"
                 ]
-            },
-            "delete": {
-                "operationId": "MediasController_destroy",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "media-uuid",
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "AdId",
-                        "required": false,
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "Delete a media or detach it from an announce",
-                "tags": [
-                    "Medias"
-                ]
             }
         },
         "/announcers/{announcerId}/medias": {
@@ -1938,19 +3721,6 @@
             }
         },
         "/newsletters": {
-            "get": {
-                "operationId": "NewslettersController_index",
-                "parameters": [],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "List verified newsletter subscribers",
-                "tags": [
-                    "Newsletters"
-                ]
-            },
             "post": {
                 "operationId": "NewslettersController_store",
                 "parameters": [],
@@ -1970,87 +3740,6 @@
                     }
                 },
                 "summary": "Subscribe an email to the newsletter",
-                "tags": [
-                    "Newsletters"
-                ]
-            }
-        },
-        "/newsletters/{id}": {
-            "get": {
-                "operationId": "NewslettersController_show",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "1",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "Get newsletter subscriber by id",
-                "tags": [
-                    "Newsletters"
-                ]
-            },
-            "put": {
-                "operationId": "NewslettersController_update",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "1",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/UpdateNewsletterDto"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "Update newsletter subscriber",
-                "tags": [
-                    "Newsletters"
-                ]
-            },
-            "delete": {
-                "operationId": "NewslettersController_destroy",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "required": true,
-                        "in": "path",
-                        "schema": {
-                            "example": "1",
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    }
-                },
-                "summary": "Delete newsletter subscriber",
                 "tags": [
                     "Newsletters"
                 ]
@@ -2078,6 +3767,443 @@
                 "summary": "Verify newsletter subscription token",
                 "tags": [
                     "Newsletters"
+                ]
+            }
+        },
+        "/newsletter/{clientId}/unsubscribe": {
+            "get": {
+                "operationId": "NewslettersController_unsubscribe",
+                "parameters": [
+                    {
+                        "name": "clientId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "example": "uuid-client-id",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Unsubscribe from newsletter using client ID",
+                "tags": [
+                    "Newsletters"
+                ]
+            }
+        },
+        "/maps/listings": {
+            "get": {
+                "operationId": "MapsController_listings",
+                "parameters": [
+                    {
+                        "name": "bbox_west",
+                        "required": false,
+                        "in": "query",
+                        "description": "Bounding box west (min longitude)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "bbox_south",
+                        "required": false,
+                        "in": "query",
+                        "description": "Bounding box south (min latitude)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "bbox_east",
+                        "required": false,
+                        "in": "query",
+                        "description": "Bounding box east (max longitude)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "bbox_north",
+                        "required": false,
+                        "in": "query",
+                        "description": "Bounding box north (max latitude)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "zoom",
+                        "required": false,
+                        "in": "query",
+                        "description": "Zoom level",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "required": false,
+                        "in": "query",
+                        "description": "City filter",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "item_type",
+                        "required": false,
+                        "in": "query",
+                        "description": "Property type (Chambre, Appartement, Maison, Meublé)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "price_min",
+                        "required": false,
+                        "in": "query",
+                        "description": "Minimum price",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "price_max",
+                        "required": false,
+                        "in": "query",
+                        "description": "Maximum price",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ad_type",
+                        "required": false,
+                        "in": "query",
+                        "description": "Ad type (location/sale)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_liked",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by user likes (1 = only liked)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_unlocked",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by unlocked announces (1 = only unlocked)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Per page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Get map listings with optional bbox filter",
+                "tags": [
+                    "Maps"
+                ]
+            }
+        },
+        "/maps/announces": {
+            "get": {
+                "operationId": "MapsController_announces",
+                "parameters": [
+                    {
+                        "name": "bbox_west",
+                        "required": false,
+                        "in": "query",
+                        "description": "Bounding box west (min longitude)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "bbox_south",
+                        "required": false,
+                        "in": "query",
+                        "description": "Bounding box south (min latitude)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "bbox_east",
+                        "required": false,
+                        "in": "query",
+                        "description": "Bounding box east (max longitude)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "bbox_north",
+                        "required": false,
+                        "in": "query",
+                        "description": "Bounding box north (max latitude)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "zoom",
+                        "required": false,
+                        "in": "query",
+                        "description": "Zoom level",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "required": false,
+                        "in": "query",
+                        "description": "City filter",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "item_type",
+                        "required": false,
+                        "in": "query",
+                        "description": "Property type (Chambre, Appartement, Maison, Meublé)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "price_min",
+                        "required": false,
+                        "in": "query",
+                        "description": "Minimum price",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "price_max",
+                        "required": false,
+                        "in": "query",
+                        "description": "Maximum price",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ad_type",
+                        "required": false,
+                        "in": "query",
+                        "description": "Ad type (location/sale)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_liked",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by user likes (1 = only liked)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_unlocked",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by unlocked announces (1 = only unlocked)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Page number",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "required": false,
+                        "in": "query",
+                        "description": "Per page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Get map announces with media thumbnails",
+                "tags": [
+                    "Maps"
+                ]
+            }
+        },
+        "/maps/listings/nearby": {
+            "get": {
+                "operationId": "MapsController_nearby",
+                "parameters": [
+                    {
+                        "name": "lat",
+                        "required": false,
+                        "in": "query",
+                        "description": "Latitude",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "lng",
+                        "required": false,
+                        "in": "query",
+                        "description": "Longitude",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "radius",
+                        "required": false,
+                        "in": "query",
+                        "description": "Radius in km",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Get listings near coordinates",
+                "tags": [
+                    "Maps"
+                ]
+            }
+        },
+        "/maps/plans": {
+            "get": {
+                "operationId": "MapsController_plans",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "List all available Maps plans",
+                "tags": [
+                    "Maps"
+                ]
+            }
+        },
+        "/maps/subscribe": {
+            "post": {
+                "operationId": "MapsController_subscribe",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubscribeDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Subscribe to a Maps plan (free) or initiate payment (paid plans)",
+                "tags": [
+                    "Maps"
+                ]
+            }
+        },
+        "/maps/subscription": {
+            "get": {
+                "operationId": "MapsController_status",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get current Maps subscription status",
+                "tags": [
+                    "Maps"
+                ]
+            }
+        },
+        "/maps/cancel": {
+            "post": {
+                "operationId": "MapsController_cancel",
+                "parameters": [],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Cancel current Maps subscription",
+                "tags": [
+                    "Maps"
                 ]
             }
         },
@@ -2246,6 +4372,21 @@
                 ]
             }
         },
+        "/subscriptions/plans": {
+            "get": {
+                "operationId": "SubscriptionsController_plans",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "List available Domicoin purchase plans",
+                "tags": [
+                    "Subscriptions"
+                ]
+            }
+        },
         "/subscriptions": {
             "get": {
                 "operationId": "SubscriptionsController_index",
@@ -2375,6 +4516,55 @@
                     "Webhooks"
                 ]
             }
+        },
+        "/uploads": {
+            "post": {
+                "operationId": "UploadsController_upload",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "file"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "media",
+                                            "avatar",
+                                            "presentation-image",
+                                            "broadcast-image"
+                                        ]
+                                    },
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Upload one file to object storage",
+                "tags": [
+                    "Uploads"
+                ]
+            }
         }
     },
     "info": {
@@ -2412,6 +4602,10 @@
                     "password": {
                         "type": "string",
                         "example": "strong-password-123"
+                    },
+                    "website": {
+                        "type": "string",
+                        "example": ""
                     }
                 },
                 "required": [
@@ -2436,7 +4630,23 @@
                     }
                 }
             },
+            "FirebaseAuthDto": {
+                "type": "object",
+                "properties": {}
+            },
             "VerifyPhoneDto": {
+                "type": "object",
+                "properties": {
+                    "verification_code": {
+                        "type": "string",
+                        "example": "123456"
+                    }
+                },
+                "required": [
+                    "verification_code"
+                ]
+            },
+            "VerifyEmailDto": {
                 "type": "object",
                 "properties": {
                     "verification_code": {
@@ -2471,6 +4681,10 @@
                     "email": {
                         "type": "string",
                         "example": "user@example.com"
+                    },
+                    "website": {
+                        "type": "string",
+                        "example": ""
                     }
                 },
                 "required": [
@@ -2484,9 +4698,13 @@
                         "type": "string",
                         "example": "user@example.com"
                     },
+                    "token": {
+                        "type": "string",
+                        "example": "reset-token"
+                    },
                     "code": {
                         "type": "string",
-                        "example": "123456"
+                        "example": "legacy-reset-token"
                     },
                     "password": {
                         "type": "string",
@@ -2499,9 +4717,21 @@
                 },
                 "required": [
                     "email",
-                    "code",
+                    "token",
                     "password",
                     "password_confirmation"
+                ]
+            },
+            "DeleteAccountDto": {
+                "type": "object",
+                "properties": {
+                    "password": {
+                        "type": "string",
+                        "example": "current-password"
+                    }
+                },
+                "required": [
+                    "password"
                 ]
             },
             "ChangePasswordDto": {
@@ -2529,6 +4759,25 @@
                     "new_password_confirmation"
                 ]
             },
+            "UpdateAnnouncerRequestDto": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "approved",
+                            "rejected"
+                        ]
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "Object": {
+                "type": "object",
+                "properties": {}
+            },
             "CreateBroadcastDto": {
                 "type": "object",
                 "properties": {
@@ -2539,6 +4788,10 @@
                     "subtitle": {
                         "type": "string",
                         "example": "Publiez en illimite et obtenez plus de visibilite."
+                    },
+                    "chip": {
+                        "type": "string",
+                        "example": "Agences"
                     },
                     "badge": {
                         "type": "string",
@@ -2581,7 +4834,100 @@
                     "title"
                 ]
             },
-            "Object": {
+            "CreateCampaignDto": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "description": "Sujet de la campagne"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Contenu HTML de la campagne"
+                    }
+                },
+                "required": [
+                    "subject",
+                    "content"
+                ]
+            },
+            "UpdateCampaignDto": {
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "description": "Sujet de la campagne"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Contenu HTML de la campagne"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Statut (draft/sent)"
+                    }
+                }
+            },
+            "CreateCategoryDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Appartement"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "house",
+                            "furniture"
+                        ],
+                        "example": "house"
+                    }
+                },
+                "required": [
+                    "name",
+                    "type"
+                ]
+            },
+            "UpdateCategoryDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Appartement"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "house",
+                            "furniture"
+                        ],
+                        "example": "house"
+                    }
+                }
+            },
+            "UpdateNewsletterDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "verified": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "verification_token": {
+                        "type": "object",
+                        "example": null
+                    }
+                }
+            },
+            "CreatePublicationDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "CreateUserDto": {
                 "type": "object",
                 "properties": {}
             },
@@ -2614,49 +4960,25 @@
                     "email"
                 ]
             },
-            "UpdateAnnouncerRequestDto": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "approved",
-                            "rejected"
-                        ]
-                    }
-                },
-                "required": [
-                    "status"
-                ]
-            },
             "CreateNewsletterDto": {
                 "type": "object",
                 "properties": {
                     "email": {
                         "type": "string",
                         "example": "user@example.com"
+                    },
+                    "website": {
+                        "type": "string",
+                        "example": ""
                     }
                 },
                 "required": [
                     "email"
                 ]
             },
-            "UpdateNewsletterDto": {
+            "SubscribeDto": {
                 "type": "object",
-                "properties": {
-                    "email": {
-                        "type": "string",
-                        "example": "user@example.com"
-                    },
-                    "verified": {
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "verification_token": {
-                        "type": "object",
-                        "example": null
-                    }
-                }
+                "properties": {}
             },
             "CreateSubscriptionDto": {
                 "type": "object",
@@ -2667,7 +4989,13 @@
                     },
                     "method": {
                         "type": "string",
-                        "example": "campay"
+                        "example": "mtn",
+                        "enum": [
+                            "mtn",
+                            "orange",
+                            "mtn_money",
+                            "orange_money"
+                        ]
                     },
                     "payment_info": {
                         "type": "object",
