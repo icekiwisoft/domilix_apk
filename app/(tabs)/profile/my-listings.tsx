@@ -17,7 +17,7 @@ function formatPrice(price: number): string {
   return price.toLocaleString('fr-FR');
 }
 
-const THUMB_SIZE = 100;
+const THUMB_SIZE = 72;
 
 // ─── ManageCard ───────────────────────────────────────────────────────────────
 
@@ -59,35 +59,21 @@ function ManageCard({ announce, onView, onEdit, onDelete }: ManageCardProps) {
 
         {/* Info */}
         <View style={styles.infoCol}>
-          <Text style={[styles.cardTitle, { color: C.onSurface }]} numberOfLines={2}>
+          <Text style={[styles.cardTitle, { color: C.onSurface }]} numberOfLines={1}>
             {announce.description.split('.')[0]}
           </Text>
 
           <View style={styles.locationRow}>
-            <MaterialIcons name="location-on" size={12} color={C.primary} />
-            <Text style={[Typography.caption, { color: C.onSurfaceVariant, flex: 1 }]} numberOfLines={1}>
+            <MaterialIcons name="location-on" size={11} color={C.primary} />
+            <Text style={[styles.locationText, { color: C.onSurfaceVariant }]} numberOfLines={1}>
               {announce.city}
             </Text>
           </View>
 
           <Text style={[styles.price, { color: C.primary }]}>
             {formatPrice(announce.price)}{' '}
-            <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>{currency}</Text>
+            <Text style={[styles.currency, { color: C.onSurfaceVariant }]}>{currency}</Text>
           </Text>
-
-          {announce.type === 'realestate' && announce.bedrooms != null && (
-            <View style={styles.metaRow}>
-              <MaterialIcons name="bed" size={11} color={C.onSurfaceVariant} />
-              <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-                {announce.bedrooms} ch.
-              </Text>
-              {announce.size != null && (
-                <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-                  {' · '}{announce.size} m²
-                </Text>
-              )}
-            </View>
-          )}
         </View>
       </Pressable>
 
@@ -199,7 +185,7 @@ export default function MyListingsScreen() {
           !isLoading && listings.length === 0 ? styles.flatEmpty : styles.flatContent
         }
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
+        ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
         renderItem={({ item }) => (
           <ManageCard
             announce={item}
@@ -282,7 +268,7 @@ const styles = StyleSheet.create({
 
   // ── ManageCard ──
   card: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     borderWidth: 1,
     overflow: 'hidden',
     ...Shadows.card,
@@ -293,9 +279,8 @@ const styles = StyleSheet.create({
   },
   thumbBox: {
     width: THUMB_SIZE,
-    minHeight: THUMB_SIZE,
+    height: THUMB_SIZE,
     flexShrink: 0,
-    position: 'relative',
   },
   thumbImg: {
     width: '100%',
@@ -303,9 +288,9 @@ const styles = StyleSheet.create({
   },
   chip: {
     position: 'absolute',
-    bottom: 6,
-    left: 6,
-    paddingHorizontal: 6,
+    bottom: 5,
+    left: 5,
+    paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: 4,
   },
@@ -316,30 +301,35 @@ const styles = StyleSheet.create({
   },
   infoCol: {
     flex: 1,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    gap: 4,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: Spacing.sm,
+    gap: 3,
     justifyContent: 'center',
   },
   cardTitle: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
   },
+  locationText: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 11,
+    lineHeight: 15,
+    flex: 1,
+  },
   price: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 19,
   },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  currency: {
+    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 10,
   },
 
   // ── Action bar ──
@@ -354,15 +344,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.xs,
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: 7,
   },
   actionLabel: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 15,
   },
   actionSep: {
     width: 1,
-    height: 18,
+    height: 14,
   },
 });
