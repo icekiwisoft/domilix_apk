@@ -57,6 +57,20 @@ export function useUnlockAnnounce() {
   });
 }
 
+export function useUpdateAnnounce() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
+      AnnouncesService.update(id, formData),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: ['announce', id] });
+      qc.invalidateQueries({ queryKey: ['announces'] });
+      qc.invalidateQueries({ queryKey: ['announces-infinite'] });
+      qc.invalidateQueries({ queryKey: ['my-announces'] });
+    },
+  });
+}
+
 export function useDeleteAnnounce() {
   const qc = useQueryClient();
   return useMutation({
@@ -64,7 +78,16 @@ export function useDeleteAnnounce() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['announces'] });
       qc.invalidateQueries({ queryKey: ['announces-infinite'] });
+      qc.invalidateQueries({ queryKey: ['my-announces'] });
     },
+  });
+}
+
+export function useMyAnnounces(announcerId: string) {
+  return useQuery({
+    queryKey: ['my-announces', announcerId],
+    queryFn: () => AnnouncesService.list({ AnnouncerId: announcerId }),
+    enabled: !!announcerId,
   });
 }
 

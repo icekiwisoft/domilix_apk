@@ -75,7 +75,7 @@ export default function CreateStep3Screen() {
     createAnnounce.mutate(formData, {
       onSuccess: () => {
         resetDraft();
-        router.replace('/(tabs)/explore');
+        router.replace('/(tabs)/profile/my-listings');
       },
     });
   }

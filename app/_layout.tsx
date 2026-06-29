@@ -54,6 +54,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(modals)/filter-sheet" options={{ presentation: 'modal', headerShown: false }} />
                 <Stack.Screen name="(modals)/unlock-confirm" options={{ presentation: 'transparentModal', headerShown: false }} />
                 <Stack.Screen name="announces/create" options={{ headerShown: false }} />
+                <Stack.Screen name="announces/edit" options={{ headerShown: false }} />
               </Stack>
               <StatusBar style="auto" />
             </ToastProvider>

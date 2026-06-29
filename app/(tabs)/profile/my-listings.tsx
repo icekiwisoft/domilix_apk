@@ -1,18 +1,134 @@
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe } from '@/hooks/queries/use-auth-queries';
-import { useDeleteAnnounce } from '@/hooks/queries/use-announces';
-import { AnnouncesService } from '@/services/announces.service';
+import { useDeleteAnnounce, useMyAnnounces } from '@/hooks/queries/use-announces';
 import { useToast } from '@/components/ui/toast';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ListingCardH } from '@/components/listing/listing-card-h';
 import { ListingCardHSkeleton } from '@/components/listing/listing-skeleton';
 import type { Announce } from '@/types/announce';
+
+function formatPrice(price: number): string {
+  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(1).replace('.0', '')}M`;
+  if (price >= 1_000) return `${Math.round(price / 1_000)}k`;
+  return price.toLocaleString('fr-FR');
+}
+
+const THUMB_SIZE = 100;
+
+// ─── ManageCard ───────────────────────────────────────────────────────────────
+
+interface ManageCardProps {
+  announce: Announce;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+function ManageCard({ announce, onView, onEdit, onDelete }: ManageCardProps) {
+  const scheme = useColorScheme();
+  const C = Colors[scheme ?? 'light'];
+
+  const thumb =
+    announce.medias[0]?.thumbnail ??
+    announce.medias[0]?.file ??
+    `https://picsum.photos/seed/${announce.id}/300/300`;
+
+  const isLocation = announce.ad_type === 'location';
+  const currency = announce.devise === 'XAF' ? 'FCFA' : announce.devise;
+
+  return (
+    <View style={[styles.card, { backgroundColor: C.surfaceContainerLowest, borderColor: C.outlineVariant + '55' }]}>
+      {/* Content row — tappable for detail */}
+      <Pressable
+        onPress={onView}
+        style={({ pressed }) => [styles.contentRow, pressed && { opacity: 0.88 }]}
+      >
+        {/* Thumbnail */}
+        <View style={[styles.thumbBox, { backgroundColor: C.surfaceContainerLow }]}>
+          <Image source={{ uri: thumb }} style={styles.thumbImg} resizeMode="cover" />
+          <View style={[styles.chip, { backgroundColor: isLocation ? C.tertiary : C.primaryContainer }]}>
+            <Text style={[styles.chipText, { color: C.onPrimary }]}>
+              {isLocation ? 'Loc.' : 'Vente'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Info */}
+        <View style={styles.infoCol}>
+          <Text style={[styles.cardTitle, { color: C.onSurface }]} numberOfLines={2}>
+            {announce.description.split('.')[0]}
+          </Text>
+
+          <View style={styles.locationRow}>
+            <MaterialIcons name="location-on" size={12} color={C.primary} />
+            <Text style={[Typography.caption, { color: C.onSurfaceVariant, flex: 1 }]} numberOfLines={1}>
+              {announce.city}
+            </Text>
+          </View>
+
+          <Text style={[styles.price, { color: C.primary }]}>
+            {formatPrice(announce.price)}{' '}
+            <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>{currency}</Text>
+          </Text>
+
+          {announce.type === 'realestate' && announce.bedrooms != null && (
+            <View style={styles.metaRow}>
+              <MaterialIcons name="bed" size={11} color={C.onSurfaceVariant} />
+              <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
+                {announce.bedrooms} ch.
+              </Text>
+              {announce.size != null && (
+                <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
+                  {' · '}{announce.size} m²
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+      </Pressable>
+
+      {/* Action bar */}
+      <View style={[styles.actionBar, { borderTopColor: C.outlineVariant + '55' }]}>
+        <Pressable
+          onPress={onView}
+          hitSlop={6}
+          style={({ pressed }) => [styles.actionBtn, pressed && { backgroundColor: C.surfaceContainerLow }]}
+        >
+          <MaterialIcons name="visibility" size={15} color={C.onSurfaceVariant} />
+          <Text style={[styles.actionLabel, { color: C.onSurfaceVariant }]}>Voir</Text>
+        </Pressable>
+
+        <View style={[styles.actionSep, { backgroundColor: C.outlineVariant + '55' }]} />
+
+        <Pressable
+          onPress={onEdit}
+          hitSlop={6}
+          style={({ pressed }) => [styles.actionBtn, pressed && { backgroundColor: C.primaryFixed + '44' }]}
+        >
+          <MaterialIcons name="edit" size={15} color={C.primary} />
+          <Text style={[styles.actionLabel, { color: C.primary }]}>Modifier</Text>
+        </Pressable>
+
+        <View style={[styles.actionSep, { backgroundColor: C.outlineVariant + '55' }]} />
+
+        <Pressable
+          onPress={onDelete}
+          hitSlop={6}
+          style={({ pressed }) => [styles.actionBtn, pressed && { backgroundColor: C.errorContainer + '44' }]}
+        >
+          <MaterialIcons name="delete-outline" size={15} color={C.error} />
+          <Text style={[styles.actionLabel, { color: C.error }]}>Supprimer</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function MyListingsScreen() {
   const scheme = useColorScheme();
@@ -22,83 +138,51 @@ export default function MyListingsScreen() {
   const { data: user } = useMe();
   const announcerId = user?.announcer?.id ?? '';
 
-  const { data: result, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ['my-announces', announcerId],
-    queryFn: () => AnnouncesService.list({ AnnouncerId: announcerId }),
-    enabled: !!announcerId,
-  });
-
+  const { data: result, isLoading, isFetching, refetch } = useMyAnnounces(announcerId);
   const deleteAnnounce = useDeleteAnnounce();
   const listings = result?.data ?? [];
-
-  function handleOptions(announce: Announce) {
-    Alert.alert(
-      announce.description.split('.')[0].trim(),
-      undefined,
-      [
-        {
-          text: 'Voir le détail',
-          onPress: () => router.push(`/announces/${announce.id}`),
-        },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: () => confirmDelete(announce),
-        },
-        { text: 'Annuler', style: 'cancel' },
-      ]
-    );
-  }
+  const total = result?.total ?? listings.length;
 
   function confirmDelete(announce: Announce) {
-    Alert.alert(
-      'Supprimer cette annonce ?',
-      'Cette action est irréversible.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: () =>
-            deleteAnnounce.mutate(announce.id, {
-              onSuccess: () => toast.show('Annonce supprimée.', 'success'),
-              onError: () => toast.show('Échec de la suppression.', 'error'),
-            }),
-        },
-      ]
-    );
+    Alert.alert('Supprimer cette annonce ?', 'Cette action est irréversible.', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer',
+        style: 'destructive',
+        onPress: () =>
+          deleteAnnounce.mutate(announce.id, {
+            onSuccess: () => toast.show('Annonce supprimée.', 'success'),
+            onError: () => toast.show('Échec de la suppression.', 'error'),
+          }),
+      },
+    ]);
   }
-
-  const total = result?.total ?? listings.length;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
+      <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant + '77' }]}>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
+          <MaterialIcons name="arrow-back" size={22} color={C.onSurface} />
         </Pressable>
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>
-          Mes annonces
-        </Text>
+
+        <View style={styles.headerCenter}>
+          <Text style={[styles.headerTitle, { color: C.onSurface }]}>Mes annonces</Text>
+          {!isLoading && total > 0 && (
+            <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
+              {total} publication{total > 1 ? 's' : ''}
+            </Text>
+          )}
+        </View>
+
         <Pressable
-          onPress={() => router.push('/(tabs)/profile/publish')}
+          onPress={() => router.push('/announces/create/step-1')}
           hitSlop={8}
-          style={[styles.addBtn, { backgroundColor: C.primary, ...Shadows.button }]}
+          style={[styles.addBtn, { backgroundColor: C.primary }, Shadows.button]}
         >
           <MaterialIcons name="add" size={20} color={C.onPrimary} />
         </Pressable>
       </View>
-
-      {/* Count */}
-      {!isLoading && total > 0 && (
-        <View style={[styles.countRow, { backgroundColor: C.surfaceContainerLow, borderBottomColor: C.outlineVariant }]}>
-          <MaterialIcons name="home-work" size={14} color={C.onSurfaceVariant} />
-          <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-            {total} publication{total > 1 ? 's' : ''}
-          </Text>
-        </View>
-      )}
 
       <FlatList
         data={isLoading ? [] : listings}
@@ -117,21 +201,12 @@ export default function MyListingsScreen() {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
         renderItem={({ item }) => (
-          <View style={styles.rowWrap}>
-            <View style={{ flex: 1 }}>
-              <ListingCardH
-                announce={item}
-                onPress={() => router.push(`/announces/${item.id}`)}
-              />
-            </View>
-            <Pressable
-              onPress={() => handleOptions(item)}
-              hitSlop={8}
-              style={[styles.menuBtn, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}
-            >
-              <MaterialIcons name="more-vert" size={20} color={C.onSurfaceVariant} />
-            </Pressable>
-          </View>
+          <ManageCard
+            announce={item}
+            onView={() => router.push(`/announces/${item.id}`)}
+            onEdit={() => router.push(`/announces/edit/${item.id}`)}
+            onDelete={() => confirmDelete(item)}
+          />
         )}
         ListHeaderComponent={
           isLoading ? (
@@ -148,7 +223,7 @@ export default function MyListingsScreen() {
               title="Aucune annonce"
               description="Vous n'avez pas encore publié d'annonce. Commencez dès maintenant."
               ctaLabel="Publier une annonce"
-              onCta={() => router.push('/(tabs)/profile/publish')}
+              onCta={() => router.push('/announces/create/step-1')}
               icon={<MaterialIcons name="add-home" size={36} color={C.primary} />}
             />
           )
@@ -160,29 +235,43 @@ export default function MyListingsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+
+  // ── Header ──
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm + 4,
     borderBottomWidth: 1,
+    gap: Spacing.sm,
   },
-  addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
-  countRow: {
-    flexDirection: 'row',
+  headerCenter: {
+    flex: 1,
+    gap: 1,
+  },
+  headerTitle: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 18,
+    lineHeight: 24,
+  },
+  addBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.full,
     alignItems: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
+    justifyContent: 'center',
+    flexShrink: 0,
   },
+
+  // ── List ──
   flatContent: {
     padding: Spacing.marginMobile,
   },
@@ -190,18 +279,90 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Spacing.marginMobile,
   },
-  rowWrap: {
+
+  // ── ManageCard ──
+  card: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...Shadows.card,
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  thumbBox: {
+    width: THUMB_SIZE,
+    minHeight: THUMB_SIZE,
+    flexShrink: 0,
+    position: 'relative',
+  },
+  thumbImg: {
+    width: '100%',
+    height: '100%',
+  },
+  chip: {
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  chipText: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 9,
+    letterSpacing: 0.4,
+  },
+  infoCol: {
+    flex: 1,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    gap: 4,
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: 2,
   },
-  menuBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
+  price: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+
+  // ── Action bar ──
+  actionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 1,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm + 2,
+  },
+  actionLabel: {
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  actionSep: {
+    width: 1,
+    height: 18,
   },
 });
