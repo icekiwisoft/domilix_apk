@@ -80,7 +80,8 @@ const styles = StyleSheet.create({
   },
   counter: {
     position: 'absolute',
-    bottom: Spacing.md,
+    // Clears the content card's -24 overlap (see app/announces/[id].tsx) so the pill isn't clipped.
+    bottom: Spacing.xl,
     right: Spacing.md,
     paddingHorizontal: 10,
     paddingVertical: 4,

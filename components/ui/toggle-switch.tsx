@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ViewStyle, type StyleProp } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useEffect } from 'react';
 
@@ -13,9 +13,10 @@ interface ToggleSwitchProps<T extends string> {
   options: [SegmentOption<T>, SegmentOption<T>];
   value: T;
   onChange: (value: T) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function ToggleSwitch<T extends string>({ options, value, onChange }: ToggleSwitchProps<T>) {
+export function ToggleSwitch<T extends string>({ options, value, onChange, style }: ToggleSwitchProps<T>) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
@@ -31,7 +32,7 @@ export function ToggleSwitch<T extends string>({ options, value, onChange }: Tog
   }));
 
   return (
-    <View style={[styles.track, { backgroundColor: C.surfaceContainerHighest }]}>
+    <View style={[styles.track, { backgroundColor: C.surfaceContainerHighest }, style]}>
       {/* Sliding active pill */}
       <Animated.View
         style={[
@@ -48,9 +49,12 @@ export function ToggleSwitch<T extends string>({ options, value, onChange }: Tog
         return (
           <Pressable
             key={opt.value}
+            accessibilityRole="radio"
+            accessibilityLabel={opt.label}
+            accessibilityState={{ selected: active }}
             onPress={() => onChange(opt.value)}
             style={styles.option}
-            hitSlop={4}
+            hitSlop={8}
           >
             <Text
               numberOfLines={1}
@@ -87,7 +91,7 @@ const styles = StyleSheet.create({
   },
   option: {
     flex: 1,
-    paddingVertical: 7,
+    paddingVertical: 9,
     paddingHorizontal: Spacing.md,
     borderRadius: Radius.full,
     alignItems: 'center',

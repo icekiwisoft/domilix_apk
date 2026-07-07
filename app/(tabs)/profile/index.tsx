@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Button, Dialog, List, Portal } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -24,29 +26,22 @@ function MenuRow({ icon, label, subtitle, onPress, destructive }: MenuRowProps) 
   const iconBg = destructive ? C.errorContainer + '55' : C.primaryFixed + '88';
   const iconColor = destructive ? C.error : C.primary;
   return (
-    <Pressable
+    <List.Item
+      title={label}
+      description={subtitle}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.menuRow,
-        { borderBottomColor: C.outlineVariant + '44' },
-        pressed && { backgroundColor: C.surfaceContainerLow },
-      ]}
-    >
-      <View style={[styles.menuIcon, { backgroundColor: iconBg }]}>
-        <MaterialIcons name={icon} size={19} color={iconColor} />
-      </View>
-      <View style={styles.menuText}>
-        <Text style={[Typography.bodyMd, { color: destructive ? C.error : C.onSurface, fontFamily: 'PlusJakartaSans_500Medium' }]}>
-          {label}
-        </Text>
-        {subtitle && (
-          <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 1 }]}>{subtitle}</Text>
-        )}
-      </View>
-      {!destructive && (
-        <MaterialIcons name="chevron-right" size={18} color={C.outlineVariant} />
+      style={[styles.menuRow, { borderBottomColor: C.outlineVariant + '44' }]}
+      titleStyle={{ color: destructive ? C.error : C.onSurface, fontFamily: 'PlusJakartaSans_500Medium', fontSize: 15 }}
+      descriptionStyle={{ color: C.onSurfaceVariant }}
+      left={() => (
+        <View style={[styles.menuIcon, { backgroundColor: iconBg }]}>
+          <MaterialIcons name={icon} size={19} color={iconColor} />
+        </View>
       )}
-    </Pressable>
+      right={destructive ? undefined : (props) => (
+        <List.Icon {...props} icon="chevron-right" color={C.outlineVariant} />
+      )}
+    />
   );
 }
 
@@ -75,6 +70,7 @@ export default function ProfileScreen() {
   const activeSub = subs.find((s) => s.status === 'active');
   const activePlanLabel = activeSub ? `Membre ${activeSub.plan_name}` : null;
   const isAnnouncer = isAnnouncerToken(accessToken) || !!user?.is_announcer || !!user?.announcer;
+  const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
 
   if (!accessToken) {
     return (
@@ -87,7 +83,8 @@ export default function ProfileScreen() {
     );
   }
 
-  function handleLogout() {
+  function confirmLogout() {
+    setLogoutDialogVisible(false);
     logout.mutate(undefined, {
       onSettled: () => router.replace('/(auth)'),
     });
@@ -100,6 +97,8 @@ export default function ProfileScreen() {
         <View style={[styles.hero, { backgroundColor: C.primaryContainer + '4D' }]}>
           {/* Edit button */}
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Modifier le profil"
             onPress={() => router.push('/(tabs)/profile/edit')}
             style={[styles.editBtn, { backgroundColor: C.surface + 'CC', borderColor: C.outlineVariant }]}
           >
@@ -108,6 +107,8 @@ export default function ProfileScreen() {
 
           {/* Avatar */}
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Modifier la photo de profil"
             onPress={() => router.push('/(tabs)/profile/edit')}
             style={[styles.avatarWrapper, { borderColor: C.primary + '40' }]}
           >
@@ -153,14 +154,13 @@ export default function ProfileScreen() {
             <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
               {user?.credits ?? 0} crédits
             </Text>
-            <Pressable
-              style={[styles.rechargeBtn, { backgroundColor: C.primary }]}
+            <Button
+              mode="contained"
+              compact
               onPress={() => router.push('/(tabs)/profile/subscriptions')}
             >
-              <Text style={[Typography.caption, { color: C.onPrimary, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
-                Recharger
-              </Text>
-            </Pressable>
+              Recharger
+            </Button>
           </View>
         </View>
 
@@ -237,11 +237,26 @@ export default function ProfileScreen() {
               icon="logout"
               label="Se déconnecter"
               destructive
-              onPress={handleLogout}
+              onPress={() => setLogoutDialogVisible(true)}
             />
           </View>
         </View>
       </ScrollView>
+
+      <Portal>
+        <Dialog visible={logoutDialogVisible} onDismiss={() => setLogoutDialogVisible(false)}>
+          <Dialog.Title>Se déconnecter</Dialog.Title>
+          <Dialog.Content>
+            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
+              Voulez-vous vraiment vous déconnecter de votre compte ?
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button mode="text" onPress={() => setLogoutDialogVisible(false)}>Annuler</Button>
+            <Button mode="text" textColor={C.error} onPress={confirmLogout}>Se déconnecter</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 }
@@ -309,11 +324,6 @@ const styles = StyleSheet.create({
     width: '100%',
     ...Shadows.xs,
   },
-  rechargeBtn: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    borderRadius: Radius.full,
-  },
   section: {
     paddingHorizontal: Spacing.marginMobile,
     marginTop: Spacing.lg,
@@ -329,11 +339,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
     borderBottomWidth: 1,
   },
   menuIcon: {
@@ -343,5 +348,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  menuText: { flex: 1 },
 });

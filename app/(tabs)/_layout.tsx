@@ -1,6 +1,6 @@
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { useEffect, type ComponentProps } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -12,7 +12,6 @@ import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, Radius, Shadows } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useUnreadCount } from '@/hooks/queries/use-notifications';
 
 const ICON_SPRING = { damping: 14, stiffness: 200 };
 const INDICATOR_SPRING = { damping: 16, stiffness: 220 };
@@ -29,7 +28,7 @@ function useTabAnimation(focused: boolean) {
     translateY.value = withSpring(focused ? -2 : 0, ICON_SPRING);
     indicatorWidth.value = withSpring(focused ? 16 : 0, INDICATOR_SPRING);
     indicatorOpacity.value = withTiming(focused ? 1 : 0, { duration: focused ? 120 : 80 });
-  }, [focused]);
+  }, [focused, indicatorOpacity, indicatorWidth, scale, translateY]);
 
   const iconAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { translateY: translateY.value }],
@@ -79,7 +78,7 @@ function TabLabel({
 
   useEffect(() => {
     scale.value = withSpring(focused ? 1 : 0.92, LABEL_SPRING);
-  }, [focused]);
+  }, [focused, scale]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -104,23 +103,31 @@ function TabLabel({
   );
 }
 
-function NotifTabIcon({ color, focused }: { color: string; focused: boolean }) {
-  const { data } = useUnreadCount();
-  const count = data?.count ?? 0;
-  const { iconAnimStyle, indicatorAnimStyle } = useTabAnimation(focused);
+function PublishTabButton({ color }: { color: string }) {
+  const scale = useSharedValue(1);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   return (
-    <View style={styles.iconPill}>
-      <Animated.View style={[styles.iconWrapper, iconAnimStyle]}>
-        <IconSymbol name={focused ? 'bell.fill' : 'bell'} size={24} color={color} />
-        {count > 0 && (
-          <View style={[styles.badge, { backgroundColor: Colors.light.error }]}>
-            <Text style={styles.badgeText}>{count > 9 ? '9+' : String(count)}</Text>
-          </View>
-        )}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Publier une annonce"
+      hitSlop={8}
+      onPress={() => router.push('/announces/create/step-1')}
+      onPressIn={() => {
+        scale.value = withSpring(0.94, ICON_SPRING);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, ICON_SPRING);
+      }}
+      style={styles.publishSlot}
+    >
+      <Animated.View style={[styles.publishButton, { backgroundColor: color }, Shadows.button, animStyle]}>
+        <IconSymbol name="plus" size={34} color="#ffffff" />
       </Animated.View>
-      <Animated.View style={[styles.indicator, { backgroundColor: color }, indicatorAnimStyle]} />
-    </View>
+    </Pressable>
   );
 }
 
@@ -175,20 +182,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="notifications"
+        options={{
+          title: '',
+          tabBarLabel: () => null,
+          tabBarButton: () => <PublishTabButton color={C.primary} />,
+          tabBarItemStyle: styles.publishItem,
+        }}
+      />
+      <Tabs.Screen
         name="favorites"
         options={{
           title: 'Favoris',
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'heart.fill' : 'heart'} color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: 'Alertes',
-          tabBarIcon: ({ color, focused }) => (
-            <NotifTabIcon color={color} focused={focused} />
           ),
         }}
       />
@@ -223,26 +230,22 @@ const styles = StyleSheet.create({
     height: 3,
     borderRadius: 2,
   },
-  iconWrapper: {
-    position: 'relative',
-    alignItems: 'center',
+  publishItem: {
     justifyContent: 'center',
   },
-  badge: {
-    position: 'absolute',
-    top: -3,
-    right: -6,
-    minWidth: 15,
-    height: 15,
+  publishSlot: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 18,
+  },
+  publishButton: {
+    width: 64,
+    height: 64,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  badgeText: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontFamily: 'PlusJakartaSans_700Bold',
-    lineHeight: 10,
+    borderWidth: 5,
+    borderColor: '#ffffff',
   },
 });

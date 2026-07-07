@@ -12,16 +12,19 @@ import {
   Text,
   View
 } from 'react-native';
+import { Badge, IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BroadcastBanner } from '@/components/home/broadcast-banner';
 import { SectionHeader } from '@/components/home/section-header';
 import { ListingCard } from '@/components/listing/listing-card';
 import { ListingSkeleton } from '@/components/listing/listing-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { SearchBar } from '@/components/search/search-bar';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useAnnounces } from '@/hooks/queries/use-announces';
 import { useBroadcasts } from '@/hooks/queries/use-broadcasts';
+import { useUnreadCount } from '@/hooks/queries/use-notifications';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const CATEGORIES = [
@@ -37,6 +40,7 @@ export default function HomeScreen() {
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
+  const { data: unreadCount } = useUnreadCount();
   const { data: broadcastsData, refetch: refetchBroadcasts } = useBroadcasts();
   const { data: recentData, isLoading: recentLoading, refetch: refetchRecent } = useAnnounces({ type: 'realestate', page: 1 });
   const { data: furnitureData, isLoading: furnitureLoading, refetch: refetchFurniture } = useAnnounces({ type: 'furniture', page: 1 });
@@ -67,9 +71,16 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant + '55' }]}>
         <Text style={[styles.logo, { color: C.primary }]}>DOMILIX</Text>
-        <Pressable hitSlop={8} style={styles.cartBtn}>
-          <MaterialIcons name="shopping-cart" size={24} color={C.primary} />
-        </Pressable>
+        <View style={styles.cartBtn}>
+          <IconButton
+            icon="bell-outline"
+            size={24}
+            iconColor={C.primary}
+            accessibilityLabel="Notifications"
+            onPress={() => router.push('/(tabs)/notifications')}
+          />
+          <Badge visible={!!unreadCount?.count} size={10} style={[styles.notifDot, { backgroundColor: C.error }]} />
+        </View>
       </View>
 
       <ScrollView
@@ -89,43 +100,6 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Hero Slider */}
-        {featuredItem && (
-          <View style={styles.section}>
-            <Pressable onPress={() => handleCardPress(featuredItem.id)} style={[styles.hero, { backgroundColor: C.surfaceContainer }]}>
-              <Image
-                source={{ uri: featuredItem.medias?.[0]?.file ?? `https://picsum.photos/seed/${featuredItem.id}/800/400` }}
-                style={StyleSheet.absoluteFillObject}
-                resizeMode="cover"
-              />
-              <LinearGradient
-                colors={['rgba(34,26,18,0.6)', 'rgba(34,26,18,0)', 'rgba(34,26,18,0.8)']}
-                locations={[0, 0.5, 1]}
-                style={StyleSheet.absoluteFillObject}
-              />
-              <View style={styles.heroContent}>
-                <View style={[styles.heroBadge, { backgroundColor: C.tertiaryContainer }]}>
-                  <Text style={[Typography.caption, { color: C.onTertiaryContainer }]}>Featured Property</Text>
-                </View>
-                <Text style={[Typography.headlineSm, styles.heroTitle]} numberOfLines={2}>
-                  {featuredItem.description.split('.')[0]}
-                </Text>
-                <View style={styles.heroLoc}>
-                  <MaterialIcons name="location-on" size={14} color="#fff" />
-                  <Text style={[Typography.caption, { color: 'rgba(255,255,255,0.9)' }]}>
-                    {featuredItem.address}, {featuredItem.city}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.heroDots}>
-                <View style={[styles.dot, { backgroundColor: '#fff' }]} />
-                <View style={[styles.dot, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
-                <View style={[styles.dot, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
-              </View>
-            </Pressable>
-          </View>
-        )}
-
         {/* Broadcast */}
         {broadcast && (
           <View style={styles.section}>
@@ -139,7 +113,10 @@ export default function HomeScreen() {
             {CATEGORIES.map((cat) => (
               <Pressable
                 key={cat.id}
-                style={styles.catItem}
+                accessibilityRole="button"
+                accessibilityLabel={cat.label}
+                accessibilityState={{ selected: cat.active }}
+                style={({ pressed }) => [styles.catItem, pressed && { opacity: 0.75 }]}
                 onPress={() => router.push({ pathname: '/(tabs)/explore', params: { type: cat.id } })}
               >
                 <View style={[
@@ -201,10 +178,10 @@ export default function HomeScreen() {
           {furnitureLoading
             ? [1, 2, 3].map((k) => (
                 <View key={k} style={[styles.miniCard, { backgroundColor: C.surfaceContainerLowest }]}>
-                  <View style={[styles.miniImage, { backgroundColor: C.surfaceVariant }]} />
+                  <Skeleton width={140} height={96} radius={0} />
                   <View style={styles.miniBody}>
-                    <View style={{ width: 80, height: 10, borderRadius: 4, backgroundColor: C.surfaceVariant }} />
-                    <View style={{ width: 60, height: 10, borderRadius: 4, backgroundColor: C.surfaceVariant }} />
+                    <Skeleton width={80} height={10} />
+                    <Skeleton width={60} height={10} style={{ marginTop: 3 }} />
                   </View>
                 </View>
               ))
@@ -262,56 +239,17 @@ const styles = StyleSheet.create({
     lineHeight: 32,
   },
   cartBtn: {
-    padding: Spacing.xs,
+    position: 'relative',
+  },
+  notifDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
   },
   scroll: { paddingTop: Spacing.md },
   section: {
     paddingHorizontal: Spacing.marginMobile,
     marginBottom: Spacing.md,
-  },
-  // Hero
-  hero: {
-    height: 200,
-    borderRadius: Radius.xl,
-    overflow: 'hidden',
-    ...Shadows.card,
-  },
-  heroContent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: Spacing.md,
-  },
-  heroBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-    marginBottom: Spacing.xs,
-  },
-  heroTitle: {
-    color: '#ffffff',
-    fontSize: 20,
-    lineHeight: 26,
-  },
-  heroLoc: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    marginTop: 3,
-  },
-  heroDots: {
-    position: 'absolute',
-    bottom: Spacing.md,
-    right: Spacing.md,
-    flexDirection: 'row',
-    gap: 4,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
   },
   // Categories
   catRow: {

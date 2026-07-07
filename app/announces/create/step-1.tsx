@@ -3,32 +3,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
+import { StepIndicator } from '@/components/ui/step-indicator';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCategories } from '@/hooks/queries/use-categories';
 import { useCreateListingStore } from '@/stores/create-listing.store';
 import type { AdType, AnnounceType } from '@/types/announce';
-
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  return (
-    <View style={styles.stepRow}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.stepDot,
-            {
-              backgroundColor: i < current ? C.primary : i === current - 1 ? C.primary : C.outlineVariant,
-              flex: 1,
-            },
-          ]}
-        />
-      ))}
-    </View>
-  );
-}
 
 export default function CreateStep1Screen() {
   const scheme = useColorScheme();
@@ -62,35 +42,42 @@ export default function CreateStep1Screen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <StepIndicator current={1} total={3} />
+        <StepIndicator current={1} />
+
+        {/* Type de bien + Type d'annonce — même ligne */}
+        <View style={styles.typeRow}>
+          <View style={styles.typeCol}>
+            <Text style={[Typography.labelSm, styles.typeLabel, { color: C.onSurfaceVariant }]}>
+              TYPE DE BIEN
+            </Text>
+            <ToggleSwitch
+              style={styles.toggleFull}
+              options={[
+                { label: 'Immobilier', value: 'realestate' },
+                { label: 'Mobilier', value: 'furniture' },
+              ]}
+              value={draft.type}
+              onChange={(v: AnnounceType) => setDraft({ type: v, category_id: '' })}
+            />
+          </View>
+
+          <View style={styles.typeCol}>
+            <Text style={[Typography.labelSm, styles.typeLabel, { color: C.onSurfaceVariant }]}>
+              TYPE D'ANNONCE
+            </Text>
+            <ToggleSwitch
+              style={styles.toggleFull}
+              options={[
+                { label: 'Location', value: 'location' },
+                { label: 'Vente', value: 'sale' },
+              ]}
+              value={draft.ad_type}
+              onChange={(v: AdType) => setDraft({ ad_type: v })}
+            />
+          </View>
+        </View>
 
         <Text style={[Typography.headlineMd, styles.sectionTitle, { color: C.onSurface }]}>
-          Type de bien
-        </Text>
-
-        <ToggleSwitch
-          options={[
-            { label: 'Immobilier', value: 'realestate' },
-            { label: 'Mobilier', value: 'furniture' },
-          ]}
-          value={draft.type}
-          onChange={(v: AnnounceType) => setDraft({ type: v, category_id: '' })}
-        />
-
-        <Text style={[Typography.headlineMd, styles.sectionTitle, { color: C.onSurface, marginTop: Spacing.xl }]}>
-          Type d'annonce
-        </Text>
-
-        <ToggleSwitch
-          options={[
-            { label: 'Location', value: 'location' },
-            { label: 'Vente', value: 'sale' },
-          ]}
-          value={draft.ad_type}
-          onChange={(v: AdType) => setDraft({ ad_type: v })}
-        />
-
-        <Text style={[Typography.headlineMd, styles.sectionTitle, { color: C.onSurface, marginTop: Spacing.xl }]}>
           Catégorie
         </Text>
 
@@ -156,18 +143,27 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.xxl,
   },
-  stepRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    marginBottom: Spacing.xl,
-  },
-  stepDot: {
-    height: 4,
-    borderRadius: 2,
-  },
   sectionTitle: {
     fontSize: 18,
+    marginTop: Spacing.xl,
     marginBottom: Spacing.md,
+  },
+  typeRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
+  },
+  typeCol: {
+    flex: 1,
+    gap: Spacing.sm,
+  },
+  typeLabel: {
+    fontSize: 11,
+    letterSpacing: 0.8,
+  },
+  toggleFull: {
+    alignSelf: 'stretch',
+    minWidth: 0,
   },
   categoryGrid: {
     flexDirection: 'row',

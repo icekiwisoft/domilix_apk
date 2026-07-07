@@ -3,6 +3,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Announce } from '@/types/announce';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { IconButton } from 'react-native-paper';
 
 const IMAGE_HEIGHT = 128;
 
@@ -60,20 +61,16 @@ export function ListingCard({ announce, onPress, onLike }: ListingCardProps) {
         </View>
 
         {/* Fav button — top right */}
-        <Pressable
+        <IconButton
+          icon={announce.liked ? 'heart' : 'heart-outline'}
+          accessibilityLabel={announce.liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          accessibilityState={{ selected: announce.liked }}
           onPress={() => onLike?.(announce.id, announce.liked)}
-          hitSlop={4}
-          style={({ pressed }) => [
-            styles.favBtn,
-            { backgroundColor: pressed ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.8)' },
-          ]}
-        >
-          <MaterialIcons
-            name={announce.liked ? 'favorite' : 'favorite-border'}
-            size={20}
-            color={announce.liked ? '#e53935' : C.secondary}
-          />
-        </Pressable>
+          size={18}
+          iconColor={announce.liked ? '#e53935' : C.secondary}
+          containerColor="rgba(255,255,255,0.8)"
+          style={styles.favBtn}
+        />
       </View>
 
       {/* Body */}
@@ -135,13 +132,9 @@ const styles = StyleSheet.create({
   },
   favBtn: {
     position: 'absolute',
-    top: Spacing.sm,
-    right: Spacing.sm,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: Spacing.xs,
+    right: Spacing.xs,
+    margin: 0,
   },
   body: {
     flex: 1,

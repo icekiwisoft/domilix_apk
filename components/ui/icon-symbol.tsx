@@ -24,6 +24,7 @@ const MAPPING = {
   'arrow.right': 'arrow-forward',
   'xmark': 'close',
   'checkmark': 'check',
+  'plus': 'add',
   // tabs
   'magnifyingglass': 'search',
   'heart': 'favorite-border',

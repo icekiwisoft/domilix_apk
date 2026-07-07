@@ -32,8 +32,16 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: gradle-
+            android/.gradle
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - name: 💾 Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk
+          key: android-sdk-${{ runner.os }}-${{ hashFiles('android/build.gradle', 'android/app/build.gradle') }}
+          restore-keys: android-sdk-${{ runner.os }}-
 
       - name: 💾 Cache EAS local build
         uses: actions/cache@v4
@@ -41,6 +49,13 @@ jobs:
           path: ~/.eas-build-local
           key: eas-local-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: eas-local-${{ runner.os }}-
+
+      - name: 💾 Cache Metro bundler
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache
+          key: metro-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: metro-${{ runner.os }}-
 
       - name: ⚡ Setup Node
         uses: actions/setup-node@v4

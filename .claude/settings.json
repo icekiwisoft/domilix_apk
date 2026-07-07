@@ -14,7 +14,23 @@
       "Bash(py --version)",
       "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"real estate mobile app luxury premium\" --design-system -p \"Domilix\" -f markdown)",
       "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"mobile app interaction animation touch\" --domain ux -n 8)",
-      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"button card shadow elevation\" --stack react-native)"
+      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"button card shadow elevation\" --stack react-native)",
+      "Bash(npx expo *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8081 --max-time 5)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8081/status --max-time 5)",
+      "Bash(echo \"started with pid $!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8090/status --max-time 5)",
+      "Bash(curl -s http://localhost:8090/ --max-time 10)",
+      "PowerShell($procId = \\(Get-NetTCPConnection -LocalPort 8090 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\); if \\($procId\\) { Stop-Process -Id $procId -Force; \"stopped $procId\" } else { \"no process found\" })",
+      "PowerShell($procId = \\(Get-NetTCPConnection -LocalPort 8091 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\); if \\($procId\\) { Stop-Process -Id $procId -Force; \"stopped $procId\" } else { \"no process found\" })",
+      "PowerShell($procId = \\(Get-NetTCPConnection -LocalPort 8092 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\); if \\($procId\\) { Stop-Process -Id $procId -Force; \"stopped $procId\" } else { \"no process found\" })",
+      "PowerShell($procId = \\(Get-NetTCPConnection -LocalPort 8093 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\); if \\($procId\\) { Stop-Process -Id $procId -Force; \"stopped $procId\" } else { \"no process found\" })",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8093/status --max-time 3)",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8094 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8095 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8096 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8097 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8098 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\Wilfreid\\.claude"

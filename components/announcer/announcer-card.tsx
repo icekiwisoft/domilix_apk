@@ -18,6 +18,8 @@ export function AnnouncerCard({ announcer, announcesCount, onPress }: AnnouncerC
 
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Voir le profil de ${displayName}`}
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
