@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -38,9 +39,13 @@ export default function EditProfileScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
-        </Pressable>
+        <IconButton
+          icon="arrow-left"
+          accessibilityLabel="Retour"
+          onPress={() => router.back()}
+          iconColor={C.onSurface}
+          style={styles.backBtn}
+        />
         <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>
           Modifier le profil
         </Text>
@@ -54,7 +59,12 @@ export default function EditProfileScreen() {
       >
         {/* Avatar picker */}
         <View style={styles.avatarSection}>
-          <Pressable onPress={handlePickAvatar} style={styles.avatarPressable}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Changer la photo de profil"
+            onPress={handlePickAvatar}
+            style={styles.avatarPressable}
+          >
             {avatar ? (
               <Image source={{ uri: avatar }} style={[styles.avatar, { borderColor: C.primary + '40' }]} />
             ) : (
@@ -98,6 +108,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
   },
+  backBtn: { margin: 0 },
   scroll: {
     paddingBottom: Spacing.xxl,
   },
