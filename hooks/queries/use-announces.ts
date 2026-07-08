@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tansta
 import { AnnouncesService } from '@/services/announces.service';
 import type { AnnounceFilters } from '@/types/announce';
 
-export function useAnnounces(filters: AnnounceFilters = {}) {
+export function useAnnounces(filters: AnnounceFilters = {}, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['announces', filters],
     queryFn: () => AnnouncesService.list(filters),
+    enabled: options?.enabled,
   });
 }
 
@@ -15,7 +16,7 @@ export function useInfiniteAnnounces(filters: Omit<AnnounceFilters, 'page'> = {}
     queryFn: ({ pageParam = 1 }) => AnnouncesService.list({ ...filters, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (last) =>
-      last.page < last.last_page ? last.page + 1 : undefined,
+      last.meta.current_page < last.meta.last_page ? last.meta.current_page + 1 : undefined,
     enabled: options?.enabled,
   });
 }

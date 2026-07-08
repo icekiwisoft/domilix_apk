@@ -1,19 +1,23 @@
-import { useCallback } from 'react';
-import { Alert, FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, Image, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { ActivityIndicator, Button, Card, Dialog, IconButton, Portal } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMe } from '@/hooks/queries/use-auth-queries';
-import { useDeleteAnnounce, useMyAnnounces } from '@/hooks/queries/use-announces';
+import { useAnnounces, useDeleteAnnounce, useInfiniteAnnounces } from '@/hooks/queries/use-announces';
 import { useToast } from '@/components/ui/toast';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ListingCardHSkeleton } from '@/components/listing/listing-skeleton';
+import { ManageCardSkeleton } from '@/components/listing/listing-skeleton';
 import type { Announce } from '@/types/announce';
 
 const THUMB_SIZE = 104;
+const STAGGER_MS = 40;
+const STAGGER_CAP = 8;
 
 function formatPrice(price: number): string {
   if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(1).replace('.0', '')}M`;
@@ -45,13 +49,14 @@ function getPeriodSuffix(announce: Announce): string {
 
 interface ManageCardProps {
   announce: Announce;
+  index: number;
   deleting?: boolean;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-function ManageCard({ announce, deleting, onView, onEdit, onDelete }: ManageCardProps) {
+function ManageCard({ announce, index, deleting, onView, onEdit, onDelete }: ManageCardProps) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
@@ -64,131 +69,103 @@ function ManageCard({ announce, deleting, onView, onEdit, onDelete }: ManageCard
   const isFurniture = announce.type === 'furniture';
   const locationText = [announce.neighborhood, announce.city].filter(Boolean).join(', ') || announce.address;
   const likesCount = announce.likes_count ?? 0;
+  const title = getTitle(announce);
 
   return (
-    <View style={[styles.card, { backgroundColor: C.surfaceContainerLowest, borderColor: C.outlineVariant + '66' }]}>
-      <Pressable
+    <Animated.View entering={FadeInDown.delay(Math.min(index, STAGGER_CAP) * STAGGER_MS).duration(260)}>
+      <Card
+        mode="elevated"
+        style={[styles.card, { backgroundColor: C.surfaceContainerLowest }]}
         onPress={onView}
-        style={({ pressed }) => [styles.cardBody, pressed && { opacity: 0.9 }]}
+        accessibilityLabel={`Voir l'annonce ${title}`}
       >
-        <View style={[styles.thumbBox, { backgroundColor: C.surfaceContainerLow }]}>
-          <Image source={{ uri: thumb }} style={styles.thumbImg} resizeMode="cover" />
-          <View style={[styles.photoBadge, { backgroundColor: 'rgba(34, 26, 18, 0.72)' }]}>
-            <MaterialIcons name="photo-camera" size={11} color="#fff" />
-            <Text style={styles.photoBadgeText}>{announce.medias?.length ?? 0}</Text>
+        <View style={styles.cardBody}>
+          <View style={[styles.thumbBox, { backgroundColor: C.surfaceContainerLow }]}>
+            <Image source={{ uri: thumb }} style={styles.thumbImg} resizeMode="cover" />
+            <View style={[styles.photoBadge, { backgroundColor: 'rgba(34, 26, 18, 0.72)' }]}>
+              <MaterialIcons name="photo-camera" size={11} color="#fff" />
+              <Text style={styles.photoBadgeText}>{announce.medias?.length ?? 0}</Text>
+            </View>
+          </View>
+
+          <View style={styles.infoCol}>
+            <View style={styles.badgeRow}>
+              <View style={[styles.statusBadge, { backgroundColor: isLocation ? C.tertiaryContainer : C.primaryFixed }]}>
+                <Text style={[styles.statusBadgeText, { color: isLocation ? C.onTertiaryContainer : C.primaryContainer }]}>
+                  {isLocation ? 'Location' : 'Vente'}
+                </Text>
+              </View>
+              <View style={[styles.typeBadge, { backgroundColor: C.surfaceContainerHigh }]}>
+                <MaterialIcons
+                  name={isFurniture ? 'chair' : 'apartment'}
+                  size={12}
+                  color={C.onSurfaceVariant}
+                />
+                <Text style={[styles.typeBadgeText, { color: C.onSurfaceVariant }]}>
+                  {isFurniture ? 'Mobilier' : 'Immobilier'}
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.cardTitle, { color: C.onSurface }]} numberOfLines={2}>
+              {title}
+            </Text>
+
+            <View style={styles.locationRow}>
+              <MaterialIcons name="location-on" size={13} color={C.secondary} />
+              <Text style={[styles.locationText, { color: C.onSurfaceVariant }]} numberOfLines={1}>
+                {locationText}
+              </Text>
+            </View>
+
+            <View style={styles.priceRow}>
+              <Text style={[styles.price, { color: C.primary }]}>
+                {formatPrice(announce.price)}
+              </Text>
+              <Text style={[styles.currency, { color: C.onSurfaceVariant }]}>
+                {getCurrency(announce)}{getPeriodSuffix(announce)}
+              </Text>
+            </View>
+
+            <View style={styles.metaRow}>
+              <View style={[styles.metaPill, { backgroundColor: C.surfaceContainerLow }]}>
+                <MaterialIcons name="favorite-border" size={12} color={C.onSurfaceVariant} />
+                <Text style={[styles.metaText, { color: C.onSurfaceVariant }]}>
+                  {likesCount}
+                </Text>
+              </View>
+              <View style={[styles.metaPill, { backgroundColor: C.surfaceContainerLow }]}>
+                <MaterialIcons name="event" size={12} color={C.onSurfaceVariant} />
+                <Text style={[styles.metaText, { color: C.onSurfaceVariant }]}>
+                  {formatDate(announce.creation_date)}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        <View style={styles.infoCol}>
-          <View style={styles.badgeRow}>
-            <View style={[styles.statusBadge, { backgroundColor: isLocation ? C.tertiaryContainer : C.primaryFixed }]}>
-              <Text style={[styles.statusBadgeText, { color: isLocation ? C.onTertiaryContainer : C.primaryContainer }]}>
-                {isLocation ? 'Location' : 'Vente'}
-              </Text>
-            </View>
-            <View style={[styles.typeBadge, { backgroundColor: C.surfaceContainerHigh }]}>
-              <MaterialIcons
-                name={isFurniture ? 'chair' : 'apartment'}
-                size={12}
-                color={C.onSurfaceVariant}
-              />
-              <Text style={[styles.typeBadgeText, { color: C.onSurfaceVariant }]}>
-                {isFurniture ? 'Mobilier' : 'Immobilier'}
-              </Text>
-            </View>
-          </View>
-
-          <Text style={[styles.cardTitle, { color: C.onSurface }]} numberOfLines={2}>
-            {getTitle(announce)}
-          </Text>
-
-          <View style={styles.locationRow}>
-            <MaterialIcons name="location-on" size={13} color={C.secondary} />
-            <Text style={[styles.locationText, { color: C.onSurfaceVariant }]} numberOfLines={1}>
-              {locationText}
-            </Text>
-          </View>
-
-          <View style={styles.priceRow}>
-            <Text style={[styles.price, { color: C.primary }]}>
-              {formatPrice(announce.price)}
-            </Text>
-            <Text style={[styles.currency, { color: C.onSurfaceVariant }]}>
-              {getCurrency(announce)}{getPeriodSuffix(announce)}
-            </Text>
-          </View>
-
-          <View style={styles.metaRow}>
-            <View style={[styles.metaPill, { backgroundColor: C.surfaceContainerLow }]}>
-              <MaterialIcons name="favorite-border" size={12} color={C.onSurfaceVariant} />
-              <Text style={[styles.metaText, { color: C.onSurfaceVariant }]}>
-                {likesCount}
-              </Text>
-            </View>
-            <View style={[styles.metaPill, { backgroundColor: C.surfaceContainerLow }]}>
-              <MaterialIcons name="event" size={12} color={C.onSurfaceVariant} />
-              <Text style={[styles.metaText, { color: C.onSurfaceVariant }]}>
-                {formatDate(announce.creation_date)}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Pressable>
-
-      <View style={[styles.actionBar, { borderTopColor: C.outlineVariant + '66' }]}>
-        <ActionButton
-          icon="visibility"
-          label="Voir"
-          color={C.onSurfaceVariant}
-          background={C.surfaceContainerLow}
-          onPress={onView}
-        />
-        <ActionButton
-          icon="edit"
-          label="Modifier"
-          color={C.primary}
-          background={C.primaryFixed + '55'}
-          onPress={onEdit}
-        />
-        <ActionButton
-          icon="delete-outline"
-          label={deleting ? 'Suppression' : 'Supprimer'}
-          color={C.error}
-          background={C.errorContainer + '55'}
-          disabled={deleting}
-          onPress={onDelete}
-        />
-      </View>
-    </View>
-  );
-}
-
-interface ActionButtonProps {
-  icon: React.ComponentProps<typeof MaterialIcons>['name'];
-  label: string;
-  color: string;
-  background: string;
-  disabled?: boolean;
-  onPress: () => void;
-}
-
-function ActionButton({ icon, label, color, background, disabled, onPress }: ActionButtonProps) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      hitSlop={6}
-      style={({ pressed }) => [
-        styles.actionBtn,
-        pressed && !disabled && { backgroundColor: background },
-        disabled && { opacity: 0.55 },
-      ]}
-    >
-      <MaterialIcons name={icon} size={16} color={color} />
-      <Text style={[styles.actionLabel, { color }]} numberOfLines={1}>
-        {label}
-      </Text>
-    </Pressable>
+        <Card.Actions style={[styles.actionBar, { borderTopColor: C.outlineVariant + '66' }]}>
+          <Button mode="text" icon="eye-outline" compact onPress={onView} textColor={C.onSurfaceVariant} style={styles.actionBtn} labelStyle={styles.actionLabel}>
+            Voir
+          </Button>
+          <Button mode="text" icon="pencil-outline" compact onPress={onEdit} textColor={C.primary} style={styles.actionBtn} labelStyle={styles.actionLabel}>
+            Modifier
+          </Button>
+          <Button
+            mode="text"
+            icon="delete-outline"
+            compact
+            disabled={deleting}
+            onPress={onDelete}
+            textColor={C.error}
+            style={styles.actionBtn}
+            labelStyle={styles.actionLabel}
+          >
+            {deleting ? 'Suppression' : 'Supprimer'}
+          </Button>
+        </Card.Actions>
+      </Card>
+    </Animated.View>
   );
 }
 
@@ -200,54 +177,85 @@ export default function MyListingsScreen() {
   const hydrated = useAuthStore(s => s.hydrated);
   const storeUser = useAuthStore(s => s.user);
 
-  const { data: meData, isLoading: isUserLoading, isFetching: isUserFetching } = useMe();
+  const { data: meData } = useMe();
   // Prefer React Query data (most up-to-date), fall back to Zustand store user
   // set by AuthProvider hydration so announcerId is available immediately
   const user = meData ?? storeUser;
-  const announcerId = user?.announcer?.id ?? '';
+  const announcerId = user?.announcer ?? '';
+  const hasAnnouncerId = !!announcerId;
 
-  const { data: result, isLoading: isListingsLoading, isFetching, isFetched, refetch } = useMyAnnounces(announcerId);
+  const {
+    data: pages,
+    isLoading: isListingsLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteAnnounces({ AnnouncerId: announcerId }, { enabled: hasAnnouncerId });
   const deleteAnnounce = useDeleteAnnounce();
-  const listings = result?.data ?? [];
-  const total = result?.total ?? listings.length;
-  const locationCount = listings.filter((item) => item.ad_type === 'location').length;
-  const saleCount = listings.filter((item) => item.ad_type === 'sale').length;
-  const isWaitingForAnnouncer = (isUserLoading || isUserFetching) && !announcerId;
-  const isInitialListingsLoad = isListingsLoading || (isFetching && listings.length === 0);
-  // !hydrated → tokens not yet read from storage (white page window)
-  // !!announcerId && !isFetched → announcerId just arrived, fetch not started yet
-  const isPageLoading = !hydrated || isWaitingForAnnouncer || isInitialListingsLoad || (!!announcerId && !isFetched);
-  const showEmptyState = !isPageLoading && isFetched && listings.length === 0;
+  const listings = useMemo(() => pages?.pages.flatMap((p) => p.data) ?? [], [pages]);
+  const total = pages?.pages[0]?.meta.total ?? listings.length;
 
+  // Backend bug: the `ad_type` filter on GET /announces is not applied
+  // server-side (confirmed: requesting ad_type=sale still returns "location"
+  // items and the unfiltered total). Until the API honors it, fetch this
+  // announcer's full listing set once — independent of how much the user has
+  // scrolled in the main paginated list — and count ad_type ourselves.
+  const { data: allForCounts } = useAnnounces(
+    { AnnouncerId: announcerId, per_page: total },
+    { enabled: hasAnnouncerId && total > 0 },
+  );
+  const locationCount = allForCounts?.data.filter((a) => a.ad_type === 'location').length ?? 0;
+  const saleCount = allForCounts?.data.filter((a) => a.ad_type === 'sale').length ?? 0;
+
+  // We have nothing useful to show until auth has hydrated, we know which
+  // announcer we are, and that announcer's listings have loaded at least once.
+  const isPageLoading = !hydrated || !hasAnnouncerId || isListingsLoading;
+  const showEmptyState = !isPageLoading && listings.length === 0;
+
+  // Belt-and-suspenders: force a fetch the moment the announcer id becomes
+  // available, instead of only trusting the query's own `enabled` transition.
+  useEffect(() => {
+    if (hasAnnouncerId) {
+      refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasAnnouncerId]);
+
+  // Refresh when coming back to this screen (e.g. after creating/editing/
+  // deleting an announce from a child screen).
   useFocusEffect(
     useCallback(() => {
-      if (announcerId) {
+      if (hasAnnouncerId) {
         refetch();
       }
-    }, [announcerId, refetch])
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hasAnnouncerId])
   );
 
-  function confirmDelete(announce: Announce) {
-    Alert.alert('Supprimer cette annonce ?', 'Cette action est irréversible.', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: () =>
-          deleteAnnounce.mutate(announce.id, {
-            onSuccess: () => toast.show('Annonce supprimée.', 'success'),
-            onError: () => toast.show('Échec de la suppression.', 'error'),
-          }),
-      },
-    ]);
+  const [deleteTarget, setDeleteTarget] = useState<Announce | null>(null);
+
+  function handleDeleteConfirmed() {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    setDeleteTarget(null);
+    deleteAnnounce.mutate(id, {
+      onSuccess: () => toast.show('Annonce supprimée.', 'success'),
+      onError: () => toast.show('Échec de la suppression.', 'error'),
+    });
   }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
       <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant + '77' }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.backBtn}>
-          <MaterialIcons name="arrow-back" size={22} color={C.onSurface} />
-        </Pressable>
+        <IconButton
+          icon="arrow-left"
+          accessibilityLabel="Retour"
+          onPress={() => router.back()}
+          iconColor={C.onSurface}
+          style={styles.backBtn}
+        />
 
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: C.onSurface }]}>Mes annonces</Text>
@@ -258,13 +266,14 @@ export default function MyListingsScreen() {
           )}
         </View>
 
-        <Pressable
+        <IconButton
+          icon="plus"
+          accessibilityLabel="Publier une annonce"
           onPress={() => router.push('/announces/create/step-1')}
-          hitSlop={8}
-          style={[styles.addBtn, { backgroundColor: C.primary }, Shadows.button]}
-        >
-          <MaterialIcons name="add" size={20} color={C.onPrimary} />
-        </Pressable>
+          iconColor={C.onPrimary}
+          containerColor={C.primary}
+          style={styles.addBtn}
+        />
       </View>
 
       <FlatList
@@ -278,25 +287,27 @@ export default function MyListingsScreen() {
             colors={[C.primary]}
           />
         }
-        contentContainerStyle={
-          showEmptyState ? styles.flatEmpty : styles.flatContent
-        }
+        contentContainerStyle={styles.flatContent}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
-        renderItem={({ item }) => (
+        onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={styles.paginationLoader} /> : null}
+        renderItem={({ item, index }) => (
           <ManageCard
             announce={item}
+            index={index}
             deleting={deleteAnnounce.isPending}
             onView={() => router.push(`/announces/${item.id}`)}
             onEdit={() => router.push(`/announces/edit/${item.id}`)}
-            onDelete={() => confirmDelete(item)}
+            onDelete={() => setDeleteTarget(item)}
           />
         )}
         ListHeaderComponent={
           isPageLoading ? (
             <View style={{ gap: Spacing.md }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <ListingCardHSkeleton key={i} />
+                <ManageCardSkeleton key={i} />
               ))}
             </View>
           ) : listings.length > 0 ? (
@@ -321,6 +332,21 @@ export default function MyListingsScreen() {
           ) : null
         }
       />
+
+      <Portal>
+        <Dialog visible={!!deleteTarget} onDismiss={() => setDeleteTarget(null)}>
+          <Dialog.Title>Supprimer cette annonce ?</Dialog.Title>
+          <Dialog.Content>
+            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
+              Cette action est irréversible.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button mode="text" onPress={() => setDeleteTarget(null)}>Annuler</Button>
+            <Button mode="text" textColor={C.error} onPress={handleDeleteConfirmed}>Supprimer</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 }
@@ -355,11 +381,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
+    margin: 0,
     flexShrink: 0,
   },
   headerCenter: {
@@ -372,21 +394,15 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   addBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
+    margin: 0,
     flexShrink: 0,
   },
   flatContent: {
+    flexGrow: 1,
     padding: Spacing.marginMobile,
     paddingBottom: Spacing.xl,
   },
-  flatEmpty: {
-    flex: 1,
-    padding: Spacing.marginMobile,
-  },
+  paginationLoader: { marginTop: Spacing.md },
   summary: {
     borderWidth: 1,
     borderRadius: Radius.lg,
@@ -419,9 +435,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: Radius.lg,
-    borderWidth: 1,
     overflow: 'hidden',
-    ...Shadows.card,
   },
   cardBody: {
     flexDirection: 'row',
@@ -543,21 +557,12 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   actionBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderTopWidth: 1,
-    padding: Spacing.xs,
-    gap: Spacing.xs,
+    justifyContent: 'space-around',
+    paddingHorizontal: Spacing.xs,
   },
   actionBtn: {
     flex: 1,
-    minHeight: 36,
-    borderRadius: Radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingHorizontal: 4,
   },
   actionLabel: {
     fontFamily: 'PlusJakartaSans_700Bold',

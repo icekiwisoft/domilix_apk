@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Button } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -86,29 +87,15 @@ export function PlanCard({
         ))}
       </View>
 
-      <Pressable
-        onPress={current ? undefined : onPress}
-        style={[
-          styles.cta,
-          {
-            backgroundColor: recommended && !current ? C.primary : 'transparent',
-            borderColor: current ? C.outlineVariant : recommended ? C.primary : C.outlineVariant,
-            borderWidth: 1.5,
-          },
-        ]}
+      <Button
+        mode={recommended && !current ? 'contained' : 'outlined'}
+        icon={current ? 'check-circle' : undefined}
+        disabled={current}
+        onPress={onPress}
+        style={styles.cta}
       >
-        {current && <MaterialIcons name="check-circle" size={15} color={C.onSurfaceVariant} style={{ marginRight: 4 }} />}
-        <Text style={[
-          Typography.labelSm,
-          {
-            color: recommended && !current ? C.onPrimary : current ? C.onSurfaceVariant : C.primary,
-            textTransform: 'uppercase',
-            letterSpacing: 0.8,
-          },
-        ]}>
-          {current ? 'Plan actuel' : ctaLabel}
-        </Text>
-      </Pressable>
+        {current ? 'Plan actuel' : ctaLabel}
+      </Button>
     </View>
   );
 }
@@ -143,10 +130,6 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   cta: {
-    height: 48,
     borderRadius: Radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

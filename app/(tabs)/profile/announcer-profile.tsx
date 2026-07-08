@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -8,13 +8,20 @@ import { AnnouncerForm, type AnnouncerFormValues } from '@/components/forms/anno
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe, useUpdateAnnouncerProfile } from '@/hooks/queries/use-auth-queries';
+import { useAnnouncer } from '@/hooks/queries/use-announcers';
 
 export default function AnnouncerProfileEditScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const { data: user } = useMe();
+  const announcerId = user?.announcer ?? '';
+  const { data: announcer } = useAnnouncer(announcerId);
   const updateAnnouncerProfile = useUpdateAnnouncerProfile();
-  const [avatar, setAvatar] = useState<string | undefined>(user?.announcer?.avatar);
+  const [avatar, setAvatar] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (announcer?.avatar) setAvatar(announcer.avatar);
+  }, [announcer?.avatar]);
 
   async function handlePickAvatar() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -33,7 +40,7 @@ export default function AnnouncerProfileEditScreen() {
     if (values.company_name) formData.append('company_name', values.company_name);
     if (values.bio) formData.append('bio', values.bio);
     if (values.professional_phone) formData.append('professional_phone', values.professional_phone);
-    if (avatar && avatar !== user?.announcer?.avatar) {
+    if (avatar && avatar !== announcer?.avatar) {
       const filename = avatar.split('/').pop() ?? 'avatar.jpg';
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : 'image/jpeg';
@@ -92,10 +99,13 @@ export default function AnnouncerProfileEditScreen() {
         {/* Form */}
         <View style={styles.formWrapper}>
           <AnnouncerForm
+            // Remount once the announcer record has loaded so react-hook-form
+            // picks up the fetched values (its defaultValues are only read once).
+            key={announcer?.id ?? 'loading'}
             defaultValues={{
-              company_name: user?.announcer?.company_name,
-              bio: user?.announcer?.bio ?? undefined,
-              professional_phone: user?.announcer?.professional_phone,
+              company_name: announcer?.company_name,
+              bio: announcer?.bio ?? undefined,
+              professional_phone: announcer?.professional_phone,
             }}
             onSubmit={handleSave}
             loading={updateAnnouncerProfile.isPending}
@@ -103,9 +113,9 @@ export default function AnnouncerProfileEditScreen() {
         </View>
 
         {/* View public profile link */}
-        {user?.announcer && (
+        {!!announcerId && (
           <Pressable
-            onPress={() => router.push(`/announcers/${user.announcer!.id}`)}
+            onPress={() => router.push(`/announcers/${announcerId}`)}
             style={styles.viewPublicRow}
           >
             <MaterialIcons name="open-in-new" size={16} color={C.primary} />

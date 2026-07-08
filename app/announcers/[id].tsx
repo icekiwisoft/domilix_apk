@@ -158,7 +158,7 @@ export default function AnnouncerProfileScreen() {
     [listingsPages],
   );
   const totalListings =
-    (listingsPages?.pages[0]?.total ?? ((announcer.houses ?? 0) + (announcer.furnitures ?? 0))) ||
+    (listingsPages?.pages[0]?.meta.total ?? ((announcer.houses ?? 0) + (announcer.furnitures ?? 0))) ||
     listings.length;
   const allMedias = useMemo(() => listings.flatMap((a) => a.medias), [listings]);
   const filteredListings = search.trim()

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { Button, Dialog, List, Portal } from 'react-native-paper';
+import { Button, Dialog, Portal, TouchableRipple } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe, useLogout } from '@/hooks/queries/use-auth-queries';
+import { useAnnouncer } from '@/hooks/queries/use-announcers';
 import { useSubscriptions } from '@/hooks/queries/use-subscriptions';
 import { useAuthStore } from '@/stores/auth.store';
 import { LoginGate } from '@/components/ui/login-gate';
@@ -26,22 +27,28 @@ function MenuRow({ icon, label, subtitle, onPress, destructive }: MenuRowProps) 
   const iconBg = destructive ? C.errorContainer + '55' : C.primaryFixed + '88';
   const iconColor = destructive ? C.error : C.primary;
   return (
-    <List.Item
-      title={label}
-      description={subtitle}
+    <TouchableRipple
       onPress={onPress}
+      accessibilityRole="button"
       style={[styles.menuRow, { borderBottomColor: C.outlineVariant + '44' }]}
-      titleStyle={{ color: destructive ? C.error : C.onSurface, fontFamily: 'PlusJakartaSans_500Medium', fontSize: 15 }}
-      descriptionStyle={{ color: C.onSurfaceVariant }}
-      left={() => (
+    >
+      <View style={styles.menuRowContent}>
         <View style={[styles.menuIcon, { backgroundColor: iconBg }]}>
           <MaterialIcons name={icon} size={19} color={iconColor} />
         </View>
-      )}
-      right={destructive ? undefined : (props) => (
-        <List.Icon {...props} icon="chevron-right" color={C.outlineVariant} />
-      )}
-    />
+        <View style={styles.menuText}>
+          <Text style={[Typography.bodyMd, { color: destructive ? C.error : C.onSurface, fontFamily: 'PlusJakartaSans_500Medium' }]}>
+            {label}
+          </Text>
+          {subtitle && (
+            <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 1 }]}>{subtitle}</Text>
+          )}
+        </View>
+        {!destructive && (
+          <MaterialIcons name="chevron-right" size={18} color={C.outlineVariant} />
+        )}
+      </View>
+    </TouchableRipple>
   );
 }
 
@@ -65,6 +72,7 @@ export default function ProfileScreen() {
   const C = Colors[scheme ?? 'light'];
   const accessToken = useAuthStore((s) => s.accessToken);
   const { data: user } = useMe();
+  const { data: announcer } = useAnnouncer(user?.announcer ?? '');
   const logout = useLogout();
   const { data: subs = [] } = useSubscriptions();
   const activeSub = subs.find((s) => s.status === 'active');
@@ -112,8 +120,8 @@ export default function ProfileScreen() {
             onPress={() => router.push('/(tabs)/profile/edit')}
             style={[styles.avatarWrapper, { borderColor: C.primary + '40' }]}
           >
-            {user?.announcer?.avatar ? (
-              <Image source={{ uri: user.announcer.avatar }} style={styles.avatarImg} />
+            {announcer?.avatar ? (
+              <Image source={{ uri: announcer.avatar }} style={styles.avatarImg} />
             ) : (
               <View style={[styles.avatarImg, styles.avatarFallback, { backgroundColor: C.surfaceContainerHighest }]}>
                 <MaterialIcons name="person" size={44} color={C.onSurfaceVariant} />
@@ -341,11 +349,20 @@ const styles = StyleSheet.create({
   menuRow: {
     borderBottomWidth: 1,
   },
+  menuRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+  },
   menuIcon: {
     width: 36,
     height: 36,
     borderRadius: Radius.sm + 2,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
+  menuText: { flex: 1 },
 });

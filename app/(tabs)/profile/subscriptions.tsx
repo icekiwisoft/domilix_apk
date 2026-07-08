@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -8,13 +7,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import { Button, IconButton, TextInput, TouchableRipple } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useSubscriptions, useCreateSubscription } from '@/hooks/queries/use-subscriptions';
 import { useToast } from '@/components/ui/toast';
@@ -237,69 +236,65 @@ function PaymentModal({
             /* ── Step 1 : method selection ─── */
             <View style={{ gap: Spacing.sm }}>
               {PAYMENT_METHODS.map((m) => (
-                <Pressable
+                <TouchableRipple
                   key={m.id}
                   onPress={() => handleMethodSelect(m)}
-                  style={({ pressed }) => [
-                    styles.methodBtn,
-                    {
-                      backgroundColor: pressed ? C.surfaceContainerLow : C.surfaceContainer,
-                      borderColor: C.outlineVariant,
-                    },
-                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={m.label}
+                  style={[styles.methodBtn, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}
                 >
-                  <View style={[styles.methodIconWrap, { backgroundColor: m.accent + '22' }]}>
-                    <MaterialIcons name={m.icon} size={20} color={m.accent} />
+                  <View style={styles.methodBtnRow}>
+                    <View style={[styles.methodIconWrap, { backgroundColor: m.accent + '22' }]}>
+                      <MaterialIcons name={m.icon} size={20} color={m.accent} />
+                    </View>
+                    <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
+                      {m.label}
+                    </Text>
+                    <MaterialIcons name="chevron-right" size={20} color={C.onSurfaceVariant} />
                   </View>
-                  <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
-                    {m.label}
-                  </Text>
-                  <MaterialIcons name="chevron-right" size={20} color={C.onSurfaceVariant} />
-                </Pressable>
+                </TouchableRipple>
               ))}
 
-              <Pressable onPress={handleClose} style={{ marginTop: Spacing.sm, alignItems: 'center', padding: Spacing.sm }}>
-                <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-                  Annuler
-                </Text>
-              </Pressable>
+              <Button mode="text" onPress={handleClose} style={{ marginTop: Spacing.sm }}>
+                Annuler
+              </Button>
             </View>
           ) : (
             /* ── Step 2 : phone input ─── */
             <View>
               {/* Selected method badge */}
               {method && (
-                <Pressable
+                <TouchableRipple
                   onPress={() => setStep('method')}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Changer de méthode de paiement, actuellement ${method.label}`}
                   style={[styles.selectedMethodRow, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }]}
                 >
-                  <View style={[styles.methodIconWrap, { backgroundColor: method.accent + '22' }]}>
-                    <MaterialIcons name={method.icon} size={18} color={method.accent} />
+                  <View style={styles.methodBtnRow}>
+                    <View style={[styles.methodIconWrap, { backgroundColor: method.accent + '22' }]}>
+                      <MaterialIcons name={method.icon} size={18} color={method.accent} />
+                    </View>
+                    <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }]}>
+                      {method.label}
+                    </Text>
+                    <Text style={[Typography.caption, { color: C.primary }]}>Changer</Text>
                   </View>
-                  <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }]}>
-                    {method.label}
-                  </Text>
-                  <Text style={[Typography.caption, { color: C.primary }]}>Changer</Text>
-                </Pressable>
+                </TouchableRipple>
               )}
 
               {/* Phone field */}
-              <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: Spacing.xs, marginTop: Spacing.md }]}>
-                Numéro associé
-              </Text>
-              <View style={[styles.phoneInput, { borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow }]}>
-                <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>+237</Text>
-                <TextInput
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  placeholder="6XX XXX XXX"
-                  placeholderTextColor={C.onSurfaceVariant + '88'}
-                  style={[Typography.bodyMd, { color: C.onSurface, flex: 1 }]}
-                  maxLength={12}
-                  autoFocus
-                />
-              </View>
+              <TextInput
+                mode="outlined"
+                label="Numéro associé"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                placeholder="6XX XXX XXX"
+                maxLength={12}
+                autoFocus
+                left={<TextInput.Affix text="+237" />}
+                style={styles.phoneInput}
+              />
 
               <View style={[styles.operatorsNote, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }]}>
                 <MaterialIcons name="info-outline" size={14} color={C.onSurfaceVariant} />
@@ -309,36 +304,20 @@ function PaymentModal({
               </View>
 
               {/* Confirm */}
-              <Pressable
-                onPress={handleConfirm}
+              <Button
+                mode="contained"
+                icon="lock"
+                loading={loading}
                 disabled={loading || phone.replace(/\s/g, '').length < 9}
-                style={[
-                  styles.confirmBtn,
-                  {
-                    backgroundColor: C.primary,
-                    opacity: loading || phone.replace(/\s/g, '').length < 9 ? 0.5 : 1,
-                    marginTop: Spacing.lg,
-                    ...Shadows.button,
-                  },
-                ]}
+                onPress={handleConfirm}
+                style={styles.confirmBtn}
               >
-                {loading ? (
-                  <ActivityIndicator size="small" color={C.onPrimary} />
-                ) : (
-                  <>
-                    <MaterialIcons name="lock" size={16} color={C.onPrimary} />
-                    <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-                      Confirmer le paiement
-                    </Text>
-                  </>
-                )}
-              </Pressable>
+                Confirmer le paiement
+              </Button>
 
-              <Pressable onPress={handleClose} style={{ marginTop: Spacing.md, alignItems: 'center', padding: Spacing.sm }}>
-                <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-                  Annuler
-                </Text>
-              </Pressable>
+              <Button mode="text" onPress={handleClose} style={{ marginTop: Spacing.md }}>
+                Annuler
+              </Button>
             </View>
           )}
         </View>
@@ -392,9 +371,13 @@ export default function SubscriptionsScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
-        </Pressable>
+        <IconButton
+          icon="arrow-left"
+          accessibilityLabel="Retour"
+          onPress={() => router.back()}
+          iconColor={C.onSurface}
+          style={styles.backBtn}
+        />
         <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>
           Plans d'Abonnement
         </Text>
@@ -509,12 +492,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   methodBtn: {
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  methodBtnRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
     padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
   },
   methodIconWrap: {
     width: 38,
@@ -524,21 +510,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selectedMethodRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    padding: Spacing.md,
     borderRadius: Radius.md,
     borderWidth: 1,
+    overflow: 'hidden',
   },
   phoneInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    height: 52,
+    marginTop: Spacing.xs,
   },
   operatorsNote: {
     flexDirection: 'row',
@@ -550,11 +527,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   confirmBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    height: 52,
-    borderRadius: Radius.md,
+    marginTop: Spacing.lg,
+  },
+  backBtn: {
+    margin: 0,
   },
 });

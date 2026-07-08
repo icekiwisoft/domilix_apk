@@ -44,8 +44,8 @@ export default function ExploreScreen() {
   });
 
   const announces = data?.data ?? [];
-  const total = data?.total ?? 0;
-  const hasMore = data ? data.page < data.last_page : false;
+  const total = data?.meta.total ?? 0;
+  const hasMore = data ? data.meta.current_page < data.meta.last_page : false;
 
   function handleFilterPress() {
     router.push('/(modals)/filter-sheet');

@@ -4,6 +4,7 @@ import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const PHOTO_SIZE = 90;
+const MANAGE_THUMB_SIZE = 104;
 
 export function ListingCardHSkeleton() {
   const scheme = useColorScheme();
@@ -16,6 +17,39 @@ export function ListingCardHSkeleton() {
         <Skeleton width="50%" height={12} style={{ marginTop: 4 }} />
         <Skeleton width="55%" height={14} style={{ marginTop: 4 }} />
         <Skeleton width="38%" height={12} style={{ marginTop: 4 }} />
+      </View>
+    </View>
+  );
+}
+
+// Full-width skeleton matching ManageCard (app/(tabs)/profile/my-listings.tsx)
+// exactly — same thumb size, badge row, and action bar height — so the
+// loading→data swap doesn't reflow the list.
+export function ManageCardSkeleton() {
+  const scheme = useColorScheme();
+  const C = Colors[scheme ?? 'light'];
+  return (
+    <View style={[styles.manageCard, { backgroundColor: C.surfaceContainerLowest, borderColor: C.outlineVariant + '66' }]}>
+      <View style={styles.manageCardBody}>
+        <Skeleton width={MANAGE_THUMB_SIZE} height={MANAGE_THUMB_SIZE} radius={Radius.md} />
+        <View style={styles.manageCardInfo}>
+          <View style={styles.manageCardBadgeRow}>
+            <Skeleton width={64} height={18} radius={Radius.full} />
+            <Skeleton width={80} height={18} radius={Radius.full} />
+          </View>
+          <Skeleton width="85%" height={15} style={{ marginTop: 8 }} />
+          <Skeleton width="55%" height={12} style={{ marginTop: 6 }} />
+          <Skeleton width="35%" height={20} style={{ marginTop: 8 }} />
+          <View style={styles.manageCardBadgeRow}>
+            <Skeleton width={48} height={16} radius={Radius.full} />
+            <Skeleton width={72} height={16} radius={Radius.full} />
+          </View>
+        </View>
+      </View>
+      <View style={[styles.manageCardActions, { borderTopColor: C.outlineVariant + '66' }]}>
+        <Skeleton width="28%" height={14} />
+        <Skeleton width="28%" height={14} />
+        <Skeleton width="28%" height={14} />
       </View>
     </View>
   );
@@ -83,5 +117,33 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.sm,
+  },
+  manageCard: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...Shadows.card,
+  },
+  manageCardBody: {
+    flexDirection: 'row',
+    padding: Spacing.sm,
+    gap: Spacing.sm + 2,
+  },
+  manageCardInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  manageCardBadgeRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  manageCardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    borderTopWidth: 1,
+    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.sm,
   },
 });

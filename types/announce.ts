@@ -102,14 +102,29 @@ export interface AnnounceFilters {
   AnnouncerId?: string;
   liked?: boolean;
   page?: number;
+  per_page?: number;
 }
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
+// The API wraps lists in a Laravel-style resource collection: pagination
+// metadata lives under `meta`, not flat on the response (confirmed via
+// runtime logging — response keys are exactly ["data", "links", "meta"]).
 
 export interface PaginatedResponse<T> {
   data: T[];
-  total: number;
-  page: number;
-  per_page: number;
-  last_page: number;
+  links: {
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    path: string;
+    per_page: number;
+    to: number | null;
+    total: number;
+  };
 }

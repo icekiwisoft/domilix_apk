@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,13 +9,19 @@ import { ProfileForm, type ProfileFormValues } from '@/components/forms/profile-
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe, useUpdateProfile } from '@/hooks/queries/use-auth-queries';
+import { useAnnouncer } from '@/hooks/queries/use-announcers';
 
 export default function EditProfileScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const { data: user } = useMe();
+  const { data: announcer } = useAnnouncer(user?.announcer ?? '');
   const updateProfile = useUpdateProfile();
-  const [avatar, setAvatar] = useState<string | undefined>(user?.announcer?.avatar);
+  const [avatar, setAvatar] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (announcer?.avatar) setAvatar(announcer.avatar);
+  }, [announcer?.avatar]);
 
   async function handlePickAvatar() {
     const result = await ImagePicker.launchImageLibraryAsync({

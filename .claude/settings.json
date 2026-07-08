@@ -30,7 +30,16 @@
       "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8095 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
       "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8096 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
       "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8097 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
-      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8098 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")"
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8098 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8100 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8102 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8103 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "Read(//c/Users/Wilfreid/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python scripts/search.py \"card elevation list item skeleton loading state\" --domain ux)",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8104 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8105 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8107 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8108 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\Wilfreid\\.claude"

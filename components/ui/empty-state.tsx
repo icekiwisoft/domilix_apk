@@ -1,6 +1,6 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { Button } from 'react-native-paper';
 import { ThemedText } from '@/components/themed-text';
-import { Button } from '@/components/ui/button';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Radius, Spacing } from '@/constants/theme';
 
@@ -15,7 +15,6 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, ctaLabel, onCta, icon, style }: EmptyStateProps) {
   const onSurfaceVariant = useThemeColor({}, 'onSurfaceVariant');
-  const primary = useThemeColor({}, 'primary');
   const primaryFixed = useThemeColor({}, 'primaryFixed');
 
   return (
@@ -39,7 +38,9 @@ export function EmptyState({ title, description, ctaLabel, onCta, icon, style }:
         </ThemedText>
       )}
       {ctaLabel && onCta && (
-        <Button variant="primary" label={ctaLabel} onPress={onCta} style={styles.cta} />
+        <Button mode="contained" onPress={onCta} style={styles.cta}>
+          {ctaLabel}
+        </Button>
       )}
     </View>
   );
