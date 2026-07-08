@@ -53,6 +53,9 @@ export function StepIndicator({ current }: StepIndicatorProps) {
               onPress={done ? () => router.navigate(route as never) : undefined}
               disabled={!done}
               hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Étape ${step} : ${label}`}
+              accessibilityState={{ disabled: !done, selected: active }}
               style={({ pressed }) => [
                 styles.circle,
                 {

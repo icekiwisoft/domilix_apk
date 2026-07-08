@@ -311,6 +311,7 @@ export default function AnnouncerProfileScreen() {
             style={s.tabPills}
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as TabName)}
+            theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
             buttons={[
               { value: 'annonces', label: 'Annonces' },
               { value: 'medias', label: 'Médias' },

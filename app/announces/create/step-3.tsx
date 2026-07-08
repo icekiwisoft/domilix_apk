@@ -1,4 +1,5 @@
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SegmentedButtons } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -104,34 +105,25 @@ export default function CreateStep3Screen() {
         {/* Price */}
         <View style={styles.section}>
           <SectionLabel>Prix</SectionLabel>
-          <View style={styles.priceRow}>
-            <TextInput
-              value={draft.price}
-              onChangeText={(t) => setDraft({ price: t })}
-              placeholder="0"
-              placeholderTextColor={C.onSurfaceVariant}
-              keyboardType="numeric"
-              style={[
-                Typography.bodyMd,
-                styles.priceInput,
-                { color: C.onSurface, borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow, flex: 1 },
-              ]}
-            />
-            {DEVISES.map((d) => (
-              <Pressable
-                key={d}
-                onPress={() => setDraft({ devise: d })}
-                style={[
-                  styles.devisePill,
-                  { backgroundColor: draft.devise === d ? C.primary : C.surfaceContainer, borderColor: draft.devise === d ? C.primary : C.outlineVariant },
-                ]}
-              >
-                <Text style={[Typography.caption, { color: draft.devise === d ? C.onPrimary : C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
-                  {d}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <TextInput
+            value={draft.price}
+            onChangeText={(t) => setDraft({ price: t })}
+            placeholder="0"
+            placeholderTextColor={C.onSurfaceVariant}
+            keyboardType="numeric"
+            style={[
+              Typography.bodyMd,
+              styles.priceInput,
+              { color: C.onSurface, borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow },
+            ]}
+          />
+          <SegmentedButtons
+            style={styles.deviseSelector}
+            value={draft.devise}
+            onValueChange={(v) => setDraft({ devise: v })}
+            theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
+            buttons={DEVISES.map((d) => ({ value: d, label: d }))}
+          />
         </View>
 
         {/* Description */}
@@ -226,22 +218,12 @@ export default function CreateStep3Screen() {
 
             <View style={styles.section}>
               <SectionLabel>Standing</SectionLabel>
-              <View style={styles.pillRow}>
-                {STANDING_OPTIONS.map((s) => (
-                  <Pressable
-                    key={s.value}
-                    onPress={() => setDraft({ standing: draft.standing === s.value ? undefined : s.value })}
-                    style={[
-                      styles.pill,
-                      { flex: 1, backgroundColor: draft.standing === s.value ? C.primary : C.surfaceContainer, borderColor: draft.standing === s.value ? C.primary : C.outlineVariant },
-                    ]}
-                  >
-                    <Text style={[Typography.caption, { color: draft.standing === s.value ? C.onPrimary : C.onSurface, textAlign: 'center', fontFamily: 'PlusJakartaSans_500Medium' }]}>
-                      {s.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+              <SegmentedButtons
+                value={draft.standing ?? ''}
+                onValueChange={(v) => setDraft({ standing: v as Standing })}
+                theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
+                buttons={STANDING_OPTIONS}
+              />
             </View>
 
             <View style={styles.section}>
@@ -336,18 +318,14 @@ const styles = StyleSheet.create({
   section: {},
   rowSection: { flexDirection: 'row', gap: Spacing.md },
   halfSection: { flex: 1 },
-  priceRow: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
   priceInput: {
     height: 48,
     borderWidth: 1,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
   },
-  devisePill: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
+  deviseSelector: {
+    marginTop: Spacing.sm,
   },
   textArea: {
     borderWidth: 1,

@@ -67,6 +67,7 @@ export default function ExploreScreen() {
             style={styles.segmented}
             value={announceType}
             onValueChange={(v) => { setAnnounceType(v as AnnounceType); setPage(1); }}
+            theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
             buttons={[
               { value: 'realestate', label: 'Immobilier' },
               { value: 'furniture', label: 'Mobilier' },
@@ -77,6 +78,7 @@ export default function ExploreScreen() {
               style={styles.segmented}
               value={adType}
               onValueChange={(v) => { setAdType(v as AdType); setPage(1); }}
+              theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
               buttons={[
                 { value: 'location', label: 'Location' },
                 { value: 'sale', label: 'Vente' },

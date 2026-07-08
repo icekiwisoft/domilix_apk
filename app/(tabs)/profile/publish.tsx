@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -9,9 +8,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import { Button, Chip, IconButton, SegmentedButtons, TextInput, TouchableRipple } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -21,6 +20,7 @@ import * as Location from 'expo-location';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast';
 import { useCategories } from '@/hooks/queries/use-categories';
 import { useCreateAnnounce } from '@/hooks/queries/use-announces';
 import { AddressesService, type AddressSuggestion } from '@/services/addresses.service';
@@ -82,6 +82,7 @@ const AMENITIES: { key: keyof FormState; label: string; icon: React.ComponentPro
 export default function PublishScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+  const toast = useToast();
   const [form, setForm] = useState<FormState>(INITIAL);
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -202,12 +203,11 @@ export default function PublishScreen() {
 
     create.mutate(fd, {
       onSuccess: () => {
-        Alert.alert('Succès', 'Votre annonce a été publiée.', [
-          { text: 'OK', onPress: () => router.back() },
-        ]);
+        toast.show('Votre annonce a été publiée.', 'success');
+        router.back();
       },
       onError: () => {
-        Alert.alert('Erreur', 'Une erreur est survenue. Veuillez réessayer.');
+        toast.show('Une erreur est survenue. Veuillez réessayer.', 'error');
       },
     });
   }
@@ -220,9 +220,14 @@ export default function PublishScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: C.surface }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: C.outlineVariant + '66' }]}>
-        <Pressable onPress={goBack} style={[styles.backBtn, { borderColor: C.outlineVariant }]} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={20} color={C.onSurface} />
-        </Pressable>
+        <IconButton
+          icon="arrow-left"
+          accessibilityLabel="Retour"
+          onPress={goBack}
+          iconColor={C.onSurface}
+          size={18}
+          style={styles.backBtn}
+        />
         <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
           Publier une annonce
         </Text>
@@ -256,19 +261,16 @@ export default function PublishScreen() {
 
         {/* Bottom CTA */}
         <View style={[styles.footer, { borderTopColor: C.outlineVariant + '66', backgroundColor: C.surface }]}>
-          <Pressable
-            onPress={isLastStep ? handleSubmit : goNext}
+          <Button
+            mode="contained"
+            loading={create.isPending}
             disabled={create.isPending}
-            style={[styles.cta, { backgroundColor: C.primary, opacity: create.isPending ? 0.7 : 1 }]}
+            onPress={isLastStep ? handleSubmit : goNext}
+            style={styles.cta}
+            contentStyle={styles.ctaContent}
           >
-            {create.isPending ? (
-              <ActivityIndicator color={C.onPrimary} />
-            ) : (
-              <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.1 }]}>
-                {isLastStep ? 'Publier' : 'Suivant'}
-              </Text>
-            )}
-          </Pressable>
+            {isLastStep ? 'Publier' : 'Suivant'}
+          </Button>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -299,6 +301,9 @@ function Step1({ form, set, C, errors }: StepProps) {
         ] as const).map((opt) => (
           <Pressable
             key={opt.value}
+            accessibilityRole="radio"
+            accessibilityLabel={opt.label}
+            accessibilityState={{ selected: form.type === opt.value }}
             onPress={() => set('type', opt.value)}
             style={[
               styles.typeCard,
@@ -320,28 +325,15 @@ function Step1({ form, set, C, errors }: StepProps) {
       {errors.type && <ErrorText msg={errors.type} C={C} />}
 
       <Text style={[Typography.labelSm, styles.groupLabel, { color: C.onSurfaceVariant, marginTop: Spacing.xl }]}>MODE</Text>
-      <View style={styles.pillRow}>
-        {([
+      <SegmentedButtons
+        value={form.ad_type}
+        onValueChange={(v) => set('ad_type', v as FormState['ad_type'])}
+        theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
+        buttons={[
           { value: 'location', label: 'Location' },
           { value: 'sale', label: 'Vente' },
-        ] as const).map((opt) => (
-          <Pressable
-            key={opt.value}
-            onPress={() => set('ad_type', opt.value)}
-            style={[
-              styles.pill,
-              {
-                borderColor: form.ad_type === opt.value ? C.primary : C.outlineVariant,
-                backgroundColor: form.ad_type === opt.value ? C.primary : 'transparent',
-              },
-            ]}
-          >
-            <Text style={[Typography.bodyMd, { color: form.ad_type === opt.value ? C.onPrimary : C.onSurface, fontFamily: 'PlusJakartaSans_500Medium' }]}>
-              {opt.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+        ]}
+      />
       {errors.ad_type && <ErrorText msg={errors.ad_type} C={C} />}
     </View>
   );
@@ -357,21 +349,17 @@ function Step2({ form, set, C, errors, categories }: StepProps & { categories: {
       <Text style={[Typography.labelSm, styles.groupLabel, { color: C.onSurfaceVariant }]}>CATÉGORIE</Text>
       <View style={styles.chipWrap}>
         {categories.map((cat) => (
-          <Pressable
+          <Chip
             key={cat.id}
+            mode="outlined"
+            selected={form.category_id === cat.id}
+            showSelectedCheck={false}
             onPress={() => set('category_id', cat.id)}
-            style={[
-              styles.chip,
-              {
-                borderColor: form.category_id === cat.id ? C.primary : C.outlineVariant,
-                backgroundColor: form.category_id === cat.id ? C.primary + '10' : C.surfaceContainerLow,
-              },
-            ]}
+            style={form.category_id === cat.id ? { backgroundColor: C.primary, borderColor: C.primary } : undefined}
+            textStyle={form.category_id === cat.id ? { color: C.onPrimary } : undefined}
           >
-            <Text style={[Typography.caption, { color: form.category_id === cat.id ? C.primary : C.onSurface, fontFamily: 'PlusJakartaSans_500Medium' }]}>
-              {cat.name}
-            </Text>
-          </Pressable>
+            {cat.name}
+          </Chip>
         ))}
       </View>
       {errors.category_id && <ErrorText msg={errors.category_id} C={C} />}
@@ -466,21 +454,17 @@ function Step3({ form, set, C, errors }: StepProps) {
       />
 
       {/* GPS button */}
-      <Pressable
+      <Button
+        mode="outlined"
+        icon={locating ? undefined : 'crosshairs-gps'}
+        loading={locating}
         onPress={useMyLocation}
         disabled={locating}
-        style={[styles.locationBtn, { backgroundColor: C.primary + '12', borderColor: C.primary + '40' }]}
+        style={styles.locationBtn}
+        contentStyle={styles.locationBtnContent}
       >
-        {locating ? (
-          <ActivityIndicator size="small" color={C.primary} />
-        ) : (
-          <MaterialIcons name="my-location" size={20} color={C.primary} />
-        )}
-        <Text style={[Typography.bodyMd, { color: C.primary, fontFamily: 'PlusJakartaSans_600SemiBold', flex: 1 }]}>
-          {locating ? 'Localisation en cours…' : 'Utiliser ma position actuelle'}
-        </Text>
-        {!locating && <MaterialIcons name="chevron-right" size={18} color={C.primary} />}
-      </Pressable>
+        {locating ? 'Localisation en cours…' : 'Utiliser ma position actuelle'}
+      </Button>
 
       <View style={[styles.dividerRow, { marginVertical: Spacing.lg }]}>
         <View style={[styles.dividerLine, { backgroundColor: C.outlineVariant }]} />
@@ -501,21 +485,25 @@ function Step3({ form, set, C, errors }: StepProps) {
           {suggestions.length > 0 && (
             <View style={[styles.suggestionsBox, { backgroundColor: C.surface, borderColor: C.outlineVariant }]}>
               {suggestions.map((s) => (
-                <Pressable
+                <TouchableRipple
                   key={s.id}
                   onPress={() => selectSuggestion(s)}
+                  accessibilityRole="button"
+                  accessibilityLabel={s.place_name}
                   style={[styles.suggestionRow, { borderBottomColor: C.outlineVariant + '55' }]}
                 >
-                  <MaterialIcons name="place" size={16} color={C.primary} style={{ marginTop: 2 }} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_500Medium' }]} numberOfLines={1}>
-                      {s.text}
-                    </Text>
-                    <Text style={[Typography.caption, { color: C.onSurfaceVariant }]} numberOfLines={1}>
-                      {s.place_name}
-                    </Text>
+                  <View style={styles.suggestionRowContent}>
+                    <MaterialIcons name="place" size={16} color={C.primary} style={{ marginTop: 2 }} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_500Medium' }]} numberOfLines={1}>
+                        {s.text}
+                      </Text>
+                      <Text style={[Typography.caption, { color: C.onSurfaceVariant }]} numberOfLines={1}>
+                        {s.place_name}
+                      </Text>
+                    </View>
                   </View>
-                </Pressable>
+                </TouchableRipple>
               ))}
             </View>
           )}
@@ -537,23 +525,17 @@ function Step3({ form, set, C, errors }: StepProps) {
         />
 
         {/* Description */}
-        <View
-          style={[
-            styles.textAreaContainer,
-            { borderColor: errors.description ? C.error : C.outlineVariant, backgroundColor: C.surface },
-          ]}
-        >
-          <Text style={[Typography.caption, { color: errors.description ? C.error : C.onSurfaceVariant, marginBottom: Spacing.xs }]}>
-            Description *
-          </Text>
-          <TextAreaInput
-            value={form.description}
-            onChangeText={(v) => set('description', v)}
-            placeholder="Décrivez votre bien : état, atouts, équipements..."
-            placeholderTextColor={C.onSurfaceVariant + '66'}
-            color={C.onSurface}
-          />
-        </View>
+        <TextInput
+          mode="outlined"
+          label="Description *"
+          value={form.description}
+          onChangeText={(v) => set('description', v)}
+          placeholder="Décrivez votre bien : état, atouts, équipements..."
+          error={!!errors.description}
+          multiline
+          numberOfLines={5}
+          style={styles.textAreaContainer}
+        />
         {errors.description && <ErrorText msg={errors.description} C={C} />}
       </View>
     </View>
@@ -573,6 +555,9 @@ function Step4({ form, set, C }: Omit<StepProps, 'errors'>) {
           return (
             <Pressable
               key={a.key}
+              accessibilityRole="checkbox"
+              accessibilityLabel={a.label}
+              accessibilityState={{ checked: active }}
               onPress={() => set(a.key, !active as any)}
               style={[
                 styles.amenityCard,
@@ -619,6 +604,8 @@ function Step5({
       <StepHeader title="Photos" subtitle="Ajoutez des photos de qualité pour attirer plus de locataires ou acheteurs." />
 
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Ajouter des photos"
         onPress={onPick}
         style={[styles.pickerZone, { borderColor: errors.medias ? C.error : C.outlineVariant, backgroundColor: C.surfaceContainerLow }]}
       >
@@ -642,12 +629,15 @@ function Step5({
                   <Text style={[Typography.caption, { color: C.onPrimary, fontSize: 9 }]}>Principale</Text>
                 </View>
               )}
-              <Pressable
+              <IconButton
+                icon="close"
+                accessibilityLabel="Supprimer cette photo"
                 onPress={() => onRemove(i)}
-                style={[styles.mediaRemove, { backgroundColor: C.error }]}
-              >
-                <MaterialIcons name="close" size={12} color={C.onError} />
-              </Pressable>
+                iconColor={C.onError}
+                containerColor={C.error}
+                size={12}
+                style={styles.mediaRemove}
+              />
             </View>
           ))}
         </View>
@@ -681,32 +671,6 @@ function ErrorText({ msg, C }: { msg: string; C: ThemeColors }) {
   );
 }
 
-function TextAreaInput({
-  value,
-  onChangeText,
-  placeholder,
-  placeholderTextColor,
-  color,
-}: {
-  value: string;
-  onChangeText: (v: string) => void;
-  placeholder: string;
-  placeholderTextColor: string;
-  color: string;
-}) {
-  return (
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      multiline
-      numberOfLines={5}
-      placeholder={placeholder}
-      placeholderTextColor={placeholderTextColor}
-      style={[Typography.bodyMd, { color, minHeight: 100, textAlignVertical: 'top' }]}
-    />
-  );
-}
-
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
@@ -720,12 +684,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    margin: 0,
   },
   progressTrack: {
     height: 3,
@@ -769,38 +728,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Pills
-  pillRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  pill: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-  },
   // Category chips
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
   },
-  chip: {
-    borderWidth: 1.5,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
-  },
   // Form
   formGap: {
     gap: Spacing.lg,
   },
   textAreaContainer: {
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
+    marginTop: 0,
   },
   // Amenities
   amenityGrid: {
@@ -828,13 +767,10 @@ const styles = StyleSheet.create({
   },
   // Location
   locationBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1.5,
     borderRadius: Radius.lg,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+  },
+  locationBtnContent: {
+    paddingVertical: Spacing.xs,
   },
   dividerRow: {
     flexDirection: 'row',
@@ -854,12 +790,14 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   suggestionRow: {
+    borderBottomWidth: 1,
+  },
+  suggestionRowContent: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
   },
   // Photos
   pickerZone: {
@@ -899,11 +837,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4,
     right: 4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    margin: 0,
   },
   // Footer
   footer: {
@@ -912,13 +846,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   cta: {
-    paddingVertical: Spacing.md,
     borderRadius: Radius.md,
-    alignItems: 'center',
-    shadowColor: '#633f00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 14,
-    elevation: 4,
+  },
+  ctaContent: {
+    height: 48,
   },
 });
