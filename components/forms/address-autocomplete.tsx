@@ -38,7 +38,12 @@ export function AddressAutocomplete({ value, onChange, error }: AddressAutocompl
           returnKeyType="done"
         />
         {value.length > 0 && (
-          <Pressable onPress={() => onChange('')} hitSlop={8}>
+          <Pressable
+            onPress={() => onChange('')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Effacer l'adresse"
+          >
             <MaterialIcons name="close" size={16} color={C.onSurfaceVariant} />
           </Pressable>
         )}
@@ -55,6 +60,8 @@ export function AddressAutocomplete({ value, onChange, error }: AddressAutocompl
             renderItem={({ item }) => (
               <Pressable
                 onPress={() => select(item.place_name)}
+                accessibilityRole="button"
+                accessibilityLabel={item.place_name}
                 style={[styles.suggestion, { borderBottomColor: C.outlineVariant + '4D' }]}
               >
                 <MaterialIcons name="place" size={16} color={C.onSurfaceVariant} />

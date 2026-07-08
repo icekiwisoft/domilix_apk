@@ -1,5 +1,5 @@
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SegmentedButtons } from 'react-native-paper';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Button, Chip, IconButton, SegmentedButtons, TextInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -46,6 +46,7 @@ export default function CreateStep3Screen() {
 
   const isRealestate = draft.type === 'realestate';
   const canPublish = draft.price && draft.description && draft.address && draft.city;
+  const segmentedTheme = { colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } };
 
   function handlePublish() {
     if (!canPublish) return;
@@ -86,13 +87,16 @@ export default function CreateStep3Screen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
-        </Pressable>
+        <IconButton
+          icon="arrow-left"
+          size={22}
+          onPress={() => router.back()}
+          accessibilityLabel="Retour"
+        />
         <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 18 }]}>
           Nouvelle annonce
         </Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -104,44 +108,32 @@ export default function CreateStep3Screen() {
 
         {/* Price */}
         <View style={styles.section}>
-          <SectionLabel>Prix</SectionLabel>
           <TextInput
+            mode="outlined"
+            label="Prix"
             value={draft.price}
             onChangeText={(t) => setDraft({ price: t })}
-            placeholder="0"
-            placeholderTextColor={C.onSurfaceVariant}
             keyboardType="numeric"
-            style={[
-              Typography.bodyMd,
-              styles.priceInput,
-              { color: C.onSurface, borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow },
-            ]}
           />
           <SegmentedButtons
             style={styles.deviseSelector}
             value={draft.devise}
             onValueChange={(v) => setDraft({ devise: v })}
-            theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
+            theme={segmentedTheme}
             buttons={DEVISES.map((d) => ({ value: d, label: d }))}
           />
         </View>
 
         {/* Description */}
         <View style={styles.section}>
-          <SectionLabel>Description</SectionLabel>
           <TextInput
+            mode="outlined"
+            label="Description"
             value={draft.description}
             onChangeText={(t) => setDraft({ description: t })}
-            placeholder="Décrivez votre bien…"
-            placeholderTextColor={C.onSurfaceVariant}
             multiline
             numberOfLines={5}
-            textAlignVertical="top"
-            style={[
-              Typography.bodyMd,
-              styles.textArea,
-              { color: C.onSurface, borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow },
-            ]}
+            style={styles.textArea}
           />
         </View>
 
@@ -158,20 +150,22 @@ export default function CreateStep3Screen() {
         <View style={styles.section}>
           <SectionLabel>Ville</SectionLabel>
           <View style={styles.pillRow}>
-            {CITIES.map((city) => (
-              <Pressable
-                key={city}
-                onPress={() => setDraft({ city })}
-                style={[
-                  styles.pill,
-                  { backgroundColor: draft.city === city ? C.primary : C.surfaceContainer, borderColor: draft.city === city ? C.primary : C.outlineVariant },
-                ]}
-              >
-                <Text style={[Typography.labelSm, { color: draft.city === city ? C.onPrimary : C.onSurface, textTransform: 'none' }]}>
+            {CITIES.map((city) => {
+              const active = draft.city === city;
+              return (
+                <Chip
+                  key={city}
+                  compact
+                  selected={active}
+                  showSelectedCheck={false}
+                  onPress={() => setDraft({ city })}
+                  style={active ? { backgroundColor: C.primary } : { backgroundColor: C.surfaceContainer }}
+                  textStyle={{ color: active ? C.onPrimary : C.onSurface }}
+                >
                   {city}
-                </Text>
-              </Pressable>
-            ))}
+                </Chip>
+              );
+            })}
           </View>
         </View>
 
@@ -182,36 +176,32 @@ export default function CreateStep3Screen() {
               <View style={styles.halfSection}>
                 <SectionLabel>Chambres</SectionLabel>
                 <View style={styles.counterRow}>
-                  {[0, 1, 2, 3, 4, 5].map((n) => (
-                    <Pressable
-                      key={n}
-                      onPress={() => setDraft({ bedrooms: n })}
-                      style={[
-                        styles.counterPill,
-                        { backgroundColor: draft.bedrooms === n ? C.primary : C.surfaceContainer, borderColor: draft.bedrooms === n ? C.primary : C.outlineVariant },
-                      ]}
-                    >
-                      <Text style={[Typography.caption, { color: draft.bedrooms === n ? C.onPrimary : C.onSurface }]}>
+                  {[0, 1, 2, 3, 4, 5].map((n) => {
+                    const active = draft.bedrooms === n;
+                    return (
+                      <Chip
+                        key={n}
+                        compact
+                        selected={active}
+                        showSelectedCheck={false}
+                        onPress={() => setDraft({ bedrooms: n })}
+                        style={active ? { backgroundColor: C.primary } : { backgroundColor: C.surfaceContainer }}
+                        textStyle={{ color: active ? C.onPrimary : C.onSurface }}
+                      >
                         {n === 0 ? 'Studio' : `${n}`}
-                      </Text>
-                    </Pressable>
-                  ))}
+                      </Chip>
+                    );
+                  })}
                 </View>
               </View>
 
               <View style={styles.halfSection}>
-                <SectionLabel>Surface (m²)</SectionLabel>
                 <TextInput
+                  mode="outlined"
+                  label="Surface (m²)"
                   value={draft.size}
                   onChangeText={(t) => setDraft({ size: t })}
-                  placeholder="0"
-                  placeholderTextColor={C.onSurfaceVariant}
                   keyboardType="numeric"
-                  style={[
-                    Typography.bodyMd,
-                    styles.sizeInput,
-                    { color: C.onSurface, borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow },
-                  ]}
                 />
               </View>
             </View>
@@ -221,7 +211,7 @@ export default function CreateStep3Screen() {
               <SegmentedButtons
                 value={draft.standing ?? ''}
                 onValueChange={(v) => setDraft({ standing: v as Standing })}
-                theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
+                theme={segmentedTheme}
                 buttons={STANDING_OPTIONS}
               />
             </View>
@@ -232,19 +222,20 @@ export default function CreateStep3Screen() {
                 {AMENITY_OPTIONS.map((a) => {
                   const active = draft[a.key];
                   return (
-                    <Pressable
+                    <Chip
                       key={a.key}
+                      compact
+                      selected={active}
+                      showSelectedCheck={false}
+                      icon={({ size }) => (
+                        <MaterialIcons name={a.icon} size={size} color={active ? C.primary : C.onSurfaceVariant} />
+                      )}
                       onPress={() => setDraft({ [a.key]: !active })}
-                      style={[
-                        styles.amenityChip,
-                        { backgroundColor: active ? C.primaryFixed : C.surfaceContainer, borderColor: active ? C.primaryFixedDim : C.outlineVariant },
-                      ]}
+                      style={active ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
+                      textStyle={{ color: active ? C.primary : C.onSurface }}
                     >
-                      <MaterialIcons name={a.icon} size={16} color={active ? C.primary : C.onSurfaceVariant} />
-                      <Text style={[Typography.caption, { color: active ? C.primary : C.onSurface, fontFamily: 'PlusJakartaSans_500Medium' }]}>
-                        {a.label}
-                      </Text>
-                    </Pressable>
+                      {a.label}
+                    </Chip>
                   );
                 })}
               </View>
@@ -278,22 +269,17 @@ export default function CreateStep3Screen() {
 
       {/* Footer */}
       <View style={[styles.footer, { borderTopColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Pressable
+        <Button
+          mode="contained"
           onPress={handlePublish}
           disabled={!canPublish || createAnnounce.isPending}
-          style={[styles.publishBtn, { backgroundColor: C.primary, opacity: canPublish && !createAnnounce.isPending ? 1 : 0.4 }]}
+          loading={createAnnounce.isPending}
+          icon={createAnnounce.isPending ? undefined : 'publish'}
+          contentStyle={styles.publishBtnContent}
+          style={styles.publishBtn}
         >
-          {createAnnounce.isPending ? (
-            <ActivityIndicator color={C.onPrimary} size="small" />
-          ) : (
-            <>
-              <MaterialIcons name="publish" size={18} color={C.onPrimary} />
-              <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-                Publier l'annonce
-              </Text>
-            </>
-          )}
-        </Pressable>
+          Publier l'annonce
+        </Button>
       </View>
     </SafeAreaView>
   );
@@ -305,8 +291,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
   },
   scroll: {
@@ -318,55 +304,15 @@ const styles = StyleSheet.create({
   section: {},
   rowSection: { flexDirection: 'row', gap: Spacing.md },
   halfSection: { flex: 1 },
-  priceInput: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-  },
   deviseSelector: {
     marginTop: Spacing.sm,
   },
   textArea: {
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
     minHeight: 100,
   },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
-  pill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
   counterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
-  counterPill: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    minWidth: 44,
-    alignItems: 'center',
-  },
-  sizeInput: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-  },
   amenityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  amenityChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.sm + 2,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-  },
   recap: {
     padding: Spacing.lg,
     borderRadius: Radius.md,
@@ -379,11 +325,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   publishBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    height: 52,
     borderRadius: Radius.md,
+  },
+  publishBtnContent: {
+    height: 52,
+    flexDirection: 'row-reverse',
   },
 });

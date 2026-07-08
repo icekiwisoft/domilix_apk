@@ -1,7 +1,8 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Button, IconButton } from 'react-native-paper';
 import { MediaUploadGrid, MIN_PHOTOS } from '@/components/forms/media-upload-grid';
 import { StepIndicator } from '@/components/ui/step-indicator';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
@@ -17,13 +18,16 @@ export default function CreateStep2Screen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
-        </Pressable>
+        <IconButton
+          icon="arrow-left"
+          size={22}
+          onPress={() => router.back()}
+          accessibilityLabel="Retour"
+        />
         <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 18 }]}>
           Nouvelle annonce
         </Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -64,16 +68,16 @@ export default function CreateStep2Screen() {
 
       {/* Footer */}
       <View style={[styles.footer, { borderTopColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Pressable
+        <Button
+          mode="contained"
           onPress={() => router.push('/announces/create/step-3')}
           disabled={draft.medias.length < MIN_PHOTOS}
-          style={[styles.nextBtn, { backgroundColor: C.primary, opacity: draft.medias.length >= MIN_PHOTOS ? 1 : 0.4 }]}
+          icon="arrow-right"
+          contentStyle={styles.nextBtnContent}
+          style={styles.nextBtn}
         >
-          <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-            Suivant — Détails
-          </Text>
-          <MaterialIcons name="arrow-forward" size={18} color={C.onPrimary} />
-        </Pressable>
+          Suivant — Détails
+        </Button>
       </View>
     </SafeAreaView>
   );
@@ -85,8 +89,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
   },
   scroll: {
@@ -112,11 +116,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   nextBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    height: 52,
     borderRadius: Radius.md,
+  },
+  nextBtnContent: {
+    height: 52,
+    flexDirection: 'row-reverse',
   },
 });

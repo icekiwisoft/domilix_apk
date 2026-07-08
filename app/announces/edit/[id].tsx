@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -8,17 +7,16 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import { ActivityIndicator, Button, Chip, IconButton, SegmentedButtons, TextInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { AddressAutocomplete } from '@/components/forms/address-autocomplete';
-import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useToast } from '@/components/ui/toast';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAnnounce, useUpdateAnnounce } from '@/hooks/queries/use-announces';
 import { useCategories } from '@/hooks/queries/use-categories';
@@ -49,7 +47,7 @@ type AmenityKey = (typeof AMENITY_OPTIONS)[number]['key'];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function SectionLabel({ children, color }: { children: string; color: string }) {
+function SectionLabel({ children, color }: { children: React.ReactNode; color: string }) {
   return (
     <Text style={[
       Typography.labelSm,
@@ -76,6 +74,7 @@ export default function EditAnnounceScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const toast = useToast();
+  const segmentedTheme = { colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } };
 
   const { data: announce, isLoading } = useAnnounce(id);
   const updateAnnounce = useUpdateAnnounce();
@@ -219,13 +218,16 @@ export default function EditAnnounceScreen() {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
         <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant }]}>
-          <Pressable onPress={() => router.back()} hitSlop={8}>
-            <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
-          </Pressable>
+          <IconButton
+            icon="arrow-left"
+            size={22}
+            onPress={() => router.back()}
+            accessibilityLabel="Retour"
+          />
           <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 18 }]}>
             Modifier l'annonce
           </Text>
-          <View style={{ width: 80 }} />
+          <View style={{ width: 40 }} />
         </View>
         <View style={styles.loadingCenter}>
           <ActivityIndicator size="large" color={C.primary} />
@@ -242,32 +244,24 @@ export default function EditAnnounceScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
       {/* ── Header ── */}
       <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
-        </Pressable>
+        <IconButton
+          icon="arrow-left"
+          size={22}
+          onPress={() => router.back()}
+          accessibilityLabel="Retour"
+        />
         <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 18 }]}>
           Modifier l'annonce
         </Text>
-        <Pressable
+        <Button
+          mode="contained"
+          compact
           onPress={handleSave}
           disabled={!canSave || updateAnnounce.isPending}
-          style={[
-            styles.saveBtn,
-            {
-              backgroundColor: canSave ? C.primary : C.surfaceContainer,
-              opacity: updateAnnounce.isPending ? 0.7 : 1,
-              ...Shadows.button,
-            },
-          ]}
+          loading={updateAnnounce.isPending}
         >
-          {updateAnnounce.isPending ? (
-            <ActivityIndicator size="small" color={C.onPrimary} />
-          ) : (
-            <Text style={[Typography.labelSm, { color: canSave ? C.onPrimary : C.onSurfaceVariant, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-              Enregistrer
-            </Text>
-          )}
-        </Pressable>
+          Enregistrer
+        </Button>
       </View>
 
       <KeyboardAvoidingView
@@ -286,17 +280,17 @@ export default function EditAnnounceScreen() {
               <Text style={[Typography.labelSm, styles.typeLabel, { color: C.onSurfaceVariant }]}>
                 TYPE DE BIEN
               </Text>
-              <ToggleSwitch
-                style={styles.toggleFull}
-                options={[
-                  { label: 'Immobilier', value: 'realestate' },
-                  { label: 'Mobilier', value: 'furniture' },
-                ]}
+              <SegmentedButtons
                 value={type}
-                onChange={(v: AnnounceType) => {
-                  setType(v);
+                onValueChange={(v) => {
+                  setType(v as AnnounceType);
                   setCategoryId('');
                 }}
+                theme={segmentedTheme}
+                buttons={[
+                  { value: 'realestate', label: 'Immobilier' },
+                  { value: 'furniture', label: 'Mobilier' },
+                ]}
               />
             </View>
 
@@ -304,14 +298,14 @@ export default function EditAnnounceScreen() {
               <Text style={[Typography.labelSm, styles.typeLabel, { color: C.onSurfaceVariant }]}>
                 TYPE D'ANNONCE
               </Text>
-              <ToggleSwitch
-                style={styles.toggleFull}
-                options={[
-                  { label: 'Location', value: 'location' },
-                  { label: 'Vente', value: 'sale' },
-                ]}
+              <SegmentedButtons
                 value={adType}
-                onChange={(v: AdType) => setAdType(v)}
+                onValueChange={(v) => setAdType(v as AdType)}
+                theme={segmentedTheme}
+                buttons={[
+                  { value: 'location', label: 'Location' },
+                  { value: 'sale', label: 'Vente' },
+                ]}
               />
             </View>
           </View>
@@ -324,28 +318,16 @@ export default function EditAnnounceScreen() {
                 {categories.map((cat) => {
                   const active = categoryId === cat.id;
                   return (
-                    <Pressable
+                    <Chip
                       key={cat.id}
+                      selected={active}
+                      showSelectedCheck={false}
                       onPress={() => setCategoryId(cat.id)}
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: active ? C.primary : C.surfaceContainer,
-                          borderColor: active ? C.primary : C.outlineVariant,
-                        },
-                      ]}
+                      style={active ? { backgroundColor: C.primary } : { backgroundColor: C.surfaceContainer }}
+                      textStyle={{ color: active ? C.onPrimary : C.onSurface }}
                     >
-                      <Text style={[
-                        Typography.bodyMd,
-                        {
-                          color: active ? C.onPrimary : C.onSurface,
-                          fontFamily: active ? 'PlusJakartaSans_600SemiBold' : 'PlusJakartaSans_400Regular',
-                          fontSize: 14,
-                        },
-                      ]}>
-                        {cat.name}
-                      </Text>
-                    </Pressable>
+                      {cat.name}
+                    </Chip>
                   );
                 })}
               </View>
@@ -355,7 +337,7 @@ export default function EditAnnounceScreen() {
           {/* ── Photos ── */}
           <Section>
             <SectionLabel color={C.onSurfaceVariant}>
-              Photos ({totalPhotos})
+              {`Photos (${totalPhotos})`}
             </SectionLabel>
 
             <View style={styles.mediaGrid}>
@@ -370,12 +352,15 @@ export default function EditAnnounceScreen() {
                     style={styles.mediaImg}
                     resizeMode="cover"
                   />
-                  <Pressable
+                  <IconButton
+                    icon="close"
+                    accessibilityLabel="Supprimer cette photo"
                     onPress={() => removeExistingMedia(media.id)}
-                    style={[styles.removeBtn, { backgroundColor: C.error }]}
-                  >
-                    <MaterialIcons name="close" size={12} color="#fff" />
-                  </Pressable>
+                    iconColor={C.onError}
+                    containerColor={C.error}
+                    size={12}
+                    style={styles.removeBtn}
+                  />
                   {i === 0 && (
                     <View style={[styles.mainBadge, { backgroundColor: C.primary }]}>
                       <Text style={[Typography.caption, { color: C.onPrimary, fontSize: 9 }]}>
@@ -393,12 +378,15 @@ export default function EditAnnounceScreen() {
                   style={[styles.mediaSlot, { borderColor: C.primary + '88', backgroundColor: C.primaryFixed + '44' }]}
                 >
                   <Image source={{ uri }} style={styles.mediaImg} resizeMode="cover" />
-                  <Pressable
+                  <IconButton
+                    icon="close"
+                    accessibilityLabel="Supprimer cette photo"
                     onPress={() => removeNewMedia(i)}
-                    style={[styles.removeBtn, { backgroundColor: C.error }]}
-                  >
-                    <MaterialIcons name="close" size={12} color="#fff" />
-                  </Pressable>
+                    iconColor={C.onError}
+                    containerColor={C.error}
+                    size={12}
+                    style={styles.removeBtn}
+                  />
                   <View style={[styles.newBadge, { backgroundColor: C.primary }]}>
                     <Text style={[Typography.caption, { color: C.onPrimary, fontSize: 9 }]}>Nouvelle</Text>
                   </View>
@@ -408,6 +396,8 @@ export default function EditAnnounceScreen() {
               {/* Add slot — always visible */}
               <Pressable
                 onPress={handlePickPhotos}
+                accessibilityRole="button"
+                accessibilityLabel="Ajouter des photos"
                 style={[styles.mediaSlot, styles.addSlot, { borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }]}
               >
                 <MaterialIcons name="add-photo-alternate" size={28} color={C.onSurfaceVariant} />
@@ -429,62 +419,32 @@ export default function EditAnnounceScreen() {
 
           {/* ── Prix ── */}
           <Section>
-            <SectionLabel color={C.onSurfaceVariant}>Prix</SectionLabel>
-            <View style={styles.priceRow}>
-              <TextInput
-                value={price}
-                onChangeText={setPrice}
-                placeholder="0"
-                placeholderTextColor={C.onSurfaceVariant}
-                keyboardType="numeric"
-                style={[
-                  Typography.bodyMd,
-                  styles.priceInput,
-                  { color: C.onSurface, borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow },
-                ]}
-              />
-              {DEVISES.map((d) => (
-                <Pressable
-                  key={d}
-                  onPress={() => setDevise(d)}
-                  style={[
-                    styles.devisePill,
-                    {
-                      backgroundColor: devise === d ? C.primary : C.surfaceContainer,
-                      borderColor: devise === d ? C.primary : C.outlineVariant,
-                    },
-                  ]}
-                >
-                  <Text style={[
-                    Typography.caption,
-                    {
-                      color: devise === d ? C.onPrimary : C.onSurface,
-                      fontFamily: 'PlusJakartaSans_600SemiBold',
-                    },
-                  ]}>
-                    {d}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <TextInput
+              mode="outlined"
+              label="Prix"
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="numeric"
+            />
+            <SegmentedButtons
+              style={styles.deviseSelector}
+              value={devise}
+              onValueChange={setDevise}
+              theme={segmentedTheme}
+              buttons={DEVISES.map((d) => ({ value: d, label: d }))}
+            />
           </Section>
 
           {/* ── Description ── */}
           <Section>
-            <SectionLabel color={C.onSurfaceVariant}>Description</SectionLabel>
             <TextInput
+              mode="outlined"
+              label="Description"
               value={description}
               onChangeText={setDescription}
-              placeholder="Décrivez votre bien…"
-              placeholderTextColor={C.onSurfaceVariant}
               multiline
               numberOfLines={5}
-              textAlignVertical="top"
-              style={[
-                Typography.bodyMd,
-                styles.textArea,
-                { color: C.onSurface, borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow },
-              ]}
+              style={styles.textArea}
             />
           </Section>
 
@@ -501,23 +461,22 @@ export default function EditAnnounceScreen() {
           <Section>
             <SectionLabel color={C.onSurfaceVariant}>Ville</SectionLabel>
             <View style={styles.pillRow}>
-              {CITIES.map((c) => (
-                <Pressable
-                  key={c}
-                  onPress={() => setCity(c)}
-                  style={[
-                    styles.pill,
-                    {
-                      backgroundColor: city === c ? C.primary : C.surfaceContainer,
-                      borderColor: city === c ? C.primary : C.outlineVariant,
-                    },
-                  ]}
-                >
-                  <Text style={[Typography.labelSm, { color: city === c ? C.onPrimary : C.onSurface, textTransform: 'none' }]}>
+              {CITIES.map((c) => {
+                const active = city === c;
+                return (
+                  <Chip
+                    key={c}
+                    compact
+                    selected={active}
+                    showSelectedCheck={false}
+                    onPress={() => setCity(c)}
+                    style={active ? { backgroundColor: C.primary } : { backgroundColor: C.surfaceContainer }}
+                    textStyle={{ color: active ? C.onPrimary : C.onSurface }}
+                  >
                     {c}
-                  </Text>
-                </Pressable>
-              ))}
+                  </Chip>
+                );
+              })}
             </View>
           </Section>
 
@@ -529,39 +488,32 @@ export default function EditAnnounceScreen() {
                 <View style={{ flex: 1 }}>
                   <SectionLabel color={C.onSurfaceVariant}>Chambres</SectionLabel>
                   <View style={styles.pillRow}>
-                    {[0, 1, 2, 3, 4, 5].map((n) => (
-                      <Pressable
-                        key={n}
-                        onPress={() => setBedrooms(n)}
-                        style={[
-                          styles.counterPill,
-                          {
-                            backgroundColor: bedrooms === n ? C.primary : C.surfaceContainer,
-                            borderColor: bedrooms === n ? C.primary : C.outlineVariant,
-                          },
-                        ]}
-                      >
-                        <Text style={[Typography.caption, { color: bedrooms === n ? C.onPrimary : C.onSurface }]}>
+                    {[0, 1, 2, 3, 4, 5].map((n) => {
+                      const active = bedrooms === n;
+                      return (
+                        <Chip
+                          key={n}
+                          compact
+                          selected={active}
+                          showSelectedCheck={false}
+                          onPress={() => setBedrooms(n)}
+                          style={active ? { backgroundColor: C.primary } : { backgroundColor: C.surfaceContainer }}
+                          textStyle={{ color: active ? C.onPrimary : C.onSurface }}
+                        >
                           {n === 0 ? 'Studio' : `${n}`}
-                        </Text>
-                      </Pressable>
-                    ))}
+                        </Chip>
+                      );
+                    })}
                   </View>
                 </View>
 
-                <View style={{ width: 100 }}>
-                  <SectionLabel color={C.onSurfaceVariant}>Surface m²</SectionLabel>
+                <View style={{ width: 120 }}>
                   <TextInput
+                    mode="outlined"
+                    label="Surface (m²)"
                     value={size}
                     onChangeText={setSize}
-                    placeholder="0"
-                    placeholderTextColor={C.onSurfaceVariant}
                     keyboardType="numeric"
-                    style={[
-                      Typography.bodyMd,
-                      styles.sizeInput,
-                      { color: C.onSurface, borderColor: C.outlineVariant, backgroundColor: C.surfaceContainerLow },
-                    ]}
                   />
                 </View>
               </View>
@@ -569,33 +521,12 @@ export default function EditAnnounceScreen() {
               {/* Standing */}
               <Section>
                 <SectionLabel color={C.onSurfaceVariant}>Standing</SectionLabel>
-                <View style={styles.pillRow}>
-                  {STANDING_OPTIONS.map((s) => (
-                    <Pressable
-                      key={s.value}
-                      onPress={() => setStanding(standing === s.value ? undefined : s.value)}
-                      style={[
-                        styles.pill,
-                        {
-                          flex: 1,
-                          backgroundColor: standing === s.value ? C.primary : C.surfaceContainer,
-                          borderColor: standing === s.value ? C.primary : C.outlineVariant,
-                        },
-                      ]}
-                    >
-                      <Text style={[
-                        Typography.caption,
-                        {
-                          color: standing === s.value ? C.onPrimary : C.onSurface,
-                          textAlign: 'center',
-                          fontFamily: 'PlusJakartaSans_500Medium',
-                        },
-                      ]}>
-                        {s.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
+                <SegmentedButtons
+                  value={standing ?? ''}
+                  onValueChange={(v) => setStanding(v as Standing)}
+                  theme={segmentedTheme}
+                  buttons={STANDING_OPTIONS}
+                />
               </Section>
 
               {/* Équipements */}
@@ -605,28 +536,20 @@ export default function EditAnnounceScreen() {
                   {AMENITY_OPTIONS.map((a) => {
                     const active = amenities[a.key];
                     return (
-                      <Pressable
+                      <Chip
                         key={a.key}
+                        compact
+                        selected={active}
+                        showSelectedCheck={false}
+                        icon={({ size }) => (
+                          <MaterialIcons name={a.icon} size={size} color={active ? C.primary : C.onSurfaceVariant} />
+                        )}
                         onPress={() => toggleAmenity(a.key)}
-                        style={[
-                          styles.amenityChip,
-                          {
-                            backgroundColor: active ? C.primaryFixed : C.surfaceContainer,
-                            borderColor: active ? C.primaryFixedDim : C.outlineVariant,
-                          },
-                        ]}
+                        style={active ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
+                        textStyle={{ color: active ? C.primary : C.onSurface }}
                       >
-                        <MaterialIcons name={a.icon} size={16} color={active ? C.primary : C.onSurfaceVariant} />
-                        <Text style={[
-                          Typography.caption,
-                          {
-                            color: active ? C.primary : C.onSurface,
-                            fontFamily: 'PlusJakartaSans_500Medium',
-                          },
-                        ]}>
-                          {a.label}
-                        </Text>
-                      </Pressable>
+                        {a.label}
+                      </Chip>
                     );
                   })}
                 </View>
@@ -660,29 +583,17 @@ export default function EditAnnounceScreen() {
 
         {/* ── Footer ── */}
         <View style={[styles.footer, { borderTopColor: C.outlineVariant, backgroundColor: C.surface }]}>
-          <Pressable
+          <Button
+            mode="contained"
             onPress={handleSave}
             disabled={!canSave || updateAnnounce.isPending}
-            style={[
-              styles.publishBtn,
-              {
-                backgroundColor: C.primary,
-                opacity: canSave && !updateAnnounce.isPending ? 1 : 0.4,
-                ...Shadows.button,
-              },
-            ]}
+            loading={updateAnnounce.isPending}
+            icon={updateAnnounce.isPending ? undefined : 'check-circle'}
+            contentStyle={styles.publishBtnContent}
+            style={styles.publishBtn}
           >
-            {updateAnnounce.isPending ? (
-              <ActivityIndicator color={C.onPrimary} size="small" />
-            ) : (
-              <>
-                <MaterialIcons name="check-circle" size={18} color={C.onPrimary} />
-                <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-                  Enregistrer les modifications
-                </Text>
-              </>
-            )}
-          </Pressable>
+            Enregistrer les modifications
+          </Button>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -702,17 +613,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-  },
-  saveBtn: {
-    height: 34,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 80,
   },
   scroll: {
     paddingHorizontal: Spacing.marginMobile,
@@ -733,10 +636,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 0.8,
   },
-  toggleFull: {
-    alignSelf: 'stretch',
-    minWidth: 0,
-  },
   rowSection: {
     flexDirection: 'row',
     gap: Spacing.md,
@@ -748,12 +647,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
-  },
-  chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
   },
 
   // Media grid
@@ -790,13 +683,9 @@ const styles = StyleSheet.create({
   },
   removeBtn: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: 4,
+    right: 4,
+    margin: 0,
   },
   addSlot: {
     alignItems: 'center',
@@ -813,32 +702,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  // Price
-  priceRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    alignItems: 'center',
-  },
-  priceInput: {
-    flex: 1,
-    height: 48,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-  },
-  devisePill: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
+  deviseSelector: {
+    marginTop: Spacing.sm,
   },
 
   // Text area
   textArea: {
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
     minHeight: 100,
   },
 
@@ -848,42 +717,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.xs,
   },
-  pill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  counterPill: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    minWidth: 44,
-    alignItems: 'center',
-  },
-  sizeInput: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-  },
 
   // Amenities
   amenityGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
-  },
-  amenityChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.sm + 2,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    borderWidth: 1,
   },
 
   // Recap
@@ -901,11 +740,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   publishBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    height: 52,
     borderRadius: Radius.md,
+  },
+  publishBtnContent: {
+    height: 52,
+    flexDirection: 'row-reverse',
   },
 });

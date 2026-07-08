@@ -1,6 +1,7 @@
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
+import { IconButton } from 'react-native-paper';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -45,13 +46,15 @@ export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
           >
             <Image source={{ uri }} style={styles.img} resizeMode="cover" />
 
-            <Pressable
+            <IconButton
+              icon="close"
+              accessibilityLabel="Supprimer cette photo"
               onPress={() => handleRemove(i)}
-              style={[styles.removeBtn, { backgroundColor: C.error }]}
-              hitSlop={4}
-            >
-              <MaterialIcons name="close" size={13} color="#fff" />
-            </Pressable>
+              iconColor={C.onError}
+              containerColor={C.error}
+              size={13}
+              style={styles.removeBtn}
+            />
 
             {i === 0 && (
               <View style={[styles.mainBadge, { backgroundColor: C.primary }]}>
@@ -66,6 +69,8 @@ export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
         {/* Add button — always visible so user can keep adding */}
         <Pressable
           onPress={handlePick}
+          accessibilityRole="button"
+          accessibilityLabel="Ajouter des photos"
           style={[
             styles.slot,
             styles.addSlot,
@@ -147,13 +152,9 @@ const styles = StyleSheet.create({
   img: { width: '100%', height: '100%' },
   removeBtn: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: 4,
+    right: 4,
+    margin: 0,
   },
   mainBadge: {
     position: 'absolute',
