@@ -30,15 +30,7 @@
       "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8095 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
       "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8096 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
       "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8097 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
-      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8098 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
-      "Skill(run)",
-      "Skill(run:*)",
-      "Bash(chromium-cli --help)",
-      "Bash(npx playwright *)",
-      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.claude/settings.json','utf8'\\)\\); console.log\\('settings.json valid JSON'\\)\")",
-      "Bash(git add *)",
-      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('dep:', p.dependencies['react-native-paper']\\); console.log\\('devDep:', p.devDependencies && p.devDependencies['react-native-paper']\\)\")",
-      "Bash(echo \"---exit $?\")"
+      "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8098 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\Wilfreid\\.claude"

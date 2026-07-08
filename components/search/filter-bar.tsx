@@ -1,11 +1,15 @@
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { ScrollView, StyleSheet } from 'react-native';
+import { Chip } from 'react-native-paper';
+import { Colors, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { AnnounceFilters } from '@/types/announce';
 
+const FILTER_ICONS: Partial<Record<keyof AnnounceFilters, string>> = {
+  city: 'map-marker',
+};
+
 const FILTER_LABELS: Partial<Record<keyof AnnounceFilters, (v: unknown) => string>> = {
-  city: (v) => `📍 ${v}`,
+  city: (v) => `${v}`,
   standing: (v) => ({
     standard: 'Standard',
     confort: 'Confort',
@@ -48,16 +52,17 @@ export function FilterBar({ filters, onRemove }: FilterBarProps) {
       contentContainerStyle={styles.container}
     >
       {chips.map(({ key, label }) => (
-        <Pressable
+        <Chip
           key={key}
-          onPress={() => onRemove(key)}
-          style={[styles.chip, { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim }]}
+          mode="flat"
+          icon={FILTER_ICONS[key]}
+          onClose={() => onRemove(key)}
+          closeIconAccessibilityLabel={`Retirer le filtre ${label}`}
+          style={{ backgroundColor: C.primaryFixed }}
+          textStyle={{ color: C.primary }}
         >
-          <Text style={[Typography.caption, { color: C.primary, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
-            {label}
-          </Text>
-          <MaterialIcons name="close" size={13} color={C.primary} />
-        </Pressable>
+          {label}
+        </Chip>
       ))}
     </ScrollView>
   );
@@ -68,14 +73,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.xs,
     paddingRight: Spacing.marginMobile,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-    borderWidth: 1,
   },
 });

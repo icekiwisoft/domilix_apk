@@ -28,7 +28,6 @@ import type { AdType, AnnounceType, Media, Standing } from '@/types/announce';
 
 const CITIES = ['Douala', 'Yaoundé', 'Bafoussam', 'Kribi', 'Limbé'];
 const DEVISES = ['FCFA', 'EUR', 'USD'];
-const MAX_PHOTOS = 4;
 
 const STANDING_OPTIONS: { value: Standing; label: string }[] = [
   { value: 'standard', label: 'Standard' },
@@ -103,6 +102,7 @@ export default function EditAnnounceScreen() {
     smart_tv: false,
   });
   const [newMediaUris, setNewMediaUris] = useState<string[]>([]);
+  const [removedMediaIds, setRemovedMediaIds] = useState<string[]>([]);
 
   // Pre-populate once announce loads
   const initialized = useRef(false);
@@ -137,9 +137,9 @@ export default function EditAnnounceScreen() {
   const categories = categoriesData?.data ?? [];
   const isRealestate = type === 'realestate';
 
-  const existingMedias: Media[] = announce?.medias ?? [];
+  const allExistingMedias: Media[] = announce?.medias ?? [];
+  const existingMedias = allExistingMedias.filter((m) => !removedMediaIds.includes(m.id));
   const totalPhotos = existingMedias.length + newMediaUris.length;
-  const canAddMore = totalPhotos < MAX_PHOTOS;
   const canSave = !!price && !!description && !!address && !!city;
 
   // ── Handlers ────────────────────────────────────────────────────────────────
@@ -148,21 +148,23 @@ export default function EditAnnounceScreen() {
   }
 
   async function handlePickPhotos() {
-    if (!canAddMore) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.85,
       allowsMultipleSelection: true,
-      selectionLimit: MAX_PHOTOS - totalPhotos,
     });
     if (!result.canceled) {
       const picked = result.assets.map((a) => a.uri);
-      setNewMediaUris((prev) => [...prev, ...picked].slice(0, MAX_PHOTOS - existingMedias.length));
+      setNewMediaUris((prev) => [...prev, ...picked]);
     }
   }
 
   function removeNewMedia(index: number) {
     setNewMediaUris((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function removeExistingMedia(mediaId: string) {
+    setRemovedMediaIds((prev) => [...prev, mediaId]);
   }
 
   function handleSave() {
@@ -192,6 +194,10 @@ export default function EditAnnounceScreen() {
       const match = /\.(\w+)$/.exec(filename);
       const mimeType = match ? `image/${match[1]}` : 'image/jpeg';
       formData.append('medias[]', { uri, name: filename, type: mimeType } as unknown as Blob);
+    });
+
+    removedMediaIds.forEach((mediaId) => {
+      formData.append('remove_media_ids[]', mediaId);
     });
 
     updateAnnounce.mutate(
@@ -274,34 +280,41 @@ export default function EditAnnounceScreen() {
           keyboardShouldPersistTaps="handled"
         >
 
-          {/* ── Type de bien ── */}
-          <Section>
-            <SectionLabel color={C.onSurfaceVariant}>Type de bien</SectionLabel>
-            <ToggleSwitch
-              options={[
-                { label: 'Immobilier', value: 'realestate' },
-                { label: 'Mobilier', value: 'furniture' },
-              ]}
-              value={type}
-              onChange={(v: AnnounceType) => {
-                setType(v);
-                setCategoryId('');
-              }}
-            />
-          </Section>
+          {/* ── Type de bien + Type d'annonce — même ligne ── */}
+          <View style={styles.typeRow}>
+            <View style={styles.typeCol}>
+              <Text style={[Typography.labelSm, styles.typeLabel, { color: C.onSurfaceVariant }]}>
+                TYPE DE BIEN
+              </Text>
+              <ToggleSwitch
+                style={styles.toggleFull}
+                options={[
+                  { label: 'Immobilier', value: 'realestate' },
+                  { label: 'Mobilier', value: 'furniture' },
+                ]}
+                value={type}
+                onChange={(v: AnnounceType) => {
+                  setType(v);
+                  setCategoryId('');
+                }}
+              />
+            </View>
 
-          {/* ── Type d'annonce ── */}
-          <Section>
-            <SectionLabel color={C.onSurfaceVariant}>Type d'annonce</SectionLabel>
-            <ToggleSwitch
-              options={[
-                { label: 'Location', value: 'location' },
-                { label: 'Vente', value: 'sale' },
-              ]}
-              value={adType}
-              onChange={(v: AdType) => setAdType(v)}
-            />
-          </Section>
+            <View style={styles.typeCol}>
+              <Text style={[Typography.labelSm, styles.typeLabel, { color: C.onSurfaceVariant }]}>
+                TYPE D'ANNONCE
+              </Text>
+              <ToggleSwitch
+                style={styles.toggleFull}
+                options={[
+                  { label: 'Location', value: 'location' },
+                  { label: 'Vente', value: 'sale' },
+                ]}
+                value={adType}
+                onChange={(v: AdType) => setAdType(v)}
+              />
+            </View>
+          </View>
 
           {/* ── Catégorie ── */}
           {categories.length > 0 && (
@@ -342,11 +355,11 @@ export default function EditAnnounceScreen() {
           {/* ── Photos ── */}
           <Section>
             <SectionLabel color={C.onSurfaceVariant}>
-              Photos ({totalPhotos}/{MAX_PHOTOS})
+              Photos ({totalPhotos})
             </SectionLabel>
 
             <View style={styles.mediaGrid}>
-              {/* Existing locked medias */}
+              {/* Existing photos */}
               {existingMedias.map((media, i) => (
                 <View
                   key={media.id}
@@ -357,11 +370,12 @@ export default function EditAnnounceScreen() {
                     style={styles.mediaImg}
                     resizeMode="cover"
                   />
-                  {/* Lock badge */}
-                  <View style={[styles.lockBadge, { backgroundColor: C.inverseSurface + 'CC' }]}>
-                    <MaterialIcons name="lock" size={10} color={C.inverseOnSurface} />
-                  </View>
-                  {/* Main badge */}
+                  <Pressable
+                    onPress={() => removeExistingMedia(media.id)}
+                    style={[styles.removeBtn, { backgroundColor: C.error }]}
+                  >
+                    <MaterialIcons name="close" size={12} color="#fff" />
+                  </Pressable>
                   {i === 0 && (
                     <View style={[styles.mainBadge, { backgroundColor: C.primary }]}>
                       <Text style={[Typography.caption, { color: C.onPrimary, fontSize: 9 }]}>
@@ -391,25 +405,23 @@ export default function EditAnnounceScreen() {
                 </View>
               ))}
 
-              {/* Add slot */}
-              {canAddMore && (
-                <Pressable
-                  onPress={handlePickPhotos}
-                  style={[styles.mediaSlot, styles.addSlot, { borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }]}
-                >
-                  <MaterialIcons name="add-photo-alternate" size={28} color={C.onSurfaceVariant} />
-                  <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 4, textAlign: 'center' }]}>
-                    Ajouter
-                  </Text>
-                </Pressable>
-              )}
+              {/* Add slot — always visible */}
+              <Pressable
+                onPress={handlePickPhotos}
+                style={[styles.mediaSlot, styles.addSlot, { borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }]}
+              >
+                <MaterialIcons name="add-photo-alternate" size={28} color={C.onSurfaceVariant} />
+                <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 4, textAlign: 'center' }]}>
+                  Ajouter
+                </Text>
+              </Pressable>
             </View>
 
-            {existingMedias.length > 0 && (
-              <View style={[styles.infoBox, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }]}>
-                <MaterialIcons name="info-outline" size={14} color={C.onSurfaceVariant} />
-                <Text style={[Typography.caption, { color: C.onSurfaceVariant, flex: 1 }]}>
-                  Les photos existantes ({existingMedias.length}) sont conservées. Vous pouvez ajouter de nouvelles photos.
+            {removedMediaIds.length > 0 && (
+              <View style={[styles.infoBox, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '44' }]}>
+                <MaterialIcons name="delete-outline" size={14} color={C.error} />
+                <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
+                  {removedMediaIds.length} photo{removedMediaIds.length > 1 ? 's' : ''} supprimée{removedMediaIds.length > 1 ? 's' : ''} à l'enregistrement.
                 </Text>
               </View>
             )}
@@ -709,6 +721,22 @@ const styles = StyleSheet.create({
     gap: Spacing.lg,
   },
   section: {},
+  typeRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  typeCol: {
+    flex: 1,
+    gap: Spacing.sm,
+  },
+  typeLabel: {
+    fontSize: 11,
+    letterSpacing: 0.8,
+  },
+  toggleFull: {
+    alignSelf: 'stretch',
+    minWidth: 0,
+  },
   rowSection: {
     flexDirection: 'row',
     gap: Spacing.md,
@@ -744,16 +772,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   mediaImg: { width: '100%', height: '100%' },
-  lockBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   mainBadge: {
     position: 'absolute',
     bottom: 6,

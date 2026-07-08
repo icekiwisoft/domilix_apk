@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AddressAutocomplete } from '@/components/forms/address-autocomplete';
+import { StepIndicator } from '@/components/ui/step-indicator';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCreateListingStore } from '@/stores/create-listing.store';
@@ -98,12 +99,7 @@ export default function CreateStep3Screen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Step indicator */}
-        <View style={styles.stepRow}>
-          {[0, 1, 2].map((i) => (
-            <View key={i} style={[styles.stepDot, { backgroundColor: i < 3 ? C.primary : C.outlineVariant, flex: 1 }]} />
-          ))}
-        </View>
+        <StepIndicator current={3} />
 
         {/* Price */}
         <View style={styles.section}>
@@ -337,8 +333,6 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxl,
     gap: Spacing.lg,
   },
-  stepRow: { flexDirection: 'row', gap: Spacing.xs },
-  stepDot: { height: 4, borderRadius: 2 },
   section: {},
   rowSection: { flexDirection: 'row', gap: Spacing.md },
   halfSection: { flex: 1 },

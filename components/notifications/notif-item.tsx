@@ -102,7 +102,19 @@ export function NotifItem({ notification, onPress, onDelete }: NotifItemProps) {
             animStyle,
           ]}
         >
-          <Pressable onPress={onPress} style={styles.content}>
+          <Pressable
+            onPress={onPress}
+            style={styles.content}
+            accessibilityRole="button"
+            accessibilityLabel={`${notification.title}. ${notification.body}`}
+            accessibilityState={{ selected: isUnread }}
+            accessibilityHint={isUnread ? 'Marquer comme lue' : undefined}
+            accessibilityActions={onDelete ? [{ name: 'delete', label: 'Supprimer' }] : undefined}
+            onAccessibilityAction={(event) => {
+              if (event.nativeEvent.actionName === 'delete') onDelete?.(notification.id);
+              else onPress?.();
+            }}
+          >
             {/* Icon */}
             <View style={[styles.iconBox, { backgroundColor: bg }]}>
               <MaterialIcons name={icon} size={20} color={color} />

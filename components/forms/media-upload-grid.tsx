@@ -1,10 +1,10 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-const MAX_PHOTOS = 4;
+export const MIN_PHOTOS = 4;
 
 interface MediaUploadGridProps {
   uris: string[];
@@ -20,11 +20,10 @@ export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
       mediaTypes: ['images'],
       quality: 0.85,
       allowsMultipleSelection: true,
-      selectionLimit: MAX_PHOTOS - uris.length,
     });
     if (!result.canceled) {
       const newUris = result.assets.map((a) => a.uri);
-      onChange([...uris, ...newUris].slice(0, MAX_PHOTOS));
+      onChange([...uris, ...newUris]);
     }
   }
 
@@ -32,58 +31,102 @@ export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
     onChange(uris.filter((_, i) => i !== index));
   }
 
-  const slots = Array.from({ length: MAX_PHOTOS });
+  const hasEnough = uris.length >= MIN_PHOTOS;
+  const remaining = Math.max(0, MIN_PHOTOS - uris.length);
 
   return (
-    <View>
+    <View style={styles.container}>
+      {/* Grid: photos + add button */}
       <View style={styles.grid}>
-        {slots.map((_, i) => {
-          const uri = uris[i];
-          return (
-            <View key={i} style={[styles.slot, { borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }]}>
-              {uri ? (
-                <>
-                  <Image source={{ uri }} style={styles.img} resizeMode="cover" />
-                  <Pressable
-                    onPress={() => handleRemove(i)}
-                    style={[styles.removeBtn, { backgroundColor: C.error }]}
-                  >
-                    <MaterialIcons name="close" size={14} color="#fff" />
-                  </Pressable>
-                  {i === 0 && (
-                    <View style={[styles.mainBadge, { backgroundColor: C.primary }]}>
-                      <Text style={[Typography.caption, { color: C.onPrimary, fontSize: 9 }]}>Principale</Text>
-                    </View>
-                  )}
-                </>
-              ) : (
-                <Pressable
-                  onPress={uris.length < MAX_PHOTOS ? handlePick : undefined}
-                  style={styles.addBtn}
-                  disabled={uris.length >= MAX_PHOTOS}
-                >
-                  <MaterialIcons
-                    name="add-photo-alternate"
-                    size={28}
-                    color={uris.length >= MAX_PHOTOS ? C.outlineVariant : C.onSurfaceVariant}
-                  />
-                  <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 4 }]}>
-                    {i === 0 ? 'Photo principale' : `Photo ${i + 1}`}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          );
-        })}
+        {uris.map((uri, i) => (
+          <View
+            key={`${uri}-${i}`}
+            style={[styles.slot, { borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }]}
+          >
+            <Image source={{ uri }} style={styles.img} resizeMode="cover" />
+
+            <Pressable
+              onPress={() => handleRemove(i)}
+              style={[styles.removeBtn, { backgroundColor: C.error }]}
+              hitSlop={4}
+            >
+              <MaterialIcons name="close" size={13} color="#fff" />
+            </Pressable>
+
+            {i === 0 && (
+              <View style={[styles.mainBadge, { backgroundColor: C.primary }]}>
+                <Text style={[Typography.caption, { color: C.onPrimary, fontSize: 9 }]}>
+                  Principale
+                </Text>
+              </View>
+            )}
+          </View>
+        ))}
+
+        {/* Add button — always visible so user can keep adding */}
+        <Pressable
+          onPress={handlePick}
+          style={[
+            styles.slot,
+            styles.addSlot,
+            { borderColor: hasEnough ? C.outlineVariant : C.primary + '88', backgroundColor: C.surfaceContainerLow },
+          ]}
+        >
+          <MaterialIcons
+            name="add-photo-alternate"
+            size={30}
+            color={hasEnough ? C.onSurfaceVariant : C.primary}
+          />
+          <Text
+            style={[
+              Typography.caption,
+              { color: hasEnough ? C.onSurfaceVariant : C.primary, marginTop: 6, textAlign: 'center' },
+            ]}
+          >
+            {uris.length === 0 ? 'Ajouter des\nphotos' : 'Ajouter'}
+          </Text>
+        </Pressable>
       </View>
-      <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: Spacing.sm }]}>
-        {uris.length}/{MAX_PHOTOS} photos · La première est la photo principale
-      </Text>
+
+      {/* Counter + minimum progress */}
+      <View style={styles.footer}>
+        <View style={styles.counterRow}>
+          <MaterialIcons
+            name={hasEnough ? 'check-circle' : 'photo-library'}
+            size={14}
+            color={hasEnough ? C.primary : C.onSurfaceVariant}
+          />
+          <Text style={[Typography.caption, { color: hasEnough ? C.primary : C.onSurfaceVariant }]}>
+            {uris.length} photo{uris.length > 1 ? 's' : ''}
+            {hasEnough
+              ? ` · Minimum atteint`
+              : ` · encore ${remaining} photo${remaining > 1 ? 's' : ''} requise${remaining > 1 ? 's' : ''}`}
+          </Text>
+        </View>
+
+        {/* Progress bar toward minimum */}
+        {!hasEnough && (
+          <View style={[styles.progressTrack, { backgroundColor: C.surfaceContainerHighest }]}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  backgroundColor: C.primary,
+                  width: `${Math.min(100, (uris.length / MIN_PHOTOS) * 100)}%`,
+                },
+              ]}
+            />
+          </View>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    gap: Spacing.sm,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -94,15 +137,14 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: Radius.md,
     borderWidth: 1.5,
-    borderStyle: 'dashed',
     overflow: 'hidden',
   },
-  img: { width: '100%', height: '100%' },
-  addBtn: {
-    flex: 1,
+  addSlot: {
+    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  img: { width: '100%', height: '100%' },
   removeBtn: {
     position: 'absolute',
     top: 6,
@@ -120,5 +162,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: Radius.full,
+  },
+  footer: {
+    gap: Spacing.xs,
+  },
+  counterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  progressTrack: {
+    height: 3,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
 });

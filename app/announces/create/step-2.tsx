@@ -2,28 +2,11 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MediaUploadGrid } from '@/components/forms/media-upload-grid';
+import { MediaUploadGrid, MIN_PHOTOS } from '@/components/forms/media-upload-grid';
+import { StepIndicator } from '@/components/ui/step-indicator';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCreateListingStore } from '@/stores/create-listing.store';
-
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  return (
-    <View style={styles.stepRow}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.stepDot,
-            { backgroundColor: i < current ? C.primary : C.outlineVariant, flex: 1 },
-          ]}
-        />
-      ))}
-    </View>
-  );
-}
 
 export default function CreateStep2Screen() {
   const scheme = useColorScheme();
@@ -47,13 +30,13 @@ export default function CreateStep2Screen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <StepIndicator current={2} total={3} />
+        <StepIndicator current={2} />
 
         <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20, marginBottom: Spacing.xs }]}>
           Photos du bien
         </Text>
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginBottom: Spacing.lg, lineHeight: 22 }]}>
-          Ajoutez jusqu'à 4 photos. Une bonne photo augmente les chances de contact.
+          Minimum {MIN_PHOTOS} photos requises. De belles photos multiplient les prises de contact.
         </Text>
 
         <MediaUploadGrid
@@ -83,8 +66,8 @@ export default function CreateStep2Screen() {
       <View style={[styles.footer, { borderTopColor: C.outlineVariant, backgroundColor: C.surface }]}>
         <Pressable
           onPress={() => router.push('/announces/create/step-3')}
-          disabled={draft.medias.length === 0}
-          style={[styles.nextBtn, { backgroundColor: C.primary, opacity: draft.medias.length > 0 ? 1 : 0.4 }]}
+          disabled={draft.medias.length < MIN_PHOTOS}
+          style={[styles.nextBtn, { backgroundColor: C.primary, opacity: draft.medias.length >= MIN_PHOTOS ? 1 : 0.4 }]}
         >
           <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
             Suivant — Détails
@@ -111,14 +94,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.xxl,
     gap: Spacing.lg,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-  },
-  stepDot: {
-    height: 4,
-    borderRadius: 2,
   },
   tips: {
     padding: Spacing.md,

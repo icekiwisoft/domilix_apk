@@ -1,4 +1,5 @@
-import { Pressable, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
+import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NotifItem } from '@/components/notifications/notif-item';
@@ -81,16 +82,14 @@ export default function NotificationsScreen() {
           )}
         </View>
         {unreadCount > 0 && (
-          <Pressable
+          <Button
+            mode="text"
+            icon="check-all"
+            compact
             onPress={() => markAllRead.mutate()}
-            hitSlop={8}
-            style={({ pressed }) => [styles.markAll, { backgroundColor: C.primaryFixed }, pressed && { opacity: 0.7 }]}
           >
-            <MaterialIcons name="done-all" size={16} color={C.primary} />
-            <Text style={[Typography.caption, { color: C.primary, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
-              Tout marquer lu
-            </Text>
-          </Pressable>
+            Tout marquer lu
+          </Button>
         )}
       </View>
 
@@ -157,14 +156,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: Radius.full,
     marginTop: 4,
-  },
-  markAll: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
   },
   empty: {
     flex: 1,

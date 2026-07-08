@@ -9,13 +9,14 @@ export function useAnnounces(filters: AnnounceFilters = {}) {
   });
 }
 
-export function useInfiniteAnnounces(filters: Omit<AnnounceFilters, 'page'> = {}) {
+export function useInfiniteAnnounces(filters: Omit<AnnounceFilters, 'page'> = {}, options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: ['announces-infinite', filters],
     queryFn: ({ pageParam = 1 }) => AnnouncesService.list({ ...filters, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (last) =>
       last.page < last.last_page ? last.page + 1 : undefined,
+    enabled: options?.enabled,
   });
 }
 
@@ -31,7 +32,11 @@ export function useCreateAnnounce() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (formData: FormData) => AnnouncesService.create(formData),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['announces'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['announces'] });
+      qc.invalidateQueries({ queryKey: ['announces-infinite'] });
+      qc.invalidateQueries({ queryKey: ['my-announces'] });
+    },
   });
 }
 
@@ -88,6 +93,9 @@ export function useMyAnnounces(announcerId: string) {
     queryKey: ['my-announces', announcerId],
     queryFn: () => AnnouncesService.list({ AnnouncerId: announcerId }),
     enabled: !!announcerId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnReconnect: true,
   });
 }
 

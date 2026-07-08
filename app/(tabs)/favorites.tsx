@@ -1,13 +1,14 @@
+import { useMemo } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Button } from '@/components/ui/button';
 import { ListingCard } from '@/components/listing/listing-card';
 import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAnnounces } from '@/hooks/queries/use-announces';
+import { useInfiniteAnnounces } from '@/hooks/queries/use-announces';
 import { useAuthStore } from '@/stores/auth.store';
 import { LoginGate } from '@/components/ui/login-gate';
 
@@ -15,6 +16,16 @@ export default function FavoritesScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const accessToken = useAuthStore((s) => s.accessToken);
+  const {
+    data,
+    isLoading,
+    isFetching,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteAnnounces({ liked: true }, { enabled: !!accessToken });
+  const favorites = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
 
   if (!accessToken) {
     return (
@@ -29,9 +40,6 @@ export default function FavoritesScreen() {
       </SafeAreaView>
     );
   }
-
-  const { data, isLoading, isFetching, refetch } = useAnnounces({ liked: true });
-  const favorites = data?.data ?? [];
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
@@ -56,10 +64,12 @@ export default function FavoritesScreen() {
             Enregistrez vos annonces préférées en appuyant sur le cœur pour les retrouver ici.
           </Text>
           <Button
-            label="Explorer les annonces"
+            mode="contained"
             onPress={() => router.push('/(tabs)/explore')}
             style={{ marginTop: Spacing.xl }}
-          />
+          >
+            Explorer les annonces
+          </Button>
         </View>
       ) : (
         <FlatList
@@ -72,6 +82,9 @@ export default function FavoritesScreen() {
             />
           )}
           ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
+          ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={styles.paginationLoader} /> : null}
+          onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
+          onEndReachedThreshold={0.5}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -107,4 +120,5 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.xxl,
   },
+  paginationLoader: { marginTop: Spacing.md },
 });

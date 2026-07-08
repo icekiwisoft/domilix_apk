@@ -1,7 +1,6 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { StyleSheet } from 'react-native';
+import { Button } from 'react-native-paper';
+import { Radius } from '@/constants/theme';
 
 interface MapListToggleProps {
   mode: 'list' | 'map';
@@ -9,38 +8,23 @@ interface MapListToggleProps {
 }
 
 export function MapListToggle({ mode, onToggle }: MapListToggleProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-
   const isMap = mode === 'map';
 
   return (
-    <Pressable
+    <Button
+      mode="contained"
+      icon={isMap ? 'format-list-bulleted' : 'map'}
+      accessibilityLabel={isMap ? 'Afficher la liste' : 'Afficher la carte'}
       onPress={onToggle}
-      style={({ pressed }) => [
-        styles.btn,
-        { backgroundColor: C.primary, opacity: pressed ? 0.88 : 1 },
-      ]}
+      style={styles.btn}
     >
-      <MaterialIcons
-        name={isMap ? 'list' : 'map'}
-        size={18}
-        color={C.onPrimary}
-      />
-      <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-        {isMap ? 'Liste' : 'Carte'}
-      </Text>
-    </Pressable>
+      {isMap ? 'Liste' : 'Carte'}
+    </Button>
   );
 }
 
 const styles = StyleSheet.create({
   btn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm + 2,
     borderRadius: Radius.full,
     shadowColor: '#633f00',
     shadowOffset: { width: 0, height: 4 },

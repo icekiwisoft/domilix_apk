@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { useSegments, useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { TokenStorage } from '@/lib/secure-storage';
 import { AuthService } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/auth.store';
@@ -8,6 +9,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { accessToken, hydrated, setTokens, setUser, clearAuth, setHydrated } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // ── Hydrate tokens + validate session on cold start ──────────────────────────
   useEffect(() => {
@@ -22,6 +24,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTokens(access, refresh);
           const user = await AuthService.me();
           setUser(user);
+          // Sync the full user (with announcer) into React Query cache so
+          // useMe() returns correct data without waiting for a background refetch
+          queryClient.setQueryData(['me'], user);
         }
       } catch {
         clearAuth();

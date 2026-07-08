@@ -18,6 +18,8 @@ export function AnnounceDetailSkeleton({ onBack }: Props) {
       <View style={{ position: 'relative' }}>
         <Skeleton height={300} radius={0} />
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Retour"
           onPress={onBack}
           style={[styles.fabBtn, styles.backBtn, { backgroundColor: C.surface + 'CC' }]}
         >

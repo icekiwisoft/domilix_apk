@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { ActivityIndicator, Button, SegmentedButtons } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SearchBar } from '@/components/search/search-bar';
 import { FilterBar } from '@/components/search/filter-bar';
 import { ResultsCount } from '@/components/search/results-count';
 import { MapListToggle } from '@/components/search/map-list-toggle';
-import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { ListingCard } from '@/components/listing/listing-card';
 import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { Colors, Spacing, Typography } from '@/constants/theme';
@@ -65,22 +63,24 @@ export default function ExploreScreen() {
         />
 
         <View style={styles.toggleRow}>
-          <ToggleSwitch
-            options={[
-              { label: 'Immobilier', value: 'realestate' },
-              { label: 'Mobilier', value: 'furniture' },
-            ]}
+          <SegmentedButtons
+            style={styles.segmented}
             value={announceType}
-            onChange={(v) => { setAnnounceType(v as AnnounceType); setPage(1); }}
+            onValueChange={(v) => { setAnnounceType(v as AnnounceType); setPage(1); }}
+            buttons={[
+              { value: 'realestate', label: 'Immobilier' },
+              { value: 'furniture', label: 'Mobilier' },
+            ]}
           />
           {announceType === 'realestate' && (
-            <ToggleSwitch
-              options={[
-                { label: 'Location', value: 'location' },
-                { label: 'Vente', value: 'sale' },
-              ]}
+            <SegmentedButtons
+              style={styles.segmented}
               value={adType}
-              onChange={(v) => { setAdType(v as AdType); setPage(1); }}
+              onValueChange={(v) => { setAdType(v as AdType); setPage(1); }}
+              buttons={[
+                { value: 'location', label: 'Location' },
+                { value: 'sale', label: 'Vente' },
+              ]}
             />
           )}
         </View>
@@ -104,7 +104,7 @@ export default function ExploreScreen() {
         ListHeaderComponent={
           <View style={styles.listHeader}>
             {isLoading ? (
-              <ActivityIndicator color={C.primary} />
+              <ActivityIndicator />
             ) : (
               <ResultsCount count={total} query={search.trim() || undefined} />
             )}
@@ -120,24 +120,21 @@ export default function ExploreScreen() {
               <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}>
                 Aucune annonce ne correspond à vos critères.
               </Text>
-              <Pressable onPress={clearFilters} style={styles.clearBtn}>
-                <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-                  Réinitialiser les filtres
-                </Text>
-              </Pressable>
+              <Button mode="text" onPress={clearFilters}>
+                Réinitialiser les filtres
+              </Button>
             </View>
           )
         }
         ListFooterComponent={
           hasMore && !isLoading ? (
-            <Pressable
+            <Button
+              mode="outlined"
               onPress={() => setPage((p) => p + 1)}
-              style={[styles.loadMore, { borderColor: C.outlineVariant }]}
+              style={styles.loadMore}
             >
-              <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-                Charger plus
-              </Text>
-            </Pressable>
+              Charger plus
+            </Button>
           ) : null
         }
         ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
@@ -154,9 +151,9 @@ export default function ExploreScreen() {
       />
 
       {/* Map toggle FAB */}
-      {/* <View style={styles.fab} pointerEvents="box-none">
+      <View style={styles.fab} pointerEvents="box-none">
         <MapListToggle mode="list" onToggle={() => router.push('/(tabs)/explore/map')} />
-      </View> */}
+      </View>
     </SafeAreaView>
   );
 }
@@ -176,6 +173,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
   },
+  segmented: {
+    alignSelf: 'flex-start',
+  },
   listHeader: {
     paddingBottom: Spacing.sm,
   },
@@ -192,16 +192,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xxl,
     gap: Spacing.md,
   },
-  clearBtn: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-  },
   loadMore: {
     marginTop: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
   },
   fab: {
     position: 'absolute',

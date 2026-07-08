@@ -1,24 +1,30 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Image,
   Linking,
-  Pressable,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import { ActivityIndicator, Button, IconButton, SegmentedButtons } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ListingCard } from '@/components/listing/listing-card';
+import { ListingSkeleton } from '@/components/listing/listing-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
+import { SearchBar } from '@/components/search/search-bar';
 import { AnnouncerDetailSkeleton } from '@/components/announcer/announcer-detail-skeleton';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAnnouncer } from '@/hooks/queries/use-announcers';
-import { useAnnounces } from '@/hooks/queries/use-announces';
+import { useInfiniteAnnounces } from '@/hooks/queries/use-announces';
+
+const PAGINATION_THRESHOLD = 400;
 
 type TabName = 'annonces' | 'medias' | 'about';
 
@@ -105,7 +111,14 @@ export default function AnnouncerProfileScreen() {
   const [search, setSearch] = useState('');
 
   const { data: announcer, isLoading, isFetching, refetch } = useAnnouncer(id ?? '');
-  const { data: listingsData } = useAnnounces(id ? { AnnouncerId: id } : {});
+  const {
+    data: listingsPages,
+    isLoading: listingsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchListings,
+  } = useInfiniteAnnounces({ AnnouncerId: id ?? '' }, { enabled: !!id });
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -116,36 +129,38 @@ export default function AnnouncerProfileScreen() {
   if (!announcer) {
     return (
       <View style={[s.root, { backgroundColor: C.background }]}>
-        <Pressable
+        <IconButton
+          icon="arrow-left"
+          accessibilityLabel="Retour"
           onPress={() => router.back()}
-          style={[
-            s.backFloating,
-            { backgroundColor: C.surface + 'CC', top: insets.top + 8 },
-          ]}
-        >
-          <MaterialIcons name="arrow-back" size={22} color={C.onSurface} />
-        </Pressable>
+          iconColor={C.onSurface}
+          containerColor={C.surface + 'CC'}
+          size={22}
+          style={[s.backFloating, { top: insets.top + 8 }]}
+        />
         <View style={s.errorBody}>
           <MaterialIcons name="person-off" size={52} color={C.onSurfaceVariant + '88'} />
           <Text style={[s.errorTitle, { color: C.onSurface }]}>Profil introuvable</Text>
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}>
             Ce profil n'existe pas ou n'est plus disponible.
           </Text>
-          <Pressable onPress={() => router.back()} style={[s.errorBtn, { backgroundColor: C.primary }]}>
-            <MaterialIcons name="arrow-back" size={16} color={C.onPrimary} />
-            <Text style={[Typography.labelSm, { color: C.onPrimary }]}>Retour</Text>
-          </Pressable>
+          <Button mode="contained" icon="arrow-left" onPress={() => router.back()} style={s.errorBtn}>
+            Retour
+          </Button>
         </View>
       </View>
     );
   }
 
   // ── Data ───────────────────────────────────────────────────────────────────
-  const listings = listingsData?.data ?? [];
+  const listings = useMemo(
+    () => listingsPages?.pages.flatMap((p) => p.data) ?? [],
+    [listingsPages],
+  );
   const totalListings =
-    (listingsData?.total ?? ((announcer.houses ?? 0) + (announcer.furnitures ?? 0))) ||
+    (listingsPages?.pages[0]?.total ?? ((announcer.houses ?? 0) + (announcer.furnitures ?? 0))) ||
     listings.length;
-  const allMedias = listings.flatMap((a) => a.medias);
+  const allMedias = useMemo(() => listings.flatMap((a) => a.medias), [listings]);
   const filteredListings = search.trim()
     ? listings.filter(
         (a) =>
@@ -160,14 +175,30 @@ export default function AnnouncerProfileScreen() {
     ? new Date(announcer.creation_date).getFullYear()
     : null;
 
+  function handleRefresh() {
+    refetch();
+    refetchListings();
+  }
+
+  function handleScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
+    if (activeTab === 'about' || !hasNextPage || isFetchingNextPage) return;
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const distanceFromBottom = contentSize.height - (layoutMeasurement.height + contentOffset.y);
+    if (distanceFromBottom < PAGINATION_THRESHOLD) {
+      fetchNextPage();
+    }
+  }
+
   return (
     <View style={[s.root, { backgroundColor: C.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={200}
         refreshControl={
           <RefreshControl
             refreshing={isFetching && !isLoading}
-            onRefresh={refetch}
+            onRefresh={handleRefresh}
             tintColor={C.primary}
             colors={[C.primary]}
           />
@@ -176,12 +207,15 @@ export default function AnnouncerProfileScreen() {
         {/* ── Cover ─────────────────────────────────────────────────────────── */}
         <View style={[s.cover, { backgroundColor: C.primary }]}>
           <View style={[s.coverOverlay, { backgroundColor: '#00000022' }]} />
-          <Pressable
+          <IconButton
+            icon="arrow-left"
+            accessibilityLabel="Retour"
             onPress={() => router.back()}
-            style={[s.backFloating, { backgroundColor: '#00000033', top: insets.top + 8 }]}
-          >
-            <MaterialIcons name="arrow-back" size={22} color="#fff" />
-          </Pressable>
+            iconColor="#fff"
+            containerColor="#00000033"
+            size={22}
+            style={[s.backFloating, { top: insets.top + 8 }]}
+          />
         </View>
 
         {/* ── Profile card ──────────────────────────────────────────────────── */}
@@ -246,27 +280,22 @@ export default function AnnouncerProfileScreen() {
           {/* CTA buttons */}
           {!!phone && (
             <View style={s.ctaRow}>
-              <Pressable
+              <Button
+                mode="outlined"
+                icon="whatsapp"
                 onPress={() => Linking.openURL(`https://wa.me/${phone.replace(/\D/g, '')}`)}
-                style={({ pressed }) => [
-                  s.ctaBtn,
-                  s.ctaBtnOutline,
-                  { borderColor: C.outlineVariant, opacity: pressed ? 0.8 : 1 },
-                ]}
+                style={s.ctaBtn}
               >
-                <MaterialIcons name="chat" size={18} color={C.onSurface} />
-                <Text style={[s.ctaLabel, { color: C.onSurface }]}>WhatsApp</Text>
-              </Pressable>
-              <Pressable
+                WhatsApp
+              </Button>
+              <Button
+                mode="contained"
+                icon="phone"
                 onPress={() => Linking.openURL(`tel:${phone}`)}
-                style={({ pressed }) => [
-                  s.ctaBtn,
-                  { backgroundColor: C.primary, opacity: pressed ? 0.88 : 1 },
-                ]}
+                style={s.ctaBtn}
               >
-                <MaterialIcons name="call" size={18} color={C.onPrimary} />
-                <Text style={[s.ctaLabel, { color: C.onPrimary }]}>Appeler</Text>
-              </Pressable>
+                Appeler
+              </Button>
             </View>
           )}
         </View>
@@ -278,22 +307,16 @@ export default function AnnouncerProfileScreen() {
             { backgroundColor: C.surface, borderBottomColor: C.outlineVariant },
           ]}
         >
-          <View style={[s.tabPills, { backgroundColor: C.surfaceContainerLow }]}>
-            {(['annonces', 'medias', 'about'] as TabName[]).map((tab) => {
-              const active = activeTab === tab;
-              return (
-                <Pressable
-                  key={tab}
-                  onPress={() => setActiveTab(tab)}
-                  style={[s.tabPill, active && { backgroundColor: C.primary }]}
-                >
-                  <Text style={[s.tabLabel, { color: active ? '#fff' : C.onSurfaceVariant }]}>
-                    {tab === 'annonces' ? 'Annonces' : tab === 'medias' ? 'Médias' : 'À propos'}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <SegmentedButtons
+            style={s.tabPills}
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as TabName)}
+            buttons={[
+              { value: 'annonces', label: 'Annonces' },
+              { value: 'medias', label: 'Médias' },
+              { value: 'about', label: 'À propos' },
+            ]}
+          />
         </View>
 
         {/* ── Content ───────────────────────────────────────────────────────── */}
@@ -302,28 +325,19 @@ export default function AnnouncerProfileScreen() {
           {/* Annonces */}
           {activeTab === 'annonces' && (
             <>
-              <View
-                style={[
-                  s.searchBar,
-                  { backgroundColor: C.surfaceContainerLowest, borderColor: C.outlineVariant },
-                ]}
-              >
-                <MaterialIcons name="search" size={20} color={C.onSurfaceVariant} />
-                <TextInput
-                  style={[s.searchInput, { color: C.onSurface }]}
-                  placeholder="Rechercher une annonce..."
-                  placeholderTextColor={C.onSurfaceVariant + '99'}
+              <View style={s.searchBarWrap}>
+                <SearchBar
                   value={search}
                   onChangeText={setSearch}
+                  placeholder="Rechercher une annonce..."
                 />
-                {search.length > 0 && (
-                  <Pressable onPress={() => setSearch('')} hitSlop={6}>
-                    <MaterialIcons name="close" size={18} color={C.onSurfaceVariant} />
-                  </Pressable>
-                )}
               </View>
 
-              {filteredListings.length === 0 ? (
+              {listingsLoading ? (
+                <View style={s.listingsCol}>
+                  {[1, 2, 3].map((k) => <ListingSkeleton key={k} />)}
+                </View>
+              ) : filteredListings.length === 0 ? (
                 <View style={s.emptyState}>
                   <MaterialIcons name="home-work" size={40} color={C.onSurfaceVariant + '66'} />
                   <Text style={[s.emptyTitle, { color: C.onSurface }]}>
@@ -346,6 +360,7 @@ export default function AnnouncerProfileScreen() {
                       onPress={() => router.push(`/announces/${a.id}`)}
                     />
                   ))}
+                  {isFetchingNextPage && <ActivityIndicator style={s.paginationLoader} />}
                 </View>
               )}
             </>
@@ -362,7 +377,15 @@ export default function AnnouncerProfileScreen() {
                 </Text>
               </View>
 
-              {allMedias.length === 0 ? (
+              {listingsLoading ? (
+                <View style={s.mediaGrid}>
+                  {[1, 2, 3, 4].map((k) => (
+                    <View key={k} style={[s.mediaThumb, { backgroundColor: C.surfaceContainerLow }]}>
+                      <Skeleton style={StyleSheet.absoluteFillObject} radius={0} />
+                    </View>
+                  ))}
+                </View>
+              ) : allMedias.length === 0 ? (
                 <View style={s.emptyState}>
                   <MaterialIcons
                     name="photo-library"
@@ -377,20 +400,23 @@ export default function AnnouncerProfileScreen() {
                   </Text>
                 </View>
               ) : (
-                <View style={s.mediaGrid}>
-                  {allMedias.map((m, idx) => (
-                    <View
-                      key={m.id ?? String(idx)}
-                      style={[s.mediaThumb, { backgroundColor: C.surfaceContainerLow }]}
-                    >
-                      <Image
-                        source={{ uri: m.thumbnail ?? m.file }}
-                        style={s.mediaImg}
-                        resizeMode="cover"
-                      />
-                    </View>
-                  ))}
-                </View>
+                <>
+                  <View style={s.mediaGrid}>
+                    {allMedias.map((m, idx) => (
+                      <View
+                        key={m.id ?? String(idx)}
+                        style={[s.mediaThumb, { backgroundColor: C.surfaceContainerLow }]}
+                      >
+                        <Image
+                          source={{ uri: m.thumbnail ?? m.file }}
+                          style={s.mediaImg}
+                          resizeMode="cover"
+                        />
+                      </View>
+                    ))}
+                  </View>
+                  {isFetchingNextPage && <ActivityIndicator style={s.paginationLoader} />}
+                </>
               )}
             </>
           )}
@@ -473,24 +499,14 @@ const s = StyleSheet.create({
     marginTop: Spacing.md,
   },
   errorBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
     marginTop: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    height: 48,
-    borderRadius: Radius.md,
   },
 
   // ── Back button ──
   backFloating: {
     position: 'absolute',
     left: Spacing.marginMobile,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    margin: 0,
     zIndex: 10,
   },
 
@@ -552,17 +568,7 @@ const s = StyleSheet.create({
 
   // ── CTA ──
   ctaRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg },
-  ctaBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: Radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-  },
-  ctaBtnOutline: { borderWidth: 1 },
-  ctaLabel: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13, letterSpacing: 0.3 },
+  ctaBtn: { flex: 1 },
 
   // ── Tabs ──
   tabsWrap: {
@@ -571,38 +577,14 @@ const s = StyleSheet.create({
     borderBottomWidth: 1,
   },
   tabPills: {
-    flexDirection: 'row',
-    borderRadius: 100,
-    padding: 4,
     alignSelf: 'flex-start',
   },
-  tabPill: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: 100,
-  },
-  tabLabel: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13, lineHeight: 18 },
 
   // ── Content ──
   content: { paddingTop: Spacing.lg },
 
   // Search
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.md,
-    height: 48,
-    borderWidth: 1,
-    marginBottom: Spacing.lg,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    fontSize: 14,
-    paddingVertical: 0,
-  },
+  searchBarWrap: { marginBottom: Spacing.lg },
 
   // Empty state
   emptyState: { alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xxl },
@@ -610,6 +592,7 @@ const s = StyleSheet.create({
 
   // Listings
   listingsCol: { gap: Spacing.md },
+  paginationLoader: { marginTop: Spacing.lg },
 
   // Media gallery
   sectionHeader: { marginBottom: Spacing.md, gap: 3 },

@@ -13,11 +13,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Button, IconButton } from 'react-native-paper';
 
 import { ListingGallery } from '@/components/listing/listing-gallery';
 import { AnnouncerCard } from '@/components/announcer/announcer-card';
 import { AnnounceDetailSkeleton } from '@/components/listing/announce-detail-skeleton';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
   useAnnounce,
@@ -133,7 +134,7 @@ export default function AnnounceDetailScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: C.background }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 96 + insets.bottom }}
@@ -155,63 +156,71 @@ export default function AnnounceDetailScreen() {
           />
 
           {/* Back — white pill button */}
-          <Pressable
+          <IconButton
+            icon="arrow-left"
+            accessibilityLabel="Retour"
             onPress={() => router.back()}
+            iconColor="#222"
+            containerColor="rgba(255,255,255,0.95)"
+            size={20}
             style={[styles.backBtn, { top: insets.top + 10 }]}
-          >
-            <MaterialIcons name="arrow-back" size={20} color="#222" />
-          </Pressable>
+          />
 
           {/* Share + Heart — plain icons, no background */}
           <View style={[styles.topActions, { top: insets.top + 10 }]}>
-            <Pressable onPress={handleShare} hitSlop={8} style={styles.iconBtn}>
-              <MaterialIcons name="ios-share" size={24} color="#222" />
-            </Pressable>
-            <Pressable
-              onPress={() => toggleLike.mutate(announce.id)}
-              hitSlop={8}
+            <IconButton
+              icon="share-variant-outline"
+              accessibilityLabel="Partager l'annonce"
+              onPress={handleShare}
+              iconColor="#222"
+              containerColor="rgba(255,255,255,0.95)"
+              size={20}
               style={styles.iconBtn}
-            >
-              <MaterialIcons
-                name={announce.liked ? 'favorite' : 'favorite-border'}
-                size={24}
-                color={announce.liked ? '#e53935' : '#222'}
-              />
-            </Pressable>
+            />
+            <IconButton
+              icon={announce.liked ? 'heart' : 'heart-outline'}
+              accessibilityLabel={announce.liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              accessibilityState={{ selected: announce.liked }}
+              onPress={() => toggleLike.mutate(announce.id)}
+              iconColor={announce.liked ? '#e53935' : '#222'}
+              containerColor="rgba(255,255,255,0.95)"
+              size={20}
+              style={styles.iconBtn}
+            />
           </View>
         </View>
 
-        {/* ── White content card ── */}
-        <View style={styles.card}>
+        {/* ── Content card ── */}
+        <View style={[styles.card, { backgroundColor: C.surface }]}>
           {/* Title */}
           <View style={styles.titleRow}>
-            <MaterialIcons name="home-work" size={22} color="#222" style={{ marginTop: 2 }} />
-            <Text style={styles.title}>
+            <MaterialIcons name="home-work" size={22} color={C.onSurface} style={{ marginTop: 2 }} />
+            <Text style={[styles.title, { color: C.onSurface }]}>
               {truncateWords(announce.description.split('.')[0])}
             </Text>
           </View>
 
           {/* Subtitles — centered gray */}
           {locationLine ? (
-            <Text style={styles.subtitle}>{locationLine}</Text>
+            <Text style={[styles.subtitle, { color: C.onSurfaceVariant }]}>{locationLine}</Text>
           ) : null}
           {statsLine ? (
-            <Text style={styles.subtitle}>{statsLine}</Text>
+            <Text style={[styles.subtitle, { color: C.onSurfaceVariant }]}>{statsLine}</Text>
           ) : null}
 
           {/* ── 3-column stats (Airbnb style) ── */}
-          <View style={styles.statsBox}>
+          <View style={[styles.statsBox, { borderColor: C.outlineVariant }]}>
             {/* Col 1 — Price */}
             <View style={styles.statsCol}>
-              <Text style={styles.statsNum}>
+              <Text style={[styles.statsNum, { color: C.onSurface }]}>
                 {announce.price.toLocaleString('fr-FR')}
               </Text>
-              <Text style={styles.statsSub}>
+              <Text style={[styles.statsSub, { color: C.onSurfaceVariant }]}>
                 {announce.devise}{announce.ad_type === 'location' ? ' /mois' : ''}
               </Text>
             </View>
 
-            <View style={styles.statsLine} />
+            <View style={[styles.statsLine, { backgroundColor: C.outlineVariant }]} />
 
             {/* Col 2 — Type */}
             <View style={styles.statsCol}>
@@ -220,30 +229,32 @@ export default function AnnounceDetailScreen() {
                 size={22}
                 color={C.primary}
               />
-              <Text style={[styles.statsSub, styles.statsBold]}>
+              <Text style={[styles.statsSub, styles.statsBold, { color: C.onSurface }]}>
                 {announce.ad_type === 'location' ? 'Location' : 'Vente'}
               </Text>
             </View>
 
-            <View style={styles.statsLine} />
+            <View style={[styles.statsLine, { backgroundColor: C.outlineVariant }]} />
 
             {/* Col 3 — Likes */}
             <View style={styles.statsCol}>
-              <Text style={styles.statsNum}>{announce.likes_count ?? 0}</Text>
-              <Text style={styles.statsSub}>favoris</Text>
+              <Text style={[styles.statsNum, { color: C.onSurface }]}>{announce.likes_count ?? 0}</Text>
+              <Text style={[styles.statsSub, { color: C.onSurfaceVariant }]}>favoris</Text>
             </View>
           </View>
 
           {/* ── Divider ── */}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
 
           {/* ── Host row (Airbnb "Stay with Rosa") ── */}
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Voir le profil de ${displayName}`}
             onPress={() => router.push(`/announcers/${announce.announcer?.id}`)}
             style={styles.hostRow}
           >
             {/* Avatar */}
-            <View style={styles.hostAvatar}>
+            <View style={[styles.hostAvatar, { borderColor: C.outlineVariant }]}>
               {announce.announcer?.avatar ? (
                 <Image
                   source={{ uri: announce.announcer.avatar }}
@@ -261,22 +272,22 @@ export default function AnnounceDetailScreen() {
               )}
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.hostName}>Annoncé par {displayName}</Text>
-              <Text style={styles.hostSub}>
+              <Text style={[styles.hostName, { color: C.onSurface }]}>Annoncé par {displayName}</Text>
+              <Text style={[styles.hostSub, { color: C.onSurfaceVariant }]}>
                 Certifié{announcerListingsCount > 0 ? ` · ${announcerListingsCount} annonce${announcerListingsCount > 1 ? 's' : ''}` : ''}
               </Text>
             </View>
           </Pressable>
 
           {/* ── Divider ── */}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
 
           {/* ── Feature highlights ── */}
           <View style={styles.feature}>
-            <MaterialIcons name="verified-user" size={28} color="#222" />
+            <MaterialIcons name="verified-user" size={28} color={C.onSurface} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.featureTitle}>Contact sécurisé</Text>
-              <Text style={styles.featureSub}>
+              <Text style={[styles.featureTitle, { color: C.onSurface }]}>Contact sécurisé</Text>
+              <Text style={[styles.featureSub, { color: C.onSurfaceVariant }]}>
                 {announce.unlocked
                   ? "Vous avez accès aux coordonnées de l'annonceur."
                   : "Débloquez pour accéder aux coordonnées de l'annonceur."}
@@ -285,20 +296,20 @@ export default function AnnounceDetailScreen() {
           </View>
 
           <View style={styles.feature}>
-            <MaterialIcons name="location-on" size={28} color="#222" />
+            <MaterialIcons name="location-on" size={28} color={C.onSurface} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.featureTitle}>{announce.city}</Text>
-              <Text style={styles.featureSub}>
+              <Text style={[styles.featureTitle, { color: C.onSurface }]}>{announce.city}</Text>
+              <Text style={[styles.featureSub, { color: C.onSurfaceVariant }]}>
                 {announce.address}
                 {announce.state ? `, ${announce.state}` : ''}
               </Text>
             </View>
           </View>
 
-          {/* ── Gray banner ── */}
-          <View style={styles.banner}>
-            <MaterialIcons name="diamond" size={16} color="#555" />
-            <Text style={styles.bannerText}>
+          {/* ── Banner ── */}
+          <View style={[styles.banner, { backgroundColor: C.surfaceContainer }]}>
+            <MaterialIcons name="diamond" size={16} color={C.onSurfaceVariant} />
+            <Text style={[styles.bannerText, { color: C.onSurfaceVariant }]}>
               {announce.ad_type === 'location'
                 ? 'Bien disponible à la location'
                 : 'Bien disponible à la vente'}
@@ -306,21 +317,27 @@ export default function AnnounceDetailScreen() {
           </View>
 
           {/* ── Divider ── */}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
 
           {/* ── Description ── */}
           <View style={styles.section}>
-            <Text style={styles.descText} numberOfLines={expanded ? undefined : 3}>
+            <Text style={[styles.descText, { color: C.onSurface }]} numberOfLines={expanded ? undefined : 3}>
               {announce.description}
             </Text>
-            <Pressable onPress={() => setExpanded((v) => !v)} style={styles.expandRow}>
-              <Text style={styles.expandLink}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded }}
+              hitSlop={8}
+              onPress={() => setExpanded((v) => !v)}
+              style={styles.expandRow}
+            >
+              <Text style={[styles.expandLink, { color: C.onSurface }]}>
                 {expanded ? 'Afficher moins' : 'Afficher plus'}
               </Text>
               <MaterialIcons
                 name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
                 size={18}
-                color="#222"
+                color={C.onSurface}
               />
             </Pressable>
           </View>
@@ -328,35 +345,35 @@ export default function AnnounceDetailScreen() {
           {/* ── Amenities ── */}
           {announce.type === 'realestate' && activeAmenities.length > 0 && (
             <>
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Ce que propose ce bien</Text>
+                <Text style={[styles.sectionTitle, { color: C.onSurface }]}>Ce que propose ce bien</Text>
                 {visibleAmenities.map((a) => (
                   <View key={a.key} style={styles.amenityRow}>
-                    <MaterialIcons name={a.icon} size={22} color="#222" />
-                    <Text style={styles.amenityLabel}>{a.label}</Text>
+                    <MaterialIcons name={a.icon} size={22} color={C.onSurface} />
+                    <Text style={[styles.amenityLabel, { color: C.onSurface }]}>{a.label}</Text>
                   </View>
                 ))}
                 {activeAmenities.length > 5 && (
-                  <Pressable
+                  <Button
+                    mode="outlined"
                     onPress={() => setShowAllAmenities((v) => !v)}
                     style={styles.showAllBtn}
+                    textColor={C.onSurface}
                   >
-                    <Text style={styles.showAllText}>
-                      {showAllAmenities
-                        ? 'Afficher moins'
-                        : `Afficher les ${activeAmenities.length} équipements`}
-                    </Text>
-                  </Pressable>
+                    {showAllAmenities
+                      ? 'Afficher moins'
+                      : `Afficher les ${activeAmenities.length} équipements`}
+                  </Button>
                 )}
               </View>
             </>
           )}
 
           {/* ── Announcer card ── */}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>L'annonceur</Text>
+            <Text style={[styles.sectionTitle, { color: C.onSurface }]}>L'annonceur</Text>
             <AnnouncerCard
               announcer={announce.announcer}
               announcesCount={announcerListingsCount}
@@ -370,32 +387,30 @@ export default function AnnounceDetailScreen() {
       <View
         style={[
           styles.bottomBar,
-          { borderTopColor: '#e0e0e0', paddingBottom: insets.bottom + 12 },
+          { borderTopColor: C.outlineVariant, backgroundColor: C.surface, paddingBottom: insets.bottom + 12 },
         ]}
       >
         {/* Left — price underlined + period */}
         <View style={styles.bottomLeft}>
-          <Text style={styles.bottomPrice}>
+          <Text style={[styles.bottomPrice, { color: C.onSurface }]}>
             {announce.price.toLocaleString('fr-FR')} {announce.devise}
           </Text>
-          <Text style={styles.bottomPeriod}>
+          <Text style={[styles.bottomPeriod, { color: C.onSurfaceVariant }]}>
             {announce.ad_type === 'location' ? 'par mois' : 'prix de vente'}
           </Text>
         </View>
 
         {/* Right — pill CTA */}
-        <Pressable
+        <Button
+          mode="contained"
+          accessibilityLabel={announce.unlocked ? "Contacter l'annonceur" : 'Débloquer les coordonnées'}
           onPress={handleUnlock}
-          style={({ pressed }) => [
-            styles.ctaPill,
-            { backgroundColor: C.primary },
-            pressed && { opacity: 0.88, transform: [{ scale: 0.97 }] },
-          ]}
+          style={styles.ctaPill}
+          contentStyle={styles.ctaContent}
+          labelStyle={styles.ctaText}
         >
-          <Text style={styles.ctaText}>
-            {announce.unlocked ? 'Contacter' : 'Débloquer'}
-          </Text>
-        </Pressable>
+          {announce.unlocked ? 'Contacter' : 'Débloquer'}
+        </Button>
       </View>
     </View>
   );
@@ -407,34 +422,21 @@ const styles = StyleSheet.create({
   backBtn: {
     position: 'absolute',
     left: 16,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.xs,
+    margin: 0,
   },
   topActions: {
     position: 'absolute',
     right: 16,
     flexDirection: 'row',
-    gap: 18,
+    gap: 4,
     alignItems: 'center',
   },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.xs,
+    margin: 0,
   },
 
   // Content card
   card: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     marginTop: -24,
@@ -454,13 +456,11 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 22,
     lineHeight: 28,
-    color: '#222',
   },
   subtitle: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 14,
     lineHeight: 20,
-    color: '#717171',
     textAlign: 'center',
     paddingHorizontal: Spacing.marginMobile,
     marginBottom: 2,
@@ -475,7 +475,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     overflow: 'hidden',
   },
   statsCol: {
@@ -487,31 +486,26 @@ const styles = StyleSheet.create({
   statsLine: {
     width: 1,
     height: 44,
-    backgroundColor: '#e0e0e0',
   },
   statsNum: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 18,
     lineHeight: 22,
-    color: '#222',
   },
   statsSub: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 11,
     lineHeight: 14,
-    color: '#717171',
     textAlign: 'center',
   },
   statsBold: {
     fontFamily: 'PlusJakartaSans_700Bold',
-    color: '#222',
     fontSize: 12,
   },
 
   // Divider
   divider: {
     height: 1,
-    backgroundColor: '#ebebeb',
     marginVertical: 8,
   },
 
@@ -530,19 +524,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     flexShrink: 0,
     borderWidth: 1.5,
-    borderColor: '#e0e0e0',
   },
   hostAvatarImg: { width: '100%', height: '100%' },
   hostName: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 15,
-    color: '#222',
     lineHeight: 20,
   },
   hostSub: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 13,
-    color: '#717171',
     marginTop: 2,
   },
 
@@ -557,30 +548,26 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 15,
-    color: '#222',
     lineHeight: 20,
   },
   featureSub: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 13,
-    color: '#717171',
     lineHeight: 18,
     marginTop: 3,
   },
 
-  // Gray banner
+  // Banner
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#f5f5f5',
     paddingHorizontal: Spacing.marginMobile,
     paddingVertical: 12,
   },
   bannerText: {
     fontFamily: 'PlusJakartaSans_500Medium',
     fontSize: 13,
-    color: '#555',
   },
 
   // Sections
@@ -592,7 +579,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 18,
-    color: '#222',
     lineHeight: 24,
     marginBottom: 4,
   },
@@ -602,7 +588,6 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 15,
     lineHeight: 24,
-    color: '#222',
   },
   expandRow: {
     flexDirection: 'row',
@@ -613,7 +598,6 @@ const styles = StyleSheet.create({
   expandLink: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 14,
-    color: '#222',
     textDecorationLine: 'underline',
   },
 
@@ -626,21 +610,11 @@ const styles = StyleSheet.create({
   amenityLabel: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 15,
-    color: '#222',
   },
   showAllBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#222',
     alignSelf: 'flex-start',
     marginTop: 4,
-  },
-  showAllText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    color: '#222',
+    borderRadius: 10,
   },
 
   // Bottom bar
@@ -655,7 +629,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.marginMobile,
     paddingTop: 14,
     borderTopWidth: 1,
-    backgroundColor: '#fff',
     gap: 16,
   },
   bottomLeft: {
@@ -665,24 +638,22 @@ const styles = StyleSheet.create({
   bottomPrice: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 20,
-    color: '#222',
     textDecorationLine: 'underline',
   },
   bottomPeriod: {
     fontFamily: 'PlusJakartaSans_400Regular',
     fontSize: 13,
-    color: '#717171',
   },
   ctaPill: {
-    paddingHorizontal: 28,
-    paddingVertical: 16,
     borderRadius: Radius.full,
     flexShrink: 0,
-    ...Shadows.button,
+  },
+  ctaContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
   ctaText: {
     fontFamily: 'PlusJakartaSans_700Bold',
     fontSize: 15,
-    color: '#fff',
   },
 });

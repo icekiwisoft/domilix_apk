@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { Button } from 'react-native-paper';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Button } from '@/components/ui/button';
 
 interface LoginGateProps {
   title: string;
@@ -34,19 +34,12 @@ export function LoginGate({ title, subtitle }: LoginGateProps) {
       </View>
 
       <View style={styles.actions}>
-        <Button
-          variant="primary"
-          label="Se connecter"
-          fullWidth
-          icon={<MaterialIcons name="login" size={18} color={C.onPrimary} style={{ marginRight: 4 }} />}
-          onPress={() => router.push('/(auth)/login')}
-        />
-        <Button
-          variant="outline"
-          label="Créer un compte"
-          fullWidth
-          onPress={() => router.push('/(auth)/register')}
-        />
+        <Button mode="contained" icon="login" onPress={() => router.push('/(auth)/login')}>
+          Se connecter
+        </Button>
+        <Button mode="outlined" onPress={() => router.push('/(auth)/register')}>
+          Créer un compte
+        </Button>
       </View>
     </View>
   );
