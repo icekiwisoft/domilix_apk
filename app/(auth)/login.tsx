@@ -4,7 +4,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -13,6 +12,7 @@ import {
     Text,
     View,
 } from 'react-native';
+import { Button, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Input } from '@/components/ui/input';
@@ -59,12 +59,14 @@ export default function LoginScreen() {
       >
         {/* Back */}
         {router.canGoBack() && (
-          <Pressable
+          <IconButton
+            icon="arrow-left"
+            mode="outlined"
+            size={22}
             onPress={() => router.back()}
-            style={[styles.backBtn, { borderColor: C.outlineVariant }]}
-          >
-            <MaterialIcons name="arrow-back" size={24} color={C.onSurfaceVariant} />
-          </Pressable>
+            accessibilityLabel="Retour"
+            style={styles.backBtn}
+          />
         )}
 
         {/* Headline */}
@@ -115,7 +117,12 @@ export default function LoginScreen() {
                   <MaterialIcons name="lock-outline" size={20} color={C.onSurfaceVariant} />
                 }
                 rightElement={
-                  <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={8}>
+                  <Pressable
+                    onPress={() => setShowPwd((v) => !v)}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  >
                     <MaterialIcons
                       name={showPwd ? 'visibility' : 'visibility-off'}
                       size={22}
@@ -128,7 +135,11 @@ export default function LoginScreen() {
           />
 
           {/* Mot de passe oublié */}
-          <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotRow}>
+          <Pressable
+            onPress={() => router.push('/(auth)/forgot-password')}
+            style={styles.forgotRow}
+            accessibilityRole="link"
+          >
             <Text style={[Typography.caption, { color: C.primary }]}>Mot de passe oublié ?</Text>
           </Pressable>
 
@@ -143,23 +154,16 @@ export default function LoginScreen() {
           )}
 
           {/* Bouton */}
-          <Pressable
+          <Button
+            mode="contained"
             onPress={handleSubmit(onSubmit)}
+            loading={login.isPending}
             disabled={login.isPending}
-            style={({ pressed }) => [
-              styles.submitBtn,
-              { backgroundColor: C.primary, opacity: login.isPending ? 0.7 : pressed ? 0.88 : 1 },
-              pressed && { transform: [{ scale: 0.97 }] },
-            ]}
+            contentStyle={styles.submitBtnContent}
+            style={styles.submitBtn}
           >
-            {login.isPending ? (
-              <ActivityIndicator color={C.onPrimary} />
-            ) : (
-              <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-                Se connecter
-              </Text>
-            )}
-          </Pressable>
+            Se connecter
+          </Button>
         </View>
 
         {/* Footer */}
@@ -169,6 +173,7 @@ export default function LoginScreen() {
             <Text
               style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
               onPress={() => router.push('/(auth)/register')}
+              accessibilityRole="link"
             >
               {"S'inscrire"}
             </Text>
@@ -185,13 +190,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.marginMobile,
   },
   backBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xxl,
+    alignSelf: 'flex-start',
+    margin: 0,
+    marginBottom: Spacing.xl,
   },
   header: {
     marginBottom: Spacing.xl,
@@ -212,15 +213,11 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   submitBtn: {
-    paddingVertical: Spacing.md,
     borderRadius: Radius.md,
-    alignItems: 'center',
     marginTop: Spacing.sm,
-    shadowColor: 'rgb(232, 146, 26)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    elevation: 4,
+  },
+  submitBtnContent: {
+    height: 50,
   },
   footer: {
     marginTop: 'auto',

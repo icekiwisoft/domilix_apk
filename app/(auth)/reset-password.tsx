@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,16 +8,18 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Button, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Input } from '@/components/ui/input';
 import { OtpInput } from '@/components/ui/otp-input';
+import { useResetPassword } from '@/hooks/queries/use-auth-queries';
 import { resetPasswordSchema, type ResetPasswordFormValues } from '@/lib/validators/auth.schema';
 
 type Step = 'otp' | 'password' | 'success';
@@ -27,13 +28,14 @@ export default function ResetPasswordScreen() {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+  const { email } = useLocalSearchParams<{ email?: string }>();
 
   const [step, setStep] = useState<Step>('otp');
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const resetPassword = useResetPassword();
 
   const {
     control,
@@ -44,23 +46,32 @@ export default function ResetPasswordScreen() {
     defaultValues: { otp: '', password: '', confirmPassword: '' },
   });
 
-  async function verifyOtp() {
+  function verifyOtp() {
     if (otp.length < 6) {
       setOtpError(true);
       return;
     }
     setOtpError(false);
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setLoading(false);
     setStep('password');
   }
 
-  async function onSubmit(_data: ResetPasswordFormValues) {
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setLoading(false);
-    setStep('success');
+  function onSubmit(data: ResetPasswordFormValues) {
+    resetPassword.mutate(
+      {
+        email: email ?? '',
+        token: otp,
+        code: otp,
+        password: data.password,
+        password_confirmation: data.confirmPassword,
+      },
+      {
+        onSuccess: () => setStep('success'),
+        onError: () => {
+          setStep('otp');
+          setOtpError(true);
+        },
+      }
+    );
   }
 
   if (step === 'success') {
@@ -76,14 +87,14 @@ export default function ResetPasswordScreen() {
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm }]}>
             Votre mot de passe a été réinitialisé avec succès.
           </Text>
-          <Pressable
+          <Button
+            mode="contained"
             onPress={() => router.replace('/(auth)/login')}
-            style={[styles.submitBtn, { backgroundColor: C.primary, marginTop: Spacing.xxl }]}
+            style={styles.submitBtn}
+            contentStyle={styles.submitBtnContent}
           >
-            <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-              Se connecter
-            </Text>
-          </Pressable>
+            Se connecter
+          </Button>
         </View>
       </View>
     );
@@ -102,12 +113,14 @@ export default function ResetPasswordScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Back */}
-        <Pressable
+        <IconButton
+          icon="arrow-left"
+          mode="outlined"
+          size={22}
           onPress={() => router.back()}
-          style={[styles.backBtn, { borderColor: C.outlineVariant }]}
-        >
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurfaceVariant} />
-        </Pressable>
+          accessibilityLabel="Retour"
+          style={styles.backBtn}
+        />
 
         {step === 'otp' && (
           <>
@@ -127,19 +140,14 @@ export default function ResetPasswordScreen() {
               )}
             </View>
 
-            <Pressable
+            <Button
+              mode="contained"
               onPress={verifyOtp}
-              disabled={loading}
-              style={[styles.submitBtn, { backgroundColor: C.primary, opacity: loading ? 0.7 : 1 }]}
+              contentStyle={styles.submitBtnContent}
+              style={styles.submitBtn}
             >
-              {loading ? (
-                <ActivityIndicator color={C.onPrimary} />
-              ) : (
-                <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-                  Continuer
-                </Text>
-              )}
-            </Pressable>
+              Continuer
+            </Button>
           </>
         )}
 
@@ -165,7 +173,12 @@ export default function ResetPasswordScreen() {
                     secureTextEntry={!showPwd}
                     error={errors.password?.message}
                     rightElement={
-                      <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={8}>
+                      <Pressable
+                        onPress={() => setShowPwd((v) => !v)}
+                        hitSlop={12}
+                        accessibilityRole="button"
+                        accessibilityLabel={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      >
                         <MaterialIcons
                           name={showPwd ? 'visibility' : 'visibility-off'}
                           size={22}
@@ -189,7 +202,12 @@ export default function ResetPasswordScreen() {
                     secureTextEntry={!showConfirm}
                     error={errors.confirmPassword?.message}
                     rightElement={
-                      <Pressable onPress={() => setShowConfirm((v) => !v)} hitSlop={8}>
+                      <Pressable
+                        onPress={() => setShowConfirm((v) => !v)}
+                        hitSlop={12}
+                        accessibilityRole="button"
+                        accessibilityLabel={showConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                      >
                         <MaterialIcons
                           name={showConfirm ? 'visibility' : 'visibility-off'}
                           size={22}
@@ -201,19 +219,25 @@ export default function ResetPasswordScreen() {
                 )}
               />
 
-              <Pressable
-                onPress={handleSubmit(onSubmit)}
-                disabled={loading}
-                style={[styles.submitBtn, { backgroundColor: C.primary, opacity: loading ? 0.7 : 1 }]}
-              >
-                {loading ? (
-                  <ActivityIndicator color={C.onPrimary} />
-                ) : (
-                  <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-                    Réinitialiser
+              {resetPassword.error && (
+                <View style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}>
+                  <MaterialIcons name="error-outline" size={16} color={C.error} />
+                  <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
+                    Impossible de réinitialiser le mot de passe. Le code a peut-être expiré.
                   </Text>
-                )}
-              </Pressable>
+                </View>
+              )}
+
+              <Button
+                mode="contained"
+                onPress={handleSubmit(onSubmit)}
+                loading={resetPassword.isPending}
+                disabled={resetPassword.isPending}
+                contentStyle={styles.submitBtnContent}
+                style={styles.submitBtn}
+              >
+                Réinitialiser
+              </Button>
             </View>
           </>
         )}
@@ -244,13 +268,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.marginMobile,
   },
   backBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xxl,
+    alignSelf: 'flex-start',
+    margin: 0,
+    marginBottom: Spacing.xl,
   },
   header: {
     marginBottom: Spacing.xl,
@@ -261,14 +281,18 @@ const styles = StyleSheet.create({
   otpSection: {
     marginBottom: Spacing.xl,
   },
-  submitBtn: {
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+  errorBanner: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#633f00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 14,
-    elevation: 4,
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+  },
+  submitBtn: {
+    borderRadius: Radius.md,
+  },
+  submitBtnContent: {
+    height: 50,
   },
 });

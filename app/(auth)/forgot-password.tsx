@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { Button, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,14 +17,15 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Input } from '@/components/ui/input';
+import { useSendResetEmail } from '@/hooks/queries/use-auth-queries';
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from '@/lib/validators/auth.schema';
 
 export default function ForgotPasswordScreen() {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState('');
+  const sendReset = useSendResetEmail();
 
   const {
     control,
@@ -36,14 +36,11 @@ export default function ForgotPasswordScreen() {
     defaultValues: { email: '' },
   });
 
-  async function onSubmit(_data: ForgotPasswordFormValues) {
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setLoading(false);
-    setSent(true);
+  function onSubmit(data: ForgotPasswordFormValues) {
+    sendReset.mutate(data.email, { onSuccess: () => setSentEmail(data.email) });
   }
 
-  if (sent) {
+  if (sendReset.isSuccess) {
     return (
       <View style={[styles.root, { backgroundColor: C.surface, paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom }]}>
         <View style={styles.centered}>
@@ -56,17 +53,17 @@ export default function ForgotPasswordScreen() {
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm }]}>
             Vérifiez votre boîte mail et suivez les instructions pour réinitialiser votre mot de passe.
           </Text>
-          <Pressable
-            onPress={() => router.push('/(auth)/reset-password')}
-            style={[styles.submitBtn, { backgroundColor: C.primary, marginTop: Spacing.xxl }]}
+          <Button
+            mode="contained"
+            onPress={() => router.push({ pathname: '/(auth)/reset-password', params: { email: sentEmail } })}
+            style={styles.submitBtn}
+            contentStyle={styles.submitBtnContent}
           >
-            <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-              Saisir le code
-            </Text>
-          </Pressable>
-          <Pressable onPress={() => router.replace('/(auth)/login')} style={{ marginTop: Spacing.lg }}>
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>Retour à la connexion</Text>
-          </Pressable>
+            Saisir le code
+          </Button>
+          <Button mode="text" onPress={() => router.replace('/(auth)/login')} style={{ marginTop: Spacing.lg }}>
+            Retour à la connexion
+          </Button>
         </View>
       </View>
     );
@@ -85,12 +82,14 @@ export default function ForgotPasswordScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Back */}
-        <Pressable
+        <IconButton
+          icon="arrow-left"
+          mode="outlined"
+          size={22}
           onPress={() => router.back()}
-          style={[styles.backBtn, { borderColor: C.outlineVariant }]}
-        >
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurfaceVariant} />
-        </Pressable>
+          accessibilityLabel="Retour"
+          style={styles.backBtn}
+        />
 
         {/* Headline */}
         <View style={styles.header}>
@@ -117,19 +116,25 @@ export default function ForgotPasswordScreen() {
             )}
           />
 
-          <Pressable
-            onPress={handleSubmit(onSubmit)}
-            disabled={loading}
-            style={[styles.submitBtn, { backgroundColor: C.primary, opacity: loading ? 0.7 : 1 }]}
-          >
-            {loading ? (
-              <ActivityIndicator color={C.onPrimary} />
-            ) : (
-              <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-                Envoyer le code
+          {sendReset.error && (
+            <View style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}>
+              <MaterialIcons name="error-outline" size={16} color={C.error} />
+              <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
+                Impossible d'envoyer l'email. Vérifiez l'adresse et réessayez.
               </Text>
-            )}
-          </Pressable>
+            </View>
+          )}
+
+          <Button
+            mode="contained"
+            onPress={handleSubmit(onSubmit)}
+            loading={sendReset.isPending}
+            disabled={sendReset.isPending}
+            contentStyle={styles.submitBtnContent}
+            style={styles.submitBtn}
+          >
+            Envoyer le code
+          </Button>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -159,13 +164,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.marginMobile,
   },
   backBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xxl,
+    alignSelf: 'flex-start',
+    margin: 0,
+    marginBottom: Spacing.xl,
   },
   header: {
     marginBottom: Spacing.xl,
@@ -173,14 +174,18 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.lg,
   },
-  submitBtn: {
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+  errorBanner: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#633f00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 14,
-    elevation: 4,
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+  },
+  submitBtn: {
+    borderRadius: Radius.md,
+  },
+  submitBtnContent: {
+    height: 50,
   },
 });

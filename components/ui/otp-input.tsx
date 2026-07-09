@@ -68,6 +68,7 @@ export function OtpInput({ value, onChange, error }: OtpInputProps) {
           <TextInput
             key={index}
             ref={(r) => { refs.current[index] = r; }}
+            accessibilityLabel={`Chiffre ${index + 1} du code`}
             style={[
               styles.cell,
               {

@@ -42,7 +42,8 @@ export const AuthService = {
 
   resetPassword: (dto: {
     email: string;
-    code: string;
+    token: string;
+    code?: string;
     password: string;
     password_confirmation: string;
   }) => client.post('/auth/resetPassword', dto).then((r) => r.data),

@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -15,6 +14,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Button, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Input } from '@/components/ui/input';
@@ -41,11 +41,15 @@ export default function RegisterScreen() {
   });
 
   function onSubmit(data: RegisterFormValues) {
+    const phoneNumber = `+237${data.phone}`;
     register.mutate(
-      { name: data.name, email: data.email || undefined, phone_number: data.phone || undefined, password: data.password },
+      { name: data.name, email: data.email || undefined, phone_number: phoneNumber, password: data.password },
       {
         onSuccess: (res) =>
-          router.push({ pathname: '/(auth)/verify-phone/[user_id]', params: { user_id: res.user.id } }),
+          router.push({
+            pathname: '/(auth)/verify-phone/[user_id]',
+            params: { user_id: res.user.id, phone: phoneNumber },
+          }),
       }
     );
   }
@@ -62,6 +66,17 @@ export default function RegisterScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Back */}
+        {router.canGoBack() && (
+          <IconButton
+            icon="arrow-left"
+            mode="outlined"
+            size={22}
+            onPress={() => router.back()}
+            accessibilityLabel="Retour"
+            style={styles.backBtn}
+          />
+        )}
 
         {/* Headline */}
         <View style={styles.header}>
@@ -157,7 +172,12 @@ export default function RegisterScreen() {
                 secureTextEntry={!showPwd}
                 error={errors.password?.message}
                 rightElement={
-                  <Pressable onPress={() => setShowPwd((v) => !v)} hitSlop={8}>
+                  <Pressable
+                    onPress={() => setShowPwd((v) => !v)}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  >
                     <MaterialIcons
                       name={showPwd ? 'visibility' : 'visibility-off'}
                       size={22}
@@ -182,7 +202,12 @@ export default function RegisterScreen() {
                 secureTextEntry={!showConfirm}
                 error={errors.confirmPassword?.message}
                 rightElement={
-                  <Pressable onPress={() => setShowConfirm((v) => !v)} hitSlop={8}>
+                  <Pressable
+                    onPress={() => setShowConfirm((v) => !v)}
+                    hitSlop={12}
+                    accessibilityRole="button"
+                    accessibilityLabel={showConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  >
                     <MaterialIcons
                       name={showConfirm ? 'visibility' : 'visibility-off'}
                       size={22}
@@ -202,6 +227,10 @@ export default function RegisterScreen() {
               <View style={styles.termsRow}>
                 <Pressable
                   onPress={() => onChange(value ? undefined : true)}
+                  hitSlop={8}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: !!value }}
+                  accessibilityLabel="J'accepte les conditions d'utilisation et la politique de confidentialité"
                   style={[
                     styles.checkbox,
                     {
@@ -221,6 +250,7 @@ export default function RegisterScreen() {
                   <Text
                     style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
                     onPress={() => Linking.openURL('https://www.privacypolicies.com/live/8afdd5ff-63d9-4381-9f5b-a8222d7bd121')}
+                    accessibilityRole="link"
                   >
                     politique de confidentialité
                   </Text>
@@ -235,23 +265,27 @@ export default function RegisterScreen() {
             </Text>
           )}
 
-          {/* Submit */}
-          <Pressable
-            onPress={handleSubmit(onSubmit)}
-            disabled={register.isPending}
-            style={[
-              styles.submitBtn,
-              { backgroundColor: C.primary, opacity: register.isPending ? 0.7 : 1 },
-            ]}
-          >
-            {register.isPending ? (
-              <ActivityIndicator color={C.onPrimary} />
-            ) : (
-              <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-                {"S'inscrire"}
+          {/* Erreur serveur */}
+          {register.error && (
+            <View style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}>
+              <MaterialIcons name="error-outline" size={16} color={C.error} />
+              <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
+                Impossible de créer le compte. Vérifiez vos informations et réessayez.
               </Text>
-            )}
-          </Pressable>
+            </View>
+          )}
+
+          {/* Submit */}
+          <Button
+            mode="contained"
+            onPress={handleSubmit(onSubmit)}
+            loading={register.isPending}
+            disabled={register.isPending}
+            contentStyle={styles.submitBtnContent}
+            style={styles.submitBtn}
+          >
+            {"S'inscrire"}
+          </Button>
         </View>
 
         {/* Footer */}
@@ -261,6 +295,7 @@ export default function RegisterScreen() {
             <Text
               style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
               onPress={() => router.push('/(auth)/login')}
+              accessibilityRole="link"
             >
               Se connecter
             </Text>
@@ -277,13 +312,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.marginMobile,
   },
   backBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xxl,
+    alignSelf: 'flex-start',
+    margin: 0,
+    marginBottom: Spacing.xl,
   },
   header: {
     marginBottom: Spacing.xl,
@@ -330,16 +361,20 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 22,
   },
-  submitBtn: {
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.md,
+  errorBanner: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+  },
+  submitBtn: {
+    borderRadius: Radius.md,
     marginTop: Spacing.sm,
-    shadowColor: 'rgb(232, 146, 26)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    elevation: 4,
+  },
+  submitBtnContent: {
+    height: 50,
   },
   footer: {
     marginTop: 'auto',

@@ -97,6 +97,12 @@ export function useVerifyPhone() {
   });
 }
 
+export function useResendVerificationCode() {
+  return useMutation({
+    mutationFn: (userId: string) => AuthService.resendVerificationCode(userId),
+  });
+}
+
 export function useSendResetEmail() {
   return useMutation({
     mutationFn: (email: string) => AuthService.sendResetEmail(email),

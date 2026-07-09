@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { Button, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -14,18 +13,31 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { OtpInput } from '@/components/ui/otp-input';
+import { useToast } from '@/components/ui/toast';
+import { useResendVerificationCode, useVerifyPhone } from '@/hooks/queries/use-auth-queries';
 
 const RESEND_SECONDS = 60;
+
+function maskPhone(phone?: string) {
+  if (!phone) return 'le numéro associé à votre compte';
+  const digits = phone.replace(/^\+?237/, '').replace(/\D/g, '');
+  if (digits.length < 9) return phone;
+  const first = digits[0];
+  const last2 = digits.slice(-2);
+  return `+237 ${first}•• •• •• ${last2}`;
+}
 
 export default function VerifyPhoneScreen() {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
-  const { user_id } = useLocalSearchParams<{ user_id: string }>();
+  const toast = useToast();
+  const { user_id, phone } = useLocalSearchParams<{ user_id: string; phone?: string }>();
+  const verifyPhone = useVerifyPhone();
+  const resendCode = useResendVerificationCode();
 
   const [otp, setOtp] = useState('');
   const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [seconds, setSeconds] = useState(RESEND_SECONDS);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -49,25 +61,32 @@ export default function VerifyPhoneScreen() {
   }
 
   function resend() {
-    if (seconds > 0) return;
-    startCountdown();
-    // mock resend
+    if (seconds > 0 || resendCode.isPending) return;
+    resendCode.mutate(user_id, {
+      onSuccess: () => {
+        startCountdown();
+        toast.show('Un nouveau code a été envoyé.', 'success');
+      },
+      onError: () => {
+        toast.show("Impossible d'envoyer le code. Réessayez.", 'error');
+      },
+    });
   }
 
-  async function verify() {
+  function verify() {
     if (otp.length < 6) {
       setError(true);
       return;
     }
     setError(false);
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setLoading(false);
-    // On success → go to tabs
-    router.replace('/(tabs)');
+    verifyPhone.mutate(
+      { userId: user_id, code: otp },
+      {
+        onSuccess: () => router.replace('/(tabs)'),
+        onError: () => setError(true),
+      }
+    );
   }
-
-  const maskedPhone = '+237 6•• •• •• ••';
 
   return (
     <ScrollView
@@ -79,12 +98,14 @@ export default function VerifyPhoneScreen() {
       keyboardShouldPersistTaps="handled"
     >
       {/* Back */}
-      <Pressable
+      <IconButton
+        icon="arrow-left"
+        mode="outlined"
+        size={22}
         onPress={() => router.back()}
-        style={[styles.backBtn, { borderColor: C.outlineVariant }]}
-      >
-        <MaterialIcons name="arrow-back" size={24} color={C.onSurfaceVariant} />
-      </Pressable>
+        accessibilityLabel="Retour"
+        style={styles.backBtn}
+      />
 
       {/* Headline */}
       <View style={styles.header}>
@@ -92,7 +113,7 @@ export default function VerifyPhoneScreen() {
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.sm }]}>
           {'Un code à 6 chiffres a été envoyé au '}
           <Text style={{ color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
-            {maskedPhone}
+            {maskPhone(phone)}
           </Text>
         </Text>
       </View>
@@ -117,31 +138,23 @@ export default function VerifyPhoneScreen() {
             </Text>
           </Text>
         ) : (
-          <Pressable onPress={resend}>
-            <Text style={[Typography.bodyMd, { color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }]}>
-              Renvoyer le code
-            </Text>
-          </Pressable>
+          <Button mode="text" onPress={resend} loading={resendCode.isPending} disabled={resendCode.isPending}>
+            Renvoyer le code
+          </Button>
         )}
       </View>
 
       {/* Verify CTA */}
-      <Pressable
+      <Button
+        mode="contained"
         onPress={verify}
-        disabled={loading || otp.length < 6}
-        style={[
-          styles.submitBtn,
-          { backgroundColor: C.primary, opacity: loading || otp.length < 6 ? 0.5 : 1 },
-        ]}
+        loading={verifyPhone.isPending}
+        disabled={verifyPhone.isPending || otp.length < 6}
+        contentStyle={styles.submitBtnContent}
+        style={styles.submitBtn}
       >
-        {loading ? (
-          <ActivityIndicator color={C.onPrimary} />
-        ) : (
-          <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-            Vérifier
-          </Text>
-        )}
-      </Pressable>
+        Vérifier
+      </Button>
     </ScrollView>
   );
 }
@@ -152,13 +165,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.marginMobile,
   },
   backBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.xxl,
+    alignSelf: 'flex-start',
+    margin: 0,
+    marginBottom: Spacing.xl,
   },
   header: {
     marginBottom: Spacing.xxl,
@@ -171,13 +180,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   submitBtn: {
-    paddingVertical: Spacing.md,
     borderRadius: Radius.md,
-    alignItems: 'center',
-    shadowColor: '#633f00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 14,
-    elevation: 4,
+  },
+  submitBtnContent: {
+    height: 50,
   },
 });
