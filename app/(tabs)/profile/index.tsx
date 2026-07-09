@@ -107,7 +107,7 @@ export default function ProfileScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Modifier le profil"
-            onPress={() => router.push('/(tabs)/profile/edit')}
+            onPress={() => router.push('/profile/edit')}
             style={[styles.editBtn, { backgroundColor: C.surface + 'CC', borderColor: C.outlineVariant }]}
           >
             <MaterialIcons name="edit" size={18} color={C.onSurface} />
@@ -117,7 +117,7 @@ export default function ProfileScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Modifier la photo de profil"
-            onPress={() => router.push('/(tabs)/profile/edit')}
+            onPress={() => router.push('/profile/edit')}
             style={[styles.avatarWrapper, { borderColor: C.primary + '40' }]}
           >
             {announcer?.avatar ? (
@@ -165,7 +165,7 @@ export default function ProfileScreen() {
             <Button
               mode="contained"
               compact
-              onPress={() => router.push('/(tabs)/profile/subscriptions')}
+              onPress={() => router.push('/profile/subscriptions')}
             >
               Recharger
             </Button>
@@ -179,7 +179,7 @@ export default function ProfileScreen() {
               icon="home-work"
               label="Mes annonces"
               subtitle="Gérer vos publications"
-              onPress={() => router.push('/(tabs)/profile/my-listings')}
+              onPress={() => router.push('/profile/my-listings')}
             />
           )}
           <MenuRow
@@ -195,7 +195,7 @@ export default function ProfileScreen() {
             icon="workspace-premium"
             label="Mon abonnement"
             subtitle={activeSub ? `Plan ${activeSub.plan_name} actif` : 'Découvrir les plans'}
-            onPress={() => router.push('/(tabs)/profile/subscriptions')}
+            onPress={() => router.push('/profile/subscriptions')}
           />
           {isAnnouncer ? (
             <>
@@ -203,26 +203,26 @@ export default function ProfileScreen() {
                 icon="add-circle-outline"
                 label="Publier une annonce"
                 subtitle="Mettre en ligne un bien ou un meuble"
-                onPress={() => router.push('/(tabs)/profile/publish')}
+                onPress={() => router.push('/profile/publish')}
               />
               <MenuRow
                 icon="storefront"
                 label="Profil annonceur"
                 subtitle="Modifier vos informations"
-                onPress={() => router.push('/(tabs)/profile/announcer-profile')}
+                onPress={() => router.push('/profile/announcer-profile')}
               />
             </>
           ) : (
             <MenuRow
               icon="add-business"
               label="Devenir annonceur"
-              onPress={() => router.push('/(tabs)/profile/announcer-profile')}
+              onPress={() => router.push('/profile/announcer-profile')}
             />
           )}
           <MenuRow
             icon="settings"
             label="Paramètres"
-            onPress={() => router.push('/(tabs)/profile/settings')}
+            onPress={() => router.push('/profile/settings')}
           />
           <MenuRow
             icon="privacy-tip"

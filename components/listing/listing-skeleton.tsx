@@ -22,7 +22,7 @@ export function ListingCardHSkeleton() {
   );
 }
 
-// Full-width skeleton matching ManageCard (app/(tabs)/profile/my-listings.tsx)
+// Full-width skeleton matching ManageCard (app/profile/my-listings.tsx)
 // exactly — same thumb size, badge row, and action bar height — so the
 // loading→data swap doesn't reflow the list.
 export function ManageCardSkeleton() {
