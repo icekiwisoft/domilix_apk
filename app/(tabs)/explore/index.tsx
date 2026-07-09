@@ -12,7 +12,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { SearchBar } from '@/components/search/search-bar';
 import { FilterBar } from '@/components/search/filter-bar';
 import { ResultsCount } from '@/components/search/results-count';
-import { MapListToggle } from '@/components/search/map-list-toggle';
+// import { MapListToggle } from '@/components/search/map-list-toggle';
 import { ListingCard } from '@/components/listing/listing-card';
 import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { Colors, Spacing, Typography } from '@/constants/theme';
@@ -156,9 +156,9 @@ export default function ExploreScreen() {
       />
 
       {/* Map toggle FAB */}
-      <View style={styles.fab} pointerEvents="box-none">
+      {/* <View style={styles.fab} pointerEvents="box-none">
         <MapListToggle mode="list" onToggle={() => router.push('/(tabs)/explore/map')} />
-      </View>
+      </View> */}
     </SafeAreaView>
   );
 }
