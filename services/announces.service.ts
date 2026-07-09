@@ -41,5 +41,24 @@ export const AnnouncesService = {
     limit?: string;
     order_by?: 'name' | 'count';
     order?: 'asc' | 'desc';
-  }) => client.get<string[]>('/cities', { params }).then((r) => r.data),
+  }) =>
+    client.get<unknown>('/cities', { params }).then((r) => {
+      console.log('[cities] raw response', JSON.stringify(r.data));
+      // Response shape isn't documented in swagger — tolerate a plain string[],
+      // an array of { city | name } objects, or a { data: [...] } envelope.
+      const raw = r.data as unknown;
+      const list = Array.isArray(raw)
+        ? raw
+        : Array.isArray((raw as { data?: unknown[] })?.data)
+        ? (raw as { data: unknown[] }).data
+        : [];
+      return list
+        .map((entry) =>
+          typeof entry === 'string'
+            ? entry
+            : ((entry as { city?: string; name?: string })?.city ??
+                (entry as { city?: string; name?: string })?.name)
+        )
+        .filter((c): c is string => !!c);
+    }),
 };

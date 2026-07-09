@@ -112,18 +112,6 @@ export default function AnnouncerProfileEditScreen() {
           />
         </View>
 
-        {/* View public profile link */}
-        {!!announcerId && (
-          <Pressable
-            onPress={() => router.push(`/announcers/${announcerId}`)}
-            style={styles.viewPublicRow}
-          >
-            <MaterialIcons name="open-in-new" size={16} color={C.primary} />
-            <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-              Voir mon profil public
-            </Text>
-          </Pressable>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -182,12 +170,5 @@ const styles = StyleSheet.create({
   },
   formWrapper: {
     paddingHorizontal: Spacing.marginMobile,
-  },
-  viewPublicRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
   },
 });

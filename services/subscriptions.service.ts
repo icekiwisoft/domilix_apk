@@ -2,6 +2,12 @@ import { client } from './api.client';
 import type { Subscription } from '@/types/notification';
 
 export const SubscriptionsService = {
+  plans: () =>
+    client.get<unknown>('/subscriptions/plans').then((r) => {
+      console.log('[plans] raw response', JSON.stringify(r.data));
+      return r.data;
+    }),
+
   list: () =>
     client.get<Subscription[]>('/subscriptions').then((r) => r.data),
 

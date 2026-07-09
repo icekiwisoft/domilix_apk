@@ -2,6 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SubscriptionsService } from '@/services/subscriptions.service';
 import { useAuthStore } from '@/stores/auth.store';
 
+export function usePlans() {
+  return useQuery({
+    queryKey: ['subscription-plans'],
+    queryFn: SubscriptionsService.plans,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 export function useSubscriptions() {
   const accessToken = useAuthStore((s) => s.accessToken);
   return useQuery({

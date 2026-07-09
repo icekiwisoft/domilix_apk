@@ -361,6 +361,7 @@ export default function AnnouncerProfileScreen() {
                       announce={a}
                       onPress={() => router.push(`/announces/${a.id}`)}
                       onLike={(id) => toggleLike.mutate(id)}
+                      imageHeight={200}
                     />
                   ))}
                   {isFetchingNextPage && <ActivityIndicator style={s.paginationLoader} />}

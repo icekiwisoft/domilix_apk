@@ -15,7 +15,7 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useSubscriptions, useCreateSubscription } from '@/hooks/queries/use-subscriptions';
+import { useSubscriptions, useCreateSubscription, usePlans } from '@/hooks/queries/use-subscriptions';
 import { useToast } from '@/components/ui/toast';
 import { PlanCard } from '@/components/ui/plan-card';
 import type { Subscription } from '@/types/notification';
@@ -74,7 +74,7 @@ const PLANS: Plan[] = [
 
 // ─── Payment methods ──────────────────────────────────────────────────────────
 
-type MethodId = 'mtn_money' | 'orange_money' | 'campay';
+type MethodId = 'mtn_money' | 'orange_money';
 
 interface PaymentMethod {
   id: MethodId;
@@ -84,9 +84,8 @@ interface PaymentMethod {
 }
 
 const PAYMENT_METHODS: PaymentMethod[] = [
-  { id: 'mtn_money',    label: 'MTN Mobile Money', icon: 'phone-android',   accent: '#FFCB05' },
-  { id: 'orange_money', label: 'Orange Money',      icon: 'phone-android',   accent: '#FF6600' },
-  { id: 'campay',       label: 'CamPay',            icon: 'account-balance', accent: '#1A73E8' },
+  { id: 'mtn_money',    label: 'MTN Mobile Money', icon: 'phone-android', accent: '#FFCB05' },
+  { id: 'orange_money', label: 'Orange Money',      icon: 'phone-android', accent: '#FF6600' },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -335,6 +334,7 @@ export default function SubscriptionsScreen() {
 
   const { data: subs = [] } = useSubscriptions();
   const createSub = useCreateSubscription();
+  usePlans();
 
   const activePlanId = getActivePlanId(subs);
   const activeSub = subs.find((s) => s.status === 'active') ?? null;
@@ -417,7 +417,7 @@ export default function SubscriptionsScreen() {
         <View style={[styles.securityNote, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}>
           <MaterialIcons name="verified-user" size={18} color={C.onSurfaceVariant} />
           <Text style={[Typography.caption, { color: C.onSurfaceVariant, flex: 1, lineHeight: 18 }]}>
-            Paiement sécurisé · MTN Mobile Money · Orange Money · CamPay
+            Paiement sécurisé · MTN Mobile Money · Orange Money
           </Text>
         </View>
 

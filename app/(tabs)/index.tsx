@@ -1,10 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  FlatList,
-  Image,
   Linking,
   Pressable,
   RefreshControl,
@@ -20,18 +17,75 @@ import { BroadcastBanner } from '@/components/home/broadcast-banner';
 import { SectionHeader } from '@/components/home/section-header';
 import { ListingCard } from '@/components/listing/listing-card';
 import { ListingSkeleton } from '@/components/listing/listing-skeleton';
-import { Skeleton } from '@/components/ui/skeleton';
 import { SearchBar } from '@/components/search/search-bar';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
+import { Colors, Shadows, Spacing, Typography } from '@/constants/theme';
+import { useAnnounces, useCities, useToggleLike } from '@/hooks/queries/use-announces';
 import { useBroadcasts } from '@/hooks/queries/use-broadcasts';
 import { useUnreadCount } from '@/hooks/queries/use-notifications';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useFilterStore } from '@/stores/filter.store';
 
 const CATEGORIES = [
   { id: 'realestate', label: 'Immobilier', icon: 'home-work' as const, active: true },
   { id: 'furniture', label: 'Mobilier', icon: 'chair' as const, active: false },
 ];
+
+const CITIES_LIMIT = '6';
+const LISTINGS_PER_CITY = 8;
+
+// ─── Region row (one horizontal scroll of listings per city) ──────────────────
+
+function RegionRow({
+  city,
+  onCardPress,
+  onLike,
+}: {
+  city: string;
+  onCardPress: (id: string) => void;
+  onLike: (id: string) => void;
+}) {
+  const { data, isLoading } = useAnnounces({ type: 'realestate', city, page: 1 });
+  const items = data?.data.slice(0, LISTINGS_PER_CITY) ?? [];
+
+  if (!isLoading && items.length === 0) return null;
+
+  function handleSeeAll() {
+    useFilterStore.getState().setFilter('city', city);
+    router.push({ pathname: '/(tabs)/explore', params: { type: 'realestate' } });
+  }
+
+  return (
+    <>
+      <View style={styles.section}>
+        <SectionHeader title={city} onSeeAll={handleSeeAll} />
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.regionRow}
+        style={styles.regionScroll}
+      >
+        {isLoading
+          ? [1, 2, 3].map((k) => (
+              <View key={k} style={styles.regionCard}>
+                <ListingSkeleton />
+              </View>
+            ))
+          : items.map((item) => (
+              <View key={item.id} style={styles.regionCard}>
+                <ListingCard
+                  announce={item}
+                  onPress={() => onCardPress(item.id)}
+                  onLike={onLike}
+                />
+              </View>
+            ))}
+      </ScrollView>
+    </>
+  );
+}
+
+// ─── Screen ─────────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
   const scheme = useColorScheme();
@@ -41,20 +95,21 @@ export default function HomeScreen() {
 
   const { data: unreadCount } = useUnreadCount();
   const { data: broadcastsData, refetch: refetchBroadcasts } = useBroadcasts();
-  const { data: recentData, isLoading: recentLoading, refetch: refetchRecent } = useAnnounces({ type: 'realestate', page: 1 });
-  const { data: furnitureData, isLoading: furnitureLoading, refetch: refetchFurniture } = useAnnounces({ type: 'furniture', page: 1 });
+  const { data: cities, isLoading: citiesLoading, refetch: refetchCities } = useCities({
+    type: 'realestate',
+    order_by: 'count',
+    order: 'desc',
+    limit: CITIES_LIMIT,
+  });
   const toggleLike = useToggleLike();
 
   async function onRefresh() {
     setRefreshing(true);
-    await Promise.all([refetchBroadcasts(), refetchRecent(), refetchFurniture()]);
+    await Promise.all([refetchBroadcasts(), refetchCities()]);
     setRefreshing(false);
   }
 
   const broadcast = broadcastsData?.[0];
-  const featured = recentData?.data.slice(0, 4) ?? [];
-  const furniture = furnitureData?.data.slice(0, 6) ?? [];
-  const featuredItem = recentData?.data[0];
 
   function handleSearch() {
     if (search.trim()) {
@@ -149,88 +204,35 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        {/* Annonces Vedettes */}
-        <View style={styles.section}>
-          <SectionHeader title="Annonces Vedettes" onSeeAll={() => router.push('/(tabs)/explore')} />
-        </View>
-        {recentLoading ? (
-          <View style={styles.grid}>
-            {[1, 2, 3, 4].map((k) => <ListingSkeleton key={k} />)}
-          </View>
+        {/* Régions — un scroll horizontal de logements par ville */}
+        {citiesLoading ? (
+          <>
+            <View style={styles.section}>
+              <SectionHeader title="Chargement…" />
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.regionRow}
+              style={styles.regionScroll}
+            >
+              {[1, 2, 3].map((k) => (
+                <View key={k} style={styles.regionCard}>
+                  <ListingSkeleton />
+                </View>
+              ))}
+            </ScrollView>
+          </>
         ) : (
-          <View style={[styles.section, { paddingHorizontal: 0 }]}>
-            <FlatList
-              data={featured}
-              keyExtractor={(a) => a.id}
-              renderItem={({ item }) => (
-                <View style={{ flex: 1, paddingHorizontal: Spacing.marginMobile / 3 }}>
-                  <ListingCard
-                    announce={item}
-                    onPress={() => handleCardPress(item.id)}
-                    onLike={(id) => toggleLike.mutate(id)}
-                  />
-                </View>
-              )}
-              numColumns={2}
-              columnWrapperStyle={{ gap: Spacing.xs }}
-              scrollEnabled={false}
-              contentContainerStyle={{ gap: Spacing.sm }}
+          (cities ?? []).map((city) => (
+            <RegionRow
+              key={city}
+              city={city}
+              onCardPress={handleCardPress}
+              onLike={(id) => toggleLike.mutate(id)}
             />
-          </View>
+          ))
         )}
-
-        {/* Nouveautés Mobilier */}
-        <View style={[styles.section, { marginTop: Spacing.sm }]}>
-          <SectionHeader
-            title="Nouveautés Mobilier"
-            onSeeAll={() => router.push({ pathname: '/(tabs)/explore', params: { type: 'furniture' } })}
-          />
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.miniRow}
-        >
-          {furnitureLoading
-            ? [1, 2, 3].map((k) => (
-                <View key={k} style={[styles.miniCard, { backgroundColor: C.surfaceContainerLowest }]}>
-                  <Skeleton width={140} height={96} radius={0} />
-                  <View style={styles.miniBody}>
-                    <Skeleton width={80} height={10} />
-                    <Skeleton width={60} height={10} style={{ marginTop: 3 }} />
-                  </View>
-                </View>
-              ))
-            : furniture.map((item) => (
-                <Pressable
-                  key={item.id}
-                  style={({ pressed }) => [
-                    styles.miniCard,
-                    { backgroundColor: C.surfaceContainerLowest },
-                    pressed && { opacity: 0.88 },
-                  ]}
-                  onPress={() => handleCardPress(item.id)}
-                >
-                  <Image
-                    source={{ uri: item.medias?.[0]?.thumbnail ?? item.medias?.[0]?.file ?? `https://picsum.photos/seed/${item.id}/200/150` }}
-                    style={styles.miniImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.miniBody}>
-                    <Text
-                      style={[Typography.caption, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold' }]}
-                      numberOfLines={1}
-                    >
-                      {item.description.split('.')[0]}
-                    </Text>
-                    <Text style={[Typography.caption, { color: C.primary }]}>
-                      {item.price?.toLocaleString('fr-FR')} {item.devise ?? 'FCFA'}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))
-          }
-        </ScrollView>
 
         <View style={{ height: Spacing.xxl }} />
       </ScrollView>
@@ -285,32 +287,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...Shadows.xs,
   },
-  // Grid skeleton
-  grid: {
+  // Regions (horizontal scroll of listings per city)
+  regionScroll: {
+    marginBottom: Spacing.lg,
+  },
+  regionRow: {
     paddingHorizontal: Spacing.marginMobile,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: Spacing.sm,
   },
-  // Mini furniture cards
-  miniRow: {
-    paddingLeft: Spacing.marginMobile,
-    paddingRight: Spacing.marginMobile,
-    gap: Spacing.md,
-  },
-  miniCard: {
-    width: 140,
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-    ...Shadows.card,
-  },
-  miniImage: {
-    width: 140,
-    height: 96,
-  },
-  miniBody: {
-    padding: Spacing.xs,
-    alignItems: 'center',
-    gap: 3,
+  regionCard: {
+    width: 180,
   },
 });

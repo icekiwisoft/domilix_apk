@@ -81,6 +81,7 @@ export default function FavoritesScreen() {
               announce={item}
               onPress={() => router.push(`/announces/${item.id}`)}
               onLike={(id) => toggleLike.mutate(id)}
+              imageHeight={200}
             />
           )}
           ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}

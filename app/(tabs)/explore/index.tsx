@@ -103,6 +103,7 @@ export default function ExploreScreen() {
             announce={item}
             onPress={() => router.push(`/announces/${item.id}`)}
             onLike={(id) => toggleLike.mutate(id)}
+            imageHeight={200}
           />
         )}
         ListHeaderComponent={

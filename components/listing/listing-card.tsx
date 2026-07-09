@@ -17,9 +17,10 @@ interface ListingCardProps {
   announce: Announce;
   onPress?: () => void;
   onLike?: (id: string, liked: boolean) => void;
+  imageHeight?: number;
 }
 
-export function ListingCard({ announce, onPress, onLike }: ListingCardProps) {
+export function ListingCard({ announce, onPress, onLike, imageHeight = IMAGE_HEIGHT }: ListingCardProps) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
@@ -52,7 +53,7 @@ export function ListingCard({ announce, onPress, onLike }: ListingCardProps) {
       ]}
     >
       {/* Image */}
-      <View style={styles.imageWrapper}>
+      <View style={[styles.imageWrapper, { height: imageHeight }]}>
         <Image source={{ uri: thumb }} style={styles.image} resizeMode="cover" />
 
         {/* Ad-type chip — top left */}
@@ -110,7 +111,6 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   imageWrapper: {
-    height: IMAGE_HEIGHT,
     position: 'relative',
   },
   image: {

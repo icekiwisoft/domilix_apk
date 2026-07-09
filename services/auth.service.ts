@@ -12,6 +12,7 @@ export const AuthService = {
 
   me: () =>
     client.get<unknown>('/auth/me').then((r) => {
+      console.log('[me] raw response', JSON.stringify(r.data));
       const data = r.data as Record<string, unknown>;
       return ((data.user ?? data) as User);
     }),

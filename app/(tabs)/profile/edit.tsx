@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ProfileForm, type ProfileFormValues } from '@/components/forms/profile-form';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
@@ -17,23 +15,6 @@ export default function EditProfileScreen() {
   const { data: user } = useMe();
   const { data: announcer } = useAnnouncer(user?.announcer ?? '');
   const updateProfile = useUpdateProfile();
-  const [avatar, setAvatar] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (announcer?.avatar) setAvatar(announcer.avatar);
-  }, [announcer?.avatar]);
-
-  async function handlePickAvatar() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.85,
-    });
-    if (!result.canceled) {
-      setAvatar(result.assets[0].uri);
-    }
-  }
 
   function handleSave(values: ProfileFormValues) {
     updateProfile.mutate(values, {
@@ -63,28 +44,15 @@ export default function EditProfileScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Avatar picker */}
+        {/* Avatar (read-only — photo management is only available for announcer accounts, via Profil annonceur) */}
         <View style={styles.avatarSection}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Changer la photo de profil"
-            onPress={handlePickAvatar}
-            style={styles.avatarPressable}
-          >
-            {avatar ? (
-              <Image source={{ uri: avatar }} style={[styles.avatar, { borderColor: C.primary + '40' }]} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}>
-                <MaterialIcons name="person" size={44} color={C.onSurfaceVariant} />
-              </View>
-            )}
-            <View style={[styles.cameraBtn, { backgroundColor: C.primary }]}>
-              <MaterialIcons name="photo-camera" size={16} color={C.onPrimary} />
+          {announcer?.avatar ? (
+            <Image source={{ uri: announcer.avatar }} style={[styles.avatar, { borderColor: C.primary + '40' }]} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}>
+              <MaterialIcons name="person" size={44} color={C.onSurfaceVariant} />
             </View>
-          </Pressable>
-          <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: Spacing.sm }]}>
-            Appuyez pour changer la photo
-          </Text>
+          )}
         </View>
 
         {/* Form */}
@@ -122,9 +90,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.xl,
   },
-  avatarPressable: {
-    position: 'relative',
-  },
   avatar: {
     width: 100,
     height: 100,
@@ -132,16 +97,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
   },
   avatarFallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cameraBtn: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
