@@ -5,6 +5,7 @@ import { useState } from 'react';
 import {
   FlatList,
   Image,
+  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -22,7 +23,7 @@ import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SearchBar } from '@/components/search/search-bar';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { useAnnounces } from '@/hooks/queries/use-announces';
+import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 import { useBroadcasts } from '@/hooks/queries/use-broadcasts';
 import { useUnreadCount } from '@/hooks/queries/use-notifications';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -30,8 +31,6 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 const CATEGORIES = [
   { id: 'realestate', label: 'Immobilier', icon: 'home-work' as const, active: true },
   { id: 'furniture', label: 'Mobilier', icon: 'chair' as const, active: false },
-  { id: 'location', label: 'Location', icon: 'apartment' as const, active: false },
-  { id: 'boutique', label: 'Boutiques', icon: 'storefront' as const, active: false },
 ];
 
 export default function HomeScreen() {
@@ -44,6 +43,7 @@ export default function HomeScreen() {
   const { data: broadcastsData, refetch: refetchBroadcasts } = useBroadcasts();
   const { data: recentData, isLoading: recentLoading, refetch: refetchRecent } = useAnnounces({ type: 'realestate', page: 1 });
   const { data: furnitureData, isLoading: furnitureLoading, refetch: refetchFurniture } = useAnnounces({ type: 'furniture', page: 1 });
+  const toggleLike = useToggleLike();
 
   async function onRefresh() {
     setRefreshing(true);
@@ -64,6 +64,18 @@ export default function HomeScreen() {
 
   function handleCardPress(id: string) {
     router.push(`/announces/${id}`);
+  }
+
+  function handleBroadcastPress(url?: string) {
+    if (!url) {
+      router.push('/(tabs)/explore');
+      return;
+    }
+    if (/^https?:\/\//.test(url)) {
+      Linking.openURL(url);
+    } else {
+      router.push(url as never);
+    }
   }
 
   return (
@@ -103,7 +115,7 @@ export default function HomeScreen() {
         {/* Broadcast */}
         {broadcast && (
           <View style={styles.section}>
-            <BroadcastBanner broadcast={broadcast} onPress={() => router.push('/(tabs)/explore')} />
+            <BroadcastBanner broadcast={broadcast} onPress={() => handleBroadcastPress(broadcast.action_url)} />
           </View>
         )}
 
@@ -152,7 +164,11 @@ export default function HomeScreen() {
               keyExtractor={(a) => a.id}
               renderItem={({ item }) => (
                 <View style={{ flex: 1, paddingHorizontal: Spacing.marginMobile / 3 }}>
-                  <ListingCard announce={item} onPress={() => handleCardPress(item.id)} />
+                  <ListingCard
+                    announce={item}
+                    onPress={() => handleCardPress(item.id)}
+                    onLike={(id) => toggleLike.mutate(id)}
+                  />
                 </View>
               )}
               numColumns={2}

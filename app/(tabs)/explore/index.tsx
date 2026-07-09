@@ -17,7 +17,7 @@ import { ListingCard } from '@/components/listing/listing-card';
 import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAnnounces } from '@/hooks/queries/use-announces';
+import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 import { useFilterStore } from '@/stores/filter.store';
 import type { AnnounceType, AdType } from '@/types/announce';
 
@@ -34,6 +34,7 @@ export default function ExploreScreen() {
   const [page, setPage] = useState(1);
 
   const { filters, setFilter, clearFilters } = useFilterStore();
+  const toggleLike = useToggleLike();
 
   const { data, isLoading, isFetching, refetch } = useAnnounces({
     ...filters,
@@ -101,6 +102,7 @@ export default function ExploreScreen() {
           <ListingCard
             announce={item}
             onPress={() => router.push(`/announces/${item.id}`)}
+            onLike={(id) => toggleLike.mutate(id)}
           />
         )}
         ListHeaderComponent={

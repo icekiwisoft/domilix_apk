@@ -174,18 +174,14 @@ export default function ProfileScreen() {
 
         {/* Activities */}
         <MenuSection title="Activité">
-          <MenuRow
-            icon="home-work"
-            label="Mes annonces"
-            subtitle="Gérer vos publications"
-            onPress={() => {
-              if (isAnnouncer) {
-                router.push('/(tabs)/profile/my-listings');
-              } else {
-                router.push('/(tabs)/explore');
-              }
-            }}
-          />
+          {isAnnouncer && (
+            <MenuRow
+              icon="home-work"
+              label="Mes annonces"
+              subtitle="Gérer vos publications"
+              onPress={() => router.push('/(tabs)/profile/my-listings')}
+            />
+          )}
           <MenuRow
             icon="favorite-border"
             label="Mes favoris"
@@ -226,10 +222,7 @@ export default function ProfileScreen() {
           <MenuRow
             icon="settings"
             label="Paramètres"
-          />
-          <MenuRow
-            icon="help-outline"
-            label="Aide & Support"
+            onPress={() => router.push('/(tabs)/profile/settings')}
           />
           <MenuRow
             icon="privacy-tip"

@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -82,44 +83,25 @@ export default function UnlockConfirmScreen() {
 
         {/* Buttons */}
         <View style={styles.actions}>
-          <Pressable
+          <Button
+            mode="outlined"
             onPress={() => router.back()}
-            style={[styles.btn, styles.cancelBtn, { borderColor: C.outlineVariant }]}
+            style={styles.btn}
+            contentStyle={styles.btnContent}
           >
-            <Text style={[Typography.labelSm, { color: C.onSurface, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-              Annuler
-            </Text>
-          </Pressable>
-          <Pressable
+            Annuler
+          </Button>
+          <Button
+            mode="contained"
             onPress={handleConfirm}
             disabled={unlockAnnounce.isPending || !hasEnoughCredits}
-            style={[
-              styles.btn,
-              {
-                backgroundColor: hasEnoughCredits ? C.primary : C.surfaceVariant,
-                opacity: unlockAnnounce.isPending ? 0.6 : 1,
-              },
-            ]}
+            loading={unlockAnnounce.isPending}
+            icon={unlockAnnounce.isPending ? undefined : 'lock-open'}
+            style={styles.btn}
+            contentStyle={styles.btnContent}
           >
-            {unlockAnnounce.isPending ? (
-              <ActivityIndicator size="small" color={C.onPrimary} />
-            ) : (
-              <>
-                <MaterialIcons
-                  name="lock-open"
-                  size={16}
-                  color={hasEnoughCredits ? C.onPrimary : C.onSurfaceVariant}
-                />
-                <Text style={[Typography.labelSm, {
-                  color: hasEnoughCredits ? C.onPrimary : C.onSurfaceVariant,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.8,
-                }]}>
-                  Confirmer (1 crédit)
-                </Text>
-              </>
-            )}
-          </Pressable>
+            Confirmer (1 crédit)
+          </Button>
         </View>
       </View>
     </SafeAreaView>
@@ -200,14 +182,9 @@ const styles = StyleSheet.create({
   },
   btn: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    height: 52,
     borderRadius: Radius.md,
   },
-  cancelBtn: {
-    borderWidth: 1,
+  btnContent: {
+    height: 52,
   },
 });

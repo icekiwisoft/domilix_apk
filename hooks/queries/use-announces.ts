@@ -1,6 +1,17 @@
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { AnnouncesService } from '@/services/announces.service';
-import type { AnnounceFilters } from '@/types/announce';
+import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
+
+function flipLiked(id: string) {
+  return (a: Announce): Announce =>
+    String(a.id) !== id
+      ? a
+      : {
+          ...a,
+          liked: !a.liked,
+          likes_count: a.likes_count != null ? a.likes_count + (a.liked ? -1 : 1) : a.likes_count,
+        };
+}
 
 export function useAnnounces(filters: AnnounceFilters = {}, options?: { enabled?: boolean }) {
   return useQuery({
@@ -45,9 +56,49 @@ export function useToggleLike() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => AnnouncesService.toggleLike(id),
-    onSuccess: (_data, id) => {
-      qc.invalidateQueries({ queryKey: ['announce', id] });
+    onMutate: async (id: string) => {
+      // The API returns numeric announce ids on some payloads even though our
+      // types declare them as string — normalize so cache keys/comparisons
+      // (built from route params, always strings) reliably match.
+      const key = String(id);
+      await qc.cancelQueries({ queryKey: ['announce', key] });
+
+      const previousAnnounce = qc.getQueryData<Announce>(['announce', key]);
+      const flip = flipLiked(key);
+
+      if (previousAnnounce) {
+        qc.setQueryData<Announce>(['announce', key], flip(previousAnnounce));
+      }
+
+      qc.setQueriesData<PaginatedResponse<Announce>>({ queryKey: ['announces'] }, (old) =>
+        old ? { ...old, data: old.data.map(flip) } : old
+      );
+
+      qc.setQueriesData<InfiniteData<PaginatedResponse<Announce>>>({ queryKey: ['announces-infinite'] }, (old) =>
+        old ? { ...old, pages: old.pages.map((p) => ({ ...p, data: p.data.map(flip) })) } : old
+      );
+
+      return { previousAnnounce };
+    },
+    onSuccess: (data, id) => {
+      const key = String(id);
+      // Reconcile with the toggle endpoint's own response — trusted over a
+      // possible refetch of GET /announces/{id}, whose "liked" field has been
+      // observed to lag/not reflect the just-toggled state on some backends.
+      if (typeof data?.liked === 'boolean') {
+        qc.setQueryData<Announce>(['announce', key], (old) =>
+          old ? { ...old, liked: data.liked } : old
+        );
+      }
       qc.invalidateQueries({ queryKey: ['announces'] });
+      qc.invalidateQueries({ queryKey: ['announces-infinite'] });
+    },
+    onError: (_err, id, context) => {
+      if (context?.previousAnnounce) {
+        qc.setQueryData(['announce', String(id)], context.previousAnnounce);
+      }
+      qc.invalidateQueries({ queryKey: ['announces'] });
+      qc.invalidateQueries({ queryKey: ['announces-infinite'] });
     },
   });
 }

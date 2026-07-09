@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedReaction,
   useAnimatedScrollHandler,
@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ImageViewerModal } from './image-viewer-modal';
 import type { Media } from '@/types/announce';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -24,6 +25,7 @@ export function ListingGallery({ medias, height = DEFAULT_HEIGHT, announceId }: 
   const C = Colors[scheme ?? 'light'];
   const scrollX = useSharedValue(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [viewerVisible, setViewerVisible] = useState(false);
 
   const sources = medias.length > 0
     ? medias.map((m) => m.file)
@@ -53,9 +55,15 @@ export function ListingGallery({ medias, height = DEFAULT_HEIGHT, announceId }: 
         scrollEventThrottle={16}
       >
         {sources.map((uri, i) => (
-          <View key={i} style={{ width: SCREEN_W, height }}>
+          <Pressable
+            key={i}
+            style={{ width: SCREEN_W, height }}
+            onPress={() => setViewerVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Voir la photo en plein écran"
+          >
             <Image source={{ uri }} style={styles.image} resizeMode="cover" />
-          </View>
+          </Pressable>
         ))}
       </Animated.ScrollView>
 
@@ -69,6 +77,13 @@ export function ListingGallery({ medias, height = DEFAULT_HEIGHT, announceId }: 
           </Text>
         </View>
       )}
+
+      <ImageViewerModal
+        visible={viewerVisible}
+        images={sources}
+        initialIndex={currentIndex}
+        onClose={() => setViewerVisible(false)}
+      />
     </View>
   );
 }

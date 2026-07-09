@@ -8,8 +8,7 @@ import { ListingCardH } from '@/components/listing/listing-card-h';
 import { ListingMapPin } from '@/components/listing/listing-map-pin';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAnnounces } from '@/hooks/queries/use-announces';
-import type { Announce } from '@/types/announce';
+import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 
 const INITIAL_REGION = {
   latitude: 4.05,
@@ -22,14 +21,16 @@ export default function MapScreenContent() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<Announce | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data } = useAnnounces({ type: 'realestate', search: search.trim() || undefined });
+  const toggleLike = useToggleLike();
   const located = (data?.data ?? []).map((a, i) => ({
     ...a,
     lat: (a.city === 'Yaoundé' ? 3.848 : 4.050) + (i % 5) * 0.012 - 0.024,
     lng: (a.city === 'Yaoundé' ? 11.502 : 9.700) + (i % 4) * 0.015 - 0.03,
   }));
+  const selected = located.find((a) => a.id === selectedId) ?? null;
 
   return (
     <>
@@ -43,7 +44,7 @@ export default function MapScreenContent() {
           <Marker
             key={a.id}
             coordinate={{ latitude: a.lat, longitude: a.lng }}
-            onPress={() => setSelected(a)}
+            onPress={() => setSelectedId(a.id)}
             anchor={{ x: 0.5, y: 1 }}
           >
             <ListingMapPin
@@ -68,6 +69,7 @@ export default function MapScreenContent() {
           <ListingCardH
             announce={selected}
             onPress={() => router.push(`/announces/${selected.id}`)}
+            onLike={(id) => toggleLike.mutate(id)}
           />
         </View>
       )}

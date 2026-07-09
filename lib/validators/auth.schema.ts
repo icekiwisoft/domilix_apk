@@ -37,6 +37,18 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   });
 
+export const changePasswordSchema = z
+  .object({
+    oldPassword: z.string().min(1, 'Mot de passe actuel requis'),
+    newPassword: z.string().min(8, 'Au moins 8 caractères'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  });
+export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+
 export type LoginFormValues = z.infer<typeof loginSchema>;
 // helper utilisé dans onSubmit pour router vers email ou phone_number
 export function resolveLoginDto(identifier: string, password: string) {

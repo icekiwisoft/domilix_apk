@@ -22,7 +22,7 @@ import { AnnouncerDetailSkeleton } from '@/components/announcer/announcer-detail
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAnnouncer } from '@/hooks/queries/use-announcers';
-import { useInfiniteAnnounces } from '@/hooks/queries/use-announces';
+import { useInfiniteAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 
 const PAGINATION_THRESHOLD = 400;
 
@@ -119,6 +119,7 @@ export default function AnnouncerProfileScreen() {
     isFetchingNextPage,
     refetch: refetchListings,
   } = useInfiniteAnnounces({ AnnouncerId: id ?? '' }, { enabled: !!id });
+  const toggleLike = useToggleLike();
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -359,6 +360,7 @@ export default function AnnouncerProfileScreen() {
                       key={a.id}
                       announce={a}
                       onPress={() => router.push(`/announces/${a.id}`)}
+                      onLike={(id) => toggleLike.mutate(id)}
                     />
                   ))}
                   {isFetchingNextPage && <ActivityIndicator style={s.paginationLoader} />}

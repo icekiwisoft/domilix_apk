@@ -8,7 +8,7 @@ import { ListingCard } from '@/components/listing/listing-card';
 import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useInfiniteAnnounces } from '@/hooks/queries/use-announces';
+import { useInfiniteAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 import { useAuthStore } from '@/stores/auth.store';
 import { LoginGate } from '@/components/ui/login-gate';
 
@@ -26,6 +26,7 @@ export default function FavoritesScreen() {
     isFetchingNextPage,
   } = useInfiniteAnnounces({ liked: true }, { enabled: !!accessToken });
   const favorites = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
+  const toggleLike = useToggleLike();
 
   if (!accessToken) {
     return (
@@ -79,6 +80,7 @@ export default function FavoritesScreen() {
             <ListingCard
               announce={item}
               onPress={() => router.push(`/announces/${item.id}`)}
+              onLike={(id) => toggleLike.mutate(id)}
             />
           )}
           ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}

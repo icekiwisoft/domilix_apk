@@ -181,7 +181,7 @@ export default function AnnounceDetailScreen() {
               icon={announce.liked ? 'heart' : 'heart-outline'}
               accessibilityLabel={announce.liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
               accessibilityState={{ selected: announce.liked }}
-              onPress={() => toggleLike.mutate(announce.id)}
+              onPress={() => toggleLike.mutate(id ?? '')}
               iconColor={announce.liked ? '#e53935' : '#222'}
               containerColor="rgba(255,255,255,0.95)"
               size={20}
