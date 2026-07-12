@@ -5,7 +5,7 @@ import { IconButton } from 'react-native-paper';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export const MIN_PHOTOS = 4;
+export const MAX_PHOTOS = 10;
 
 interface MediaUploadGridProps {
   uris: string[];
@@ -15,25 +15,25 @@ interface MediaUploadGridProps {
 export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+  const atMax = uris.length >= MAX_PHOTOS;
 
   async function handlePick() {
+    if (atMax) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.85,
       allowsMultipleSelection: true,
+      selectionLimit: MAX_PHOTOS - uris.length,
     });
     if (!result.canceled) {
       const newUris = result.assets.map((a) => a.uri);
-      onChange([...uris, ...newUris]);
+      onChange([...uris, ...newUris].slice(0, MAX_PHOTOS));
     }
   }
 
   function handleRemove(index: number) {
     onChange(uris.filter((_, i) => i !== index));
   }
-
-  const hasEnough = uris.length >= MIN_PHOTOS;
-  const remaining = Math.max(0, MIN_PHOTOS - uris.length);
 
   return (
     <View style={styles.container}>
@@ -66,63 +66,32 @@ export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
           </View>
         ))}
 
-        {/* Add button — always visible so user can keep adding */}
-        <Pressable
-          onPress={handlePick}
-          accessibilityRole="button"
-          accessibilityLabel="Ajouter des photos"
-          style={[
-            styles.slot,
-            styles.addSlot,
-            { borderColor: hasEnough ? C.outlineVariant : C.primary + '88', backgroundColor: C.surfaceContainerLow },
-          ]}
-        >
-          <MaterialIcons
-            name="add-photo-alternate"
-            size={30}
-            color={hasEnough ? C.onSurfaceVariant : C.primary}
-          />
-          <Text
+        {/* Add button — hidden once the max is reached */}
+        {!atMax && (
+          <Pressable
+            onPress={handlePick}
+            accessibilityRole="button"
+            accessibilityLabel="Ajouter des photos"
             style={[
-              Typography.caption,
-              { color: hasEnough ? C.onSurfaceVariant : C.primary, marginTop: 6, textAlign: 'center' },
+              styles.slot,
+              styles.addSlot,
+              { borderColor: C.primary + '88', backgroundColor: C.surfaceContainerLow },
             ]}
           >
-            {uris.length === 0 ? 'Ajouter des\nphotos' : 'Ajouter'}
-          </Text>
-        </Pressable>
+            <MaterialIcons name="add-photo-alternate" size={30} color={C.primary} />
+            <Text style={[Typography.caption, { color: C.primary, marginTop: 6, textAlign: 'center' }]}>
+              {uris.length === 0 ? 'Ajouter des\nphotos' : 'Ajouter'}
+            </Text>
+          </Pressable>
+        )}
       </View>
 
-      {/* Counter + minimum progress */}
-      <View style={styles.footer}>
-        <View style={styles.counterRow}>
-          <MaterialIcons
-            name={hasEnough ? 'check-circle' : 'photo-library'}
-            size={14}
-            color={hasEnough ? C.primary : C.onSurfaceVariant}
-          />
-          <Text style={[Typography.caption, { color: hasEnough ? C.primary : C.onSurfaceVariant }]}>
-            {uris.length} photo{uris.length > 1 ? 's' : ''}
-            {hasEnough
-              ? ` · Minimum atteint`
-              : ` · encore ${remaining} photo${remaining > 1 ? 's' : ''} requise${remaining > 1 ? 's' : ''}`}
-          </Text>
-        </View>
-
-        {/* Progress bar toward minimum */}
-        {!hasEnough && (
-          <View style={[styles.progressTrack, { backgroundColor: C.surfaceContainerHighest }]}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  backgroundColor: C.primary,
-                  width: `${Math.min(100, (uris.length / MIN_PHOTOS) * 100)}%`,
-                },
-              ]}
-            />
-          </View>
-        )}
+      {/* Counter */}
+      <View style={styles.counterRow}>
+        <MaterialIcons name="photo-library" size={14} color={C.onSurfaceVariant} />
+        <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
+          {uris.length}/{MAX_PHOTOS} photos
+        </Text>
       </View>
     </View>
   );
@@ -164,21 +133,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: Radius.full,
   },
-  footer: {
-    gap: Spacing.xs,
-  },
   counterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-  },
-  progressTrack: {
-    height: 3,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
   },
 });

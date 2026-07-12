@@ -206,7 +206,7 @@ export default function ProfileScreen() {
                 icon="add-circle-outline"
                 label="Publier une annonce"
                 subtitle="Mettre en ligne un bien ou un meuble"
-                onPress={() => router.push('/profile/publish')}
+                onPress={() => router.push('/announces/create/step-1')}
               />
               <MenuRow
                 icon="storefront"

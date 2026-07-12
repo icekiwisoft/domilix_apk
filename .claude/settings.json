@@ -61,7 +61,8 @@
       "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/src/auth/dto/**)",
       "Bash(grep -rin \"FIREBASE\" .env*)",
       "Bash(cd \"C:\\\\Users\\\\Wilfreid\\\\Documents\\\\GitHub\\\\domilix\\\\backend\" && grep -n \"firebase-admin\\\\|jsonwebtoken\" package.json; echo \"---\"; grep -in \"FIREBASE\" .env.example)",
-      "Bash(find . -maxdepth 1 -iname \"*.env*\")"
+      "Bash(find . -maxdepth 1 -iname \"*.env*\")",
+      "Bash(git rm *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\Wilfreid\\.claude"

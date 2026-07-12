@@ -11,6 +11,7 @@ export interface CreateListingDraft {
   description: string;
   address: string;
   city: string;
+  state: string;
   bedrooms: number;
   size: string;
   standing: Standing | undefined;
@@ -33,6 +34,7 @@ const DEFAULT_DRAFT: CreateListingDraft = {
   description: '',
   address: '',
   city: 'Douala',
+  state: '',
   bedrooms: 0,
   size: '',
   standing: undefined,
