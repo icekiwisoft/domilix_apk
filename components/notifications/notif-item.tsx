@@ -17,19 +17,28 @@ type NotifIconConfig = {
   color: string;
 };
 
-function getIconConfig(type: string, C: (typeof Colors)['light']): NotifIconConfig {
+function getIconConfig(type: string, C: (typeof Colors)['light'] | (typeof Colors)['dark']): NotifIconConfig {
   switch (type) {
-    case 'announce_liked':
-      return { icon: 'favorite', bg: C.errorContainer, color: C.error };
-    case 'announce_unlocked':
+    // Payment / Domicoin credits
+    case 'payment_success':
+      return { icon: 'payment', bg: C.primaryFixed, color: C.primary };
+    case 'credits_received':
+      return { icon: 'toll', bg: C.primaryFixed, color: C.primary };
+    case 'signup_gift_received':
+      return { icon: 'card-giftcard', bg: C.tertiaryContainer, color: C.onTertiaryContainer };
+    // Announce lifecycle
+    case 'ad_unlocked':
       return { icon: 'lock-open', bg: C.secondaryContainer, color: C.secondary };
-    case 'subscription':
+    case 'ad_published':
+      return { icon: 'campaign', bg: C.primaryFixed, color: C.primary };
+    // Account / auth
+    case 'welcome':
+      return { icon: 'celebration', bg: C.tertiaryContainer, color: C.onTertiaryContainer };
+    case 'new_login':
+      return { icon: 'login', bg: C.surfaceContainerHigh, color: C.onSurfaceVariant };
+    // Announcer subscription
+    case 'announcer_subscription_assigned':
       return { icon: 'workspace-premium', bg: C.primaryFixed, color: C.primary };
-    case 'phone_verified':
-      return { icon: 'verified', bg: C.primaryFixed, color: C.primary };
-    case 'announcer_approved':
-      return { icon: 'check-circle', bg: C.primaryFixed, color: C.primary };
-    case 'system':
     default:
       return { icon: 'info', bg: C.surfaceContainerHigh, color: C.onSurfaceVariant };
   }
@@ -171,7 +180,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingHorizontal: Spacing.marginMobile,
     paddingVertical: Spacing.md,
     gap: Spacing.md,
@@ -183,7 +192,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    marginTop: 2,
   },
   textBlock: {
     flex: 1,
@@ -208,7 +216,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginTop: Spacing.sm,
     flexShrink: 0,
   },
 });

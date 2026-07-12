@@ -55,7 +55,8 @@
       "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/domilix.com/**)",
       "Bash(python3 -c ' *)",
       "Bash(grep -rn \"credits\" \"c:/Users/Wilfreid/Documents/GitHub/domilix/backend/src/auth\" 2>/dev/null)",
-      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/src/auth/**)"
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/src/auth/**)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/**)"
     ],
     "additionalDirectories": [
       "C:\\Users\\Wilfreid\\.claude"
