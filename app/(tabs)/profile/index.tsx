@@ -12,6 +12,7 @@ import { useSubscriptions } from '@/hooks/queries/use-subscriptions';
 import { useAuthStore } from '@/stores/auth.store';
 import { LoginGate } from '@/components/ui/login-gate';
 import { isAnnouncerToken } from '@/lib/decode-token';
+import { isPackUsable } from '@/lib/subscription-helpers';
 
 interface MenuRowProps {
   icon: React.ComponentProps<typeof MaterialIcons>['name'];
@@ -75,8 +76,10 @@ export default function ProfileScreen() {
   const { data: announcer } = useAnnouncer(user?.announcer ?? '');
   const logout = useLogout();
   const { data: subs = [] } = useSubscriptions();
-  const activeSub = subs.find((s) => s.status === 'active');
-  const activePlanLabel = activeSub ? `Membre ${activeSub.plan_name}` : null;
+  const activePacks = subs.filter(isPackUsable);
+  const activePlanLabel = activePacks.length > 0
+    ? `${activePacks.length} pack${activePacks.length > 1 ? 's' : ''} actif${activePacks.length > 1 ? 's' : ''}`
+    : null;
   const isAnnouncer = isAnnouncerToken(accessToken) || !!user?.is_announcer || !!user?.announcer;
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
 
@@ -193,8 +196,8 @@ export default function ProfileScreen() {
         <MenuSection title="Compte">
           <MenuRow
             icon="workspace-premium"
-            label="Mon abonnement"
-            subtitle={activeSub ? `Plan ${activeSub.plan_name} actif` : 'Découvrir les plans'}
+            label="Mes packs Domicoin"
+            subtitle={activePlanLabel ?? 'Découvrir les packs'}
             onPress={() => router.push('/profile/subscriptions')}
           />
           {isAnnouncer ? (
@@ -227,7 +230,7 @@ export default function ProfileScreen() {
           <MenuRow
             icon="privacy-tip"
             label="Politique de confidentialité"
-            onPress={() => Linking.openURL('https://www.privacypolicies.com/live/8afdd5ff-63d9-4381-9f5b-a8222d7bd121')}
+            onPress={() => Linking.openURL('https://domilix.com/privacy-policy')}
           />
         </MenuSection>
 

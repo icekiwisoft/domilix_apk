@@ -9,6 +9,8 @@ interface PlanCardProps {
   tagline?: string;
   price: number | null;
   period?: string;
+  credits?: number;
+  validityLabel?: string;
   features: string[];
   recommended?: boolean;
   current?: boolean;
@@ -21,6 +23,8 @@ export function PlanCard({
   tagline,
   price,
   period = '/mois',
+  credits,
+  validityLabel,
   features,
   recommended,
   current,
@@ -56,6 +60,27 @@ export function PlanCard({
           {tagline}
         </Text>
       ) : null}
+
+      {(credits != null || validityLabel) && (
+        <View style={styles.metaCol}>
+          {credits != null && (
+            <View style={styles.metaRow}>
+              <MaterialIcons name="toll" size={18} color={C.primary} />
+              <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_700Bold' }]}>
+                {credits} Domicoins
+              </Text>
+            </View>
+          )}
+          {validityLabel && (
+            <View style={styles.metaRow}>
+              <MaterialIcons name="schedule" size={18} color={C.onSurfaceVariant} />
+              <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
+                {validityLabel}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={styles.priceRow}>
         {price === null ? (
@@ -117,6 +142,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 2,
+  },
+  metaCol: {
+    gap: Spacing.xs,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   divider: {
     height: 1,

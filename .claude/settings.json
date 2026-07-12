@@ -41,7 +41,21 @@
       "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8107 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
       "PowerShell(Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8108 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique\\) -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne 0 } | Stop-Process -Force; \"done\")",
       "WebSearch",
-      "WebFetch(domain:support.google.com)"
+      "WebFetch(domain:support.google.com)",
+      "Bash(find \"c:/Users/Wilfreid/Documents/GitHub/domilix\" -iname \"*subscription*\" -not -path \"*/node_modules/*\" -not -path \"*/.next/*\" 2>/dev/null)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/**)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/src/subscriptions/**)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/src/subscriptions/dto/**)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/domilix.com/src/services/**)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/domilix.com/src/views/Subscriptions/**)",
+      "Bash(find \"c:/Users/Wilfreid/Documents/GitHub/domilix/domilix.com/src\" -iname \"ChoiseMode*\")",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/domilix.com/src/**)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/domilix.com/src/components/Cards/Paiement/**)",
+      "Bash(grep -rl '\"subscriptions\"' \"c:/Users/Wilfreid/Documents/GitHub/domilix/domilix.com\" --include=\"*.json\" 2>/dev/null | grep -v node_modules)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/domilix.com/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(grep -rn \"credits\" \"c:/Users/Wilfreid/Documents/GitHub/domilix/backend/src/auth\" 2>/dev/null)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/src/auth/**)"
     ],
     "additionalDirectories": [
       "C:\\Users\\Wilfreid\\.claude"
