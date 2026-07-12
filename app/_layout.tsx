@@ -69,7 +69,6 @@ export default function RootLayout() {
                   <Stack.Screen name="profile/my-listings" options={{ headerShown: false }} />
                   <Stack.Screen name="profile/subscriptions" options={{ headerShown: false }} />
                   <Stack.Screen name="profile/announcer-profile" options={{ headerShown: false }} />
-                  <Stack.Screen name="profile/publish" options={{ headerShown: false }} />
                 </Stack>
                 <StatusBar style="auto" />
               </ToastProvider>

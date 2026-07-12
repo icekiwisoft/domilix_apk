@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -18,63 +18,53 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useSubscriptions, useCreateSubscription, usePlans } from '@/hooks/queries/use-subscriptions';
 import { useToast } from '@/components/ui/toast';
 import { PlanCard } from '@/components/ui/plan-card';
-import type { Subscription } from '@/types/notification';
+import { isPackUsable } from '@/lib/subscription-helpers';
+import type { Subscription, SubscriptionPlan, SubscriptionPlanName } from '@/types/notification';
 
-// ─── Plans ────────────────────────────────────────────────────────────────────
+// ─── Display metadata for each internal Domicoin plan name ────────────────────
+// The API's plan_name is the internal (English, sometimes misspelled) DB
+// identifier — "Standart" not "Standard". We only use it as an opaque key for
+// display copy and for round-tripping back to the API unchanged; the French
+// labels below are presentation-only, matching the domilix.com web app.
 
-type PlanId = 'starter' | 'pro' | 'business';
+const PLAN_ORDER: SubscriptionPlanName[] = ['Standart', 'Advantage', 'Premium', 'Ultimate'];
 
-interface Plan {
-  id: PlanId;
-  title: string;
-  price: number | null;
-  tagline: string;
-  features: string[];
-}
-
-const PLANS: Plan[] = [
-  {
-    id: 'starter',
-    title: 'Starter',
-    price: null,
-    tagline: 'Pour débuter et tester la plateforme.',
-    features: [
-      "Jusqu'à 3 annonces actives",
-      'Photos en qualité standard',
-      'Support par email (48h)',
-    ],
+const PLAN_DISPLAY: Record<SubscriptionPlanName, { title: string; tagline: string; recommended?: boolean }> = {
+  Standart: {
+    title: 'Pack Standard',
+    tagline: 'Idéal pour tester Domilix et contacter quelques annonceurs ciblés.',
   },
-  {
-    id: 'pro',
-    title: 'Pro',
-    price: 15000,
-    tagline: 'Pour les agents indépendants ambitieux.',
-    features: [
-      'Annonces illimitées',
-      'Photos Haute Définition',
-      'Mise en avant 1x/semaine',
-      'Statistiques de base',
-      'Support prioritaire WhatsApp',
-    ],
+  Advantage: {
+    title: 'Pack Avantage',
+    tagline: 'Pour comparer plusieurs logements sans bloquer votre recherche.',
   },
-  {
-    id: 'business',
-    title: 'Business',
-    price: 35000,
-    tagline: 'La solution complète pour les agences.',
-    features: [
-      'Tout du plan Pro',
-      'Mise en avant illimitée',
-      'Tableau de bord avancé',
-      'Marque blanche agence',
-      'Agent de compte dédié',
-    ],
+  Premium: {
+    title: 'Pack Premium',
+    tagline: 'Le meilleur choix pour chercher activement et ne pas rater les bonnes annonces.',
+    recommended: true,
   },
+  Ultimate: {
+    title: 'Pack Ultime',
+    tagline: 'Pour une recherche intensive avec un maximum d’opportunités de contact.',
+  },
+};
+
+const PLAN_FEATURES = [
+  "Voir les informations de base d'une annonce.",
+  'Partagez les annonces avec vos contacts.',
 ];
+
+function formatValidity(days: number): string {
+  if (days >= 7 && days % 7 === 0) {
+    const weeks = days / 7;
+    return `${weeks} semaine${weeks > 1 ? 's' : ''} de validité`;
+  }
+  return `${days} jour${days > 1 ? 's' : ''} de validité`;
+}
 
 // ─── Payment methods ──────────────────────────────────────────────────────────
 
-type MethodId = 'mtn_money' | 'orange_money';
+type MethodId = 'mtn' | 'orange';
 
 interface PaymentMethod {
   id: MethodId;
@@ -84,21 +74,13 @@ interface PaymentMethod {
 }
 
 const PAYMENT_METHODS: PaymentMethod[] = [
-  { id: 'mtn_money',    label: 'MTN Mobile Money', icon: 'phone-android', accent: '#FFCB05' },
-  { id: 'orange_money', label: 'Orange Money',      icon: 'phone-android', accent: '#FF6600' },
+  { id: 'mtn',    label: 'MTN Mobile Money', icon: 'phone-android', accent: '#FFCB05' },
+  { id: 'orange', label: 'Orange Money',     icon: 'phone-android', accent: '#FF6600' },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getActivePlanId(subs: Subscription[]): PlanId | null {
-  const active = subs.find((s) => s.status === 'active');
-  if (!active) return null;
-  const name = active.plan_name.toLowerCase();
-  if (name.includes('business')) return 'business';
-  if (name.includes('pro')) return 'pro';
-  if (name.includes('starter')) return 'starter';
-  return null;
-}
+// ─── Active packs ──────────────────────────────────────────────────────────────
+// A Domicoin pack isn't a recurring "current plan" — a user can hold several
+// active packs at once, each with its own remaining credits and expiry.
 
 function formatExpiry(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('fr-FR', {
@@ -108,31 +90,30 @@ function formatExpiry(dateStr: string): string {
   });
 }
 
-// ─── Active subscription banner ───────────────────────────────────────────────
-
-function ActiveSubBanner({ sub }: { sub: Subscription }) {
+function ActivePackRow({ sub }: { sub: Subscription }) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+  const expiry = sub.expires_at ?? sub.end_date;
 
   return (
     <View style={[banner.wrap, { backgroundColor: C.primaryContainer + '22', borderColor: C.primary + '55' }]}>
       <View style={banner.row}>
         <View style={[banner.iconCircle, { backgroundColor: C.primary + '22' }]}>
-          <MaterialIcons name="workspace-premium" size={20} color={C.primary} />
+          <MaterialIcons name="toll" size={20} color={C.primary} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-            Plan actif
-          </Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 1 }]}>
             {sub.plan_name}
           </Text>
+          <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 1 }]}>
+            {sub.credits} Domicoins restants
+          </Text>
         </View>
-        {sub.expires_at ? (
+        {expiry ? (
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>Expire le</Text>
             <Text style={[Typography.caption, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 1 }]}>
-              {formatExpiry(sub.expires_at)}
+              {formatExpiry(expiry)}
             </Text>
           </View>
         ) : null}
@@ -170,7 +151,7 @@ function PaymentModal({
   onConfirm,
   loading,
 }: {
-  plan: Plan | null;
+  plan: SubscriptionPlan | null;
   visible: boolean;
   onClose: () => void;
   onConfirm: (phone: string, method: MethodId) => void;
@@ -206,6 +187,8 @@ function PaymentModal({
     onConfirm(cleaned.startsWith('+') ? cleaned : `+237${cleaned}`, method.id);
   }
 
+  const planTitle = plan ? PLAN_DISPLAY[plan.name]?.title ?? plan.name : '';
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
@@ -228,7 +211,7 @@ function PaymentModal({
             {step === 'method' ? 'Méthode de paiement' : 'Numéro Mobile Money'}
           </Text>
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginBottom: Spacing.lg, fontSize: 14 }]}>
-            Plan {plan?.title} — {plan?.price ? `${plan.price.toLocaleString('fr-FR')} FCFA/mois` : 'Gratuit'}
+            {planTitle} — {plan ? `${plan.price.toLocaleString('fr-FR')} XAF` : ''}
           </Text>
 
           {step === 'method' ? (
@@ -333,16 +316,20 @@ export default function SubscriptionsScreen() {
   const toast = useToast();
 
   const { data: subs = [] } = useSubscriptions();
+  const { data: plans = [], isLoading: plansLoading } = usePlans();
   const createSub = useCreateSubscription();
-  usePlans();
 
-  const activePlanId = getActivePlanId(subs);
-  const activeSub = subs.find((s) => s.status === 'active') ?? null;
+  const activePacks = useMemo(() => subs.filter(isPackUsable), [subs]);
 
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const orderedPlans = useMemo(() => {
+    const byName = new Map(plans.map((p) => [p.name, p] as const));
+    return PLAN_ORDER.map((name) => byName.get(name)).filter((p): p is SubscriptionPlan => !!p);
+  }, [plans]);
+
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  function handleSubscribe(plan: Plan) {
+  function handleChoose(plan: SubscriptionPlan) {
     setSelectedPlan(plan);
     setModalVisible(true);
   }
@@ -351,7 +338,10 @@ export default function SubscriptionsScreen() {
     if (!selectedPlan) return;
     createSub.mutate(
       {
-        plan_name: selectedPlan.title,
+        // Echo back the exact name the API gave us for this plan — never
+        // invent our own string here (French/English casing mismatches
+        // silently fail server-side plan lookup).
+        plan_name: selectedPlan.name,
         method,
         payment_info: { phone_number: phone },
       },
@@ -379,7 +369,7 @@ export default function SubscriptionsScreen() {
           style={styles.backBtn}
         />
         <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>
-          Plans d'Abonnement
+          Packs Domicoin
         </Text>
         <View style={{ width: 24 }} />
       </View>
@@ -388,30 +378,40 @@ export default function SubscriptionsScreen() {
         {/* Intro */}
         <View>
           <Text style={[Typography.headlineLg, { color: C.onSurface, textAlign: 'center', fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold' }]}>
-            Propulsez vos annonces
+            Choisissez votre pack idéal !
           </Text>
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm, lineHeight: 22 }]}>
-            Choisissez le plan qui correspond à votre ambition. Une tarification transparente pour les professionnels de l'immobilier au Cameroun.
+            Débloquez les coordonnées des biens qui vous intéressent et augmentez vos chances de trouver rapidement.
           </Text>
         </View>
 
-        {/* Active subscription banner */}
-        {activeSub && <ActiveSubBanner sub={activeSub} />}
+        {/* Active packs */}
+        {activePacks.map((sub) => <ActivePackRow key={sub.id} sub={sub} />)}
 
         {/* Plans */}
-        {PLANS.map((plan) => (
-          <PlanCard
-            key={plan.id}
-            title={plan.title}
-            tagline={plan.tagline}
-            price={plan.price}
-            features={plan.features}
-            recommended={plan.id === 'pro'}
-            current={activePlanId === plan.id}
-            ctaLabel={`Passer au ${plan.title}`}
-            onPress={() => handleSubscribe(plan)}
-          />
-        ))}
+        {orderedPlans.map((plan) => {
+          const display = PLAN_DISPLAY[plan.name];
+          return (
+            <PlanCard
+              key={plan.id}
+              title={display.title}
+              tagline={display.tagline}
+              price={plan.price}
+              credits={plan.credits}
+              validityLabel={formatValidity(plan.duration)}
+              features={PLAN_FEATURES}
+              recommended={display.recommended}
+              ctaLabel="Débloquer mes contacts"
+              onPress={() => handleChoose(plan)}
+            />
+          );
+        })}
+
+        {!plansLoading && orderedPlans.length === 0 && (
+          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}>
+            Les packs ne sont pas disponibles pour le moment. Réessayez plus tard.
+          </Text>
+        )}
 
         {/* Security note */}
         <View style={[styles.securityNote, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}>

@@ -1,3 +1,14 @@
+import { ListingCard } from '@/components/listing/listing-card';
+import { ListingSkeleton } from '@/components/listing/listing-skeleton';
+import { FilterBar } from '@/components/search/filter-bar';
+import { ResultsCount } from '@/components/search/results-count';
+import { SearchBar } from '@/components/search/search-bar';
+import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useFilterStore } from '@/stores/filter.store';
+import type { AdType, AnnounceType } from '@/types/announce';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import {
   FlatList,
@@ -8,18 +19,6 @@ import {
 } from 'react-native';
 import { ActivityIndicator, Button, SegmentedButtons } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
-import { SearchBar } from '@/components/search/search-bar';
-import { FilterBar } from '@/components/search/filter-bar';
-import { ResultsCount } from '@/components/search/results-count';
-// import { MapListToggle } from '@/components/search/map-list-toggle';
-import { ListingCard } from '@/components/listing/listing-card';
-import { ListingSkeleton } from '@/components/listing/listing-skeleton';
-import { Colors, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
-import { useFilterStore } from '@/stores/filter.store';
-import type { AnnounceType, AdType } from '@/types/announce';
 
 export default function ExploreScreen() {
   const scheme = useColorScheme();
@@ -154,11 +153,6 @@ export default function ExploreScreen() {
           />
         }
       />
-
-      {/* Map toggle FAB */}
-      {/* <View style={styles.fab} pointerEvents="box-none">
-        <MapListToggle mode="list" onToggle={() => router.push('/(tabs)/explore/map')} />
-      </View> */}
     </SafeAreaView>
   );
 }
@@ -187,7 +181,7 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: Spacing.marginMobile,
     paddingTop: Spacing.md,
-    paddingBottom: 120,
+    paddingBottom: Spacing.xxl,
   },
   skeletons: {
     gap: Spacing.md,
@@ -199,12 +193,5 @@ const styles = StyleSheet.create({
   },
   loadMore: {
     marginTop: Spacing.lg,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: Spacing.xxl,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
   },
 });

@@ -249,7 +249,7 @@ export default function RegisterScreen() {
                   {' et la '}
                   <Text
                     style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
-                    onPress={() => Linking.openURL('https://www.privacypolicies.com/live/8afdd5ff-63d9-4381-9f5b-a8222d7bd121')}
+                    onPress={() => Linking.openURL('https://domilix.com/privacy-policy')}
                     accessibilityRole="link"
                   >
                     politique de confidentialité
