@@ -56,7 +56,12 @@
       "Bash(python3 -c ' *)",
       "Bash(grep -rn \"credits\" \"c:/Users/Wilfreid/Documents/GitHub/domilix/backend/src/auth\" 2>/dev/null)",
       "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/src/auth/**)",
-      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/**)"
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/**)",
+      "Bash(cd \"C:\\\\Users\\\\Wilfreid\\\\Documents\\\\GitHub\\\\domilix\" && echo \"--- auth controller ---\" && find backend/src/auth -type f | sort)",
+      "Read(//c/Users/Wilfreid/Documents/GitHub/domilix/backend/src/auth/dto/**)",
+      "Bash(grep -rin \"FIREBASE\" .env*)",
+      "Bash(cd \"C:\\\\Users\\\\Wilfreid\\\\Documents\\\\GitHub\\\\domilix\\\\backend\" && grep -n \"firebase-admin\\\\|jsonwebtoken\" package.json; echo \"---\"; grep -in \"FIREBASE\" .env.example)",
+      "Bash(find . -maxdepth 1 -iname \"*.env*\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\Wilfreid\\.claude"
