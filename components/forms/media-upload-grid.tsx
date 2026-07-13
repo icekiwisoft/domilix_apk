@@ -79,7 +79,17 @@ export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
             ]}
           >
             <MaterialIcons name="add-photo-alternate" size={30} color={C.primary} />
-            <Text style={[Typography.caption, { color: C.primary, marginTop: 6, textAlign: 'center' }]}>
+            <Text
+              style={[
+                Typography.caption,
+                {
+                  color: C.primary,
+                  marginTop: 6,
+                  textAlign: 'center',
+                  includeFontPadding: false,
+                },
+              ]}
+            >
               {uris.length === 0 ? 'Ajouter des\nphotos' : 'Ajouter'}
             </Text>
           </Pressable>

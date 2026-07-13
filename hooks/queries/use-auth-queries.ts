@@ -42,6 +42,24 @@ export function useLogin() {
   });
 }
 
+export function useFirebaseLogin() {
+  const { setTokens, setUser } = useAuthStore.getState();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (idToken: string) => AuthService.firebaseLogin(idToken),
+    onSuccess: (data) => {
+      const raw = data as unknown as Record<string, unknown>;
+      const { access, refresh } = extractTokens(raw);
+      if (access) setTokens(access, refresh);
+      const user = raw.user as typeof data.user | undefined;
+      if (user) {
+        setUser(user);
+        qc.setQueryData(['me'], user);
+      }
+    },
+  });
+}
+
 export function useRegister() {
   const { setTokens, setUser } = useAuthStore.getState();
   const qc = useQueryClient();

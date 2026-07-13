@@ -62,7 +62,17 @@
       "Bash(grep -rin \"FIREBASE\" .env*)",
       "Bash(cd \"C:\\\\Users\\\\Wilfreid\\\\Documents\\\\GitHub\\\\domilix\\\\backend\" && grep -n \"firebase-admin\\\\|jsonwebtoken\" package.json; echo \"---\"; grep -in \"FIREBASE\" .env.example)",
       "Bash(find . -maxdepth 1 -iname \"*.env*\")",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(node -e \"const authPkg = require\\('firebase/auth/package.json'\\); console.log\\(authPkg.version\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@firebase/auth/package.json'\\).version\\)\")",
+      "Bash(npm install *)",
+      "Bash(cd \"c:\\\\Users\\\\Wilfreid\\\\Documents\\\\GitHub\\\\domilix_apk\")",
+      "Bash(seq 1 40)",
+      "Read(//tmp/**)",
+      "Bash(break)",
+      "Bash(sleep 2)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 8098 -ErrorAction SilentlyContinue)"
     ],
     "additionalDirectories": [
       "C:\\Users\\Wilfreid\\.claude"

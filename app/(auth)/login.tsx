@@ -15,6 +15,7 @@ import {
 import { Button, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GoogleSignInButton } from '@/components/auth/google-signin-button';
 import { Input } from '@/components/ui/input';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useLogin } from '@/hooks/queries/use-auth-queries';
@@ -166,6 +167,10 @@ export default function LoginScreen() {
           </Button>
         </View>
 
+        <View style={styles.googleRow}>
+          <GoogleSignInButton redirectTo={redirect} />
+        </View>
+
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
@@ -199,6 +204,9 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: Spacing.lg,
+  },
+  googleRow: {
+    marginTop: Spacing.xl,
   },
   forgotRow: {
     alignSelf: 'flex-end',

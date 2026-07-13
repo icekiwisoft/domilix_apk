@@ -8,6 +8,11 @@ export const AuthService = {
   login: (dto: LoginDto) =>
     client.post<{ user: User } & AuthTokens>('/auth/login', dto).then((r) => r.data),
 
+  firebaseLogin: (idToken: string) =>
+    client
+      .post<{ user: User } & AuthTokens>('/auth/firebase', { id_token: idToken })
+      .then((r) => r.data),
+
   logout: () => client.post('/auth/logout').then((r) => r.data),
 
   me: () =>

@@ -88,21 +88,33 @@ export default function CreateStep5Screen() {
           <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: Spacing.sm }]}>
             Récapitulatif
           </Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-            📦 {draft.type === 'realestate' ? 'Immobilier' : 'Mobilier'} · {draft.ad_type === 'location' ? 'Location' : 'Vente'}
-          </Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-            🖼️ {draft.medias.length} photo{draft.medias.length > 1 ? 's' : ''}
-          </Text>
-          {draft.price && (
+          <View style={styles.recapRow}>
+            <MaterialIcons name={draft.type === 'realestate' ? 'home-work' : 'chair'} size={16} color={C.primary} />
             <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-              💰 {Number(draft.price).toLocaleString('fr-FR')} {draft.devise}
+              {draft.type === 'realestate' ? 'Immobilier' : 'Mobilier'} · {draft.ad_type === 'location' ? 'Location' : 'Vente'}
             </Text>
+          </View>
+          <View style={styles.recapRow}>
+            <MaterialIcons name="photo-library" size={16} color={C.primary} />
+            <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
+              {draft.medias.length} photo{draft.medias.length > 1 ? 's' : ''}
+            </Text>
+          </View>
+          {draft.price && (
+            <View style={styles.recapRow}>
+              <MaterialIcons name="payments" size={16} color={C.primary} />
+              <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
+                {Number(draft.price).toLocaleString('fr-FR')} {draft.devise}
+              </Text>
+            </View>
           )}
           {draft.city && (
-            <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-              📍 {draft.address || '—'}, {draft.city}
-            </Text>
+            <View style={styles.recapRow}>
+              <MaterialIcons name="place" size={16} color={C.primary} />
+              <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
+                {draft.address || '—'}, {draft.city}
+              </Text>
+            </View>
           )}
         </View>
       </ScrollView>
@@ -147,6 +159,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1,
     gap: Spacing.xs,
+  },
+  recapRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   footer: {
     paddingHorizontal: Spacing.marginMobile,
