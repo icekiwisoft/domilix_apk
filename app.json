@@ -19,7 +19,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.jack0237.domilix"
+      "package": "com.jack0237.domilix",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",

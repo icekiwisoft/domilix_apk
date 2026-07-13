@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "782365365187",
+    "project_id": "domilix",
+    "storage_bucket": "domilix.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:782365365187:android:7fb54040c8e948cb91a376",
+        "android_client_info": {
+          "package_name": "com.jack0237.domilix"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "782365365187-ch9alrtjojfddna064pjepskrujm0ol1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jack0237.domilix",
+            "certificate_hash": "7718a844576abf801528d435be7ad8734c152020"
+          }
+        },
+        {
+          "client_id": "782365365187-9fm5som86olub9tqtcnc7htuj0tj5449.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8sVAFo8GBKa1Aqkbgu95yFI8-jpTdZjw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "782365365187-9fm5som86olub9tqtcnc7htuj0tj5449.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
