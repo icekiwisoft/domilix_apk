@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   Image,
-  Linking,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   RefreshControl,
@@ -170,7 +169,6 @@ export default function AnnouncerProfileScreen() {
       )
     : listings;
 
-  const phone = announcer.professional_phone ?? announcer.contact;
   const displayName = announcer.company_name ?? announcer.name;
   const memberYear = announcer.creation_date
     ? new Date(announcer.creation_date).getFullYear()
@@ -278,27 +276,6 @@ export default function AnnouncerProfileScreen() {
             <StatPill value={totalListings} label="Annonces" />
           </View>
 
-          {/* CTA buttons */}
-          {!!phone && (
-            <View style={s.ctaRow}>
-              <Button
-                mode="outlined"
-                icon="whatsapp"
-                onPress={() => Linking.openURL(`https://wa.me/${phone.replace(/\D/g, '')}`)}
-                style={s.ctaBtn}
-              >
-                WhatsApp
-              </Button>
-              <Button
-                mode="contained"
-                icon="phone"
-                onPress={() => Linking.openURL(`tel:${phone}`)}
-                style={s.ctaBtn}
-              >
-                Appeler
-              </Button>
-            </View>
-          )}
         </View>
 
         {/* ── Tabs ──────────────────────────────────────────────────────────── */}
@@ -447,15 +424,9 @@ export default function AnnouncerProfileScreen() {
                 ]}
               >
                 <Text style={[s.aboutCardTitle, { color: C.onSurface }]}>
-                  Informations de contact
+                  Informations du profil
                 </Text>
                 <View style={s.contactCards}>
-                  {!!announcer.email && (
-                    <ContactInfoCard icon="email" label="Email" value={announcer.email} />
-                  )}
-                  {!!phone && (
-                    <ContactInfoCard icon="phone" label="Téléphone" value={phone} />
-                  )}
                   <ContactInfoCard
                     icon={announcer.verified ? 'verified' : 'radio-button-unchecked'}
                     label="Statut"
@@ -571,8 +542,6 @@ const s = StyleSheet.create({
   statSep: { width: 1, height: 32 },
 
   // ── CTA ──
-  ctaRow: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg },
-  ctaBtn: { flex: 1 },
 
   // ── Tabs ──
   tabsWrap: {

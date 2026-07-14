@@ -12,6 +12,13 @@ export interface CreateListingDraft {
   address: string;
   city: string;
   state: string;
+  country: string;
+  postal_code: string;
+  neighborhood: string;
+  longitude?: number;
+  latitude?: number;
+  location_source: 'auto' | 'manual';
+  hide_on_map: boolean;
   bedrooms: number;
   size: string;
   standing: Standing | undefined;
@@ -35,6 +42,13 @@ const DEFAULT_DRAFT: CreateListingDraft = {
   address: '',
   city: 'Douala',
   state: '',
+  country: 'Cameroun',
+  postal_code: '',
+  neighborhood: '',
+  longitude: undefined,
+  latitude: undefined,
+  location_source: 'manual',
+  hide_on_map: true,
   bedrooms: 0,
   size: '',
   standing: undefined,

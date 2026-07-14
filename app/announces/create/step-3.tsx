@@ -2,16 +2,14 @@ import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Button, Chip, TextInput } from 'react-native-paper';
+import { Button, TextInput } from 'react-native-paper';
 import * as Location from 'expo-location';
 import { AddressAutocomplete } from '@/components/forms/address-autocomplete';
 import { CreateStepHeader } from '@/components/forms/create-step-header';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCreateListingStore } from '@/stores/create-listing.store';
-import { AddressesService } from '@/services/addresses.service';
-
-const CITIES = ['Douala', 'Yaoundé', 'Bafoussam', 'Kribi', 'Limbé'];
+import { GeoapifyService, type GeoapifyAddressSuggestion } from '@/services/geoapify.service';
 
 function SectionLabel({ children }: { children: string }) {
   const scheme = useColorScheme();
@@ -32,6 +30,33 @@ export default function CreateStep3Screen() {
 
   const canContinue = !!draft.address && !!draft.city && !!draft.description;
 
+  function applyLocation(suggestion: GeoapifyAddressSuggestion) {
+    setDraft({
+      address: suggestion.text || suggestion.place_name,
+      city: suggestion.city || draft.city,
+      state: suggestion.state || '',
+      country: suggestion.country || draft.country,
+      postal_code: suggestion.postal_code || '',
+      neighborhood: suggestion.neighborhood || '',
+      longitude: suggestion.center[0],
+      latitude: suggestion.center[1],
+      location_source: 'auto',
+      hide_on_map: false,
+    });
+  }
+
+  function applyCity(suggestion: GeoapifyAddressSuggestion) {
+    setDraft({
+      city: suggestion.city || suggestion.text || suggestion.place_name,
+      state: suggestion.state || '',
+      country: suggestion.country || draft.country,
+      longitude: suggestion.center[0],
+      latitude: suggestion.center[1],
+      location_source: 'auto',
+      hide_on_map: false,
+    });
+  }
+
   async function useMyLocation() {
     setLocating(true);
     try {
@@ -44,13 +69,8 @@ export default function CreateStep3Screen() {
         return;
       }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const result = await AddressesService.reverseGeocode(loc.coords.longitude, loc.coords.latitude);
-      const parts = result.place_name.split(', ');
-      setDraft({
-        address: result.text || parts[0] || '',
-        city: parts.length > 1 ? parts[1] : draft.city,
-        state: parts.length > 2 ? parts[2] : '',
-      });
+      const result = await GeoapifyService.reverseGeocode(loc.coords.longitude, loc.coords.latitude);
+      applyLocation(result);
     } catch {
       Alert.alert('Erreur', 'Impossible de récupérer votre position. Réessayez ou saisissez manuellement.');
     } finally {
@@ -72,11 +92,8 @@ export default function CreateStep3Screen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_700Bold' }]}>
-          Localisation & Description
-        </Text>
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs, marginBottom: Spacing.xl }]}>
-          Utilisez votre position ou saisissez l'adresse de votre bien.
+          {"Utilisez votre position ou saisissez l'adresse de votre bien."}
         </Text>
 
         {/* GPS button */}
@@ -101,31 +118,37 @@ export default function CreateStep3Screen() {
           <SectionLabel>Adresse</SectionLabel>
           <AddressAutocomplete
             value={draft.address}
-            onChange={(v) => setDraft({ address: v })}
+            onChange={(v) => setDraft({
+              address: v,
+              longitude: undefined,
+              latitude: undefined,
+              location_source: 'manual',
+              hide_on_map: true,
+            })}
+            onSelect={applyLocation}
           />
+          {draft.latitude != null && draft.longitude != null && (
+            <View style={[styles.locationStatus, { backgroundColor: C.primaryContainer + '1A', borderColor: C.primaryContainer + '33' }]}>
+              <Text style={[Typography.caption, { color: C.onSurface }]}>Position précise enregistrée pour cette annonce.</Text>
+            </View>
+          )}
         </View>
 
         {/* City */}
         <View style={[styles.section, { marginTop: Spacing.lg }]}>
           <SectionLabel>Ville</SectionLabel>
-          <View style={styles.pillRow}>
-            {CITIES.map((city) => {
-              const active = draft.city === city;
-              return (
-                <Chip
-                  key={city}
-                  compact
-                  selected={active}
-                  showSelectedCheck={false}
-                  onPress={() => setDraft({ city })}
-                  style={{ backgroundColor: active ? C.primary : C.surfaceContainer }}
-                  textStyle={{ color: active ? C.onPrimary : C.onSurface }}
-                >
-                  {city}
-                </Chip>
-              );
+          <AddressAutocomplete
+            kind="city"
+            value={draft.city}
+            onChange={(city) => setDraft({
+              city,
+              longitude: undefined,
+              latitude: undefined,
+              location_source: 'manual',
+              hide_on_map: true,
             })}
-          </View>
+            onSelect={applyCity}
+          />
         </View>
 
         {/* State/Region */}
@@ -186,9 +209,14 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
   },
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
   textArea: {
     minHeight: 100,
+  },
+  locationStatus: {
+    marginTop: Spacing.sm,
+    padding: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: Radius.sm,
   },
   footer: {
     paddingHorizontal: Spacing.marginMobile,

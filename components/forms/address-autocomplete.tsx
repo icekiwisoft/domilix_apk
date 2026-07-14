@@ -4,45 +4,52 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAddressSearch } from '@/hooks/queries/use-addresses';
+import type { GeoapifyAddressSuggestion } from '@/services/geoapify.service';
 
 interface AddressAutocompleteProps {
   value: string;
   onChange: (val: string) => void;
+  onSelect?: (suggestion: GeoapifyAddressSuggestion) => void;
+  kind?: 'address' | 'city';
   error?: string;
 }
 
-export function AddressAutocomplete({ value, onChange, error }: AddressAutocompleteProps) {
+export function AddressAutocomplete({ value, onChange, onSelect, kind = 'address', error }: AddressAutocompleteProps) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const [open, setOpen] = useState(false);
 
-  const { data: suggestions = [] } = useAddressSearch(value, open);
+  const { data: suggestions = [], isFetching, isError } = useAddressSearch(value, open, kind === 'city' ? 'city' : undefined);
 
-  function select(placeName: string) {
-    onChange(placeName);
+  function select(suggestion: GeoapifyAddressSuggestion) {
+    const selectedValue = kind === 'city'
+      ? suggestion.city || suggestion.text || suggestion.place_name
+      : suggestion.text || suggestion.place_name;
+    onChange(selectedValue);
+    onSelect?.(suggestion);
     setOpen(false);
   }
 
   return (
     <View>
       <View style={[styles.inputRow, { borderColor: error ? C.error : C.outlineVariant, backgroundColor: C.surfaceContainerLow }]}>
-        <MaterialIcons name="location-on" size={18} color={C.onSurfaceVariant} />
+        <MaterialIcons name={kind === 'city' ? 'location-city' : 'location-on'} size={18} color={C.onSurfaceVariant} />
         <TextInput
           value={value}
           onChangeText={(t) => { onChange(t); setOpen(true); }}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Quartier, rue…"
+          placeholder={kind === 'city' ? 'Ville…' : 'Quartier, rue…'}
           placeholderTextColor={C.onSurfaceVariant}
           style={[Typography.bodyMd, { flex: 1, color: C.onSurface, paddingVertical: 0 }]}
           returnKeyType="done"
         />
         {value.length > 0 && (
           <Pressable
-            onPress={() => onChange('')}
+            onPress={() => { onChange(''); setOpen(false); }}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Effacer l'adresse"
+            accessibilityLabel={kind === 'city' ? 'Effacer la ville' : "Effacer l'adresse"}
           >
             <MaterialIcons name="close" size={16} color={C.onSurfaceVariant} />
           </Pressable>
@@ -50,6 +57,12 @@ export function AddressAutocomplete({ value, onChange, error }: AddressAutocompl
       </View>
       {error && (
         <Text style={[Typography.caption, { color: C.error, marginTop: 4 }]}>{error}</Text>
+      )}
+      {isError && (
+        <Text style={[Typography.caption, { color: C.error, marginTop: 4 }]}>Suggestions indisponibles.</Text>
+      )}
+      {open && value.trim().length >= 3 && isFetching && suggestions.length === 0 && (
+        <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: Spacing.xs }]}>Recherche en cours…</Text>
       )}
       {open && suggestions.length > 0 && (
         <View style={[styles.dropdown, { backgroundColor: C.surface, borderColor: C.outlineVariant }]}>
@@ -59,7 +72,7 @@ export function AddressAutocomplete({ value, onChange, error }: AddressAutocompl
             scrollEnabled={false}
             renderItem={({ item }) => (
               <Pressable
-                onPress={() => select(item.place_name)}
+                onPress={() => select(item)}
                 accessibilityRole="button"
                 accessibilityLabel={item.place_name}
                 style={[styles.suggestion, { borderBottomColor: C.outlineVariant + '4D' }]}
