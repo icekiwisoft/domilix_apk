@@ -2,7 +2,7 @@
 
 ## 📚 Documentation Overview
 
-You now have **3 comprehensive guides** that contain EVERYTHING needed to develop a production-ready mobile version of Domilix. Here's how to use them:
+You now have **4 comprehensive guides** that contain EVERYTHING needed to develop and ship a production-ready mobile version of Domilix. Here's how to use them:
 
 ---
 
@@ -85,6 +85,27 @@ You now have **3 comprehensive guides** that contain EVERYTHING needed to develo
 
 ---
 
+## 📖 Guide 4: ANDROID_RELEASE_OPTIMIZATION.md
+**Purpose**: Android production build optimization with Expo and R8
+**Best For**: Preparing Google Play releases and validating build optimization safely
+
+### Contains:
+- ✅ **Active Expo config** (`expo-build-properties`)
+- ✅ **R8/minification settings** for Android release builds
+- ✅ **Resource shrinking settings**
+- ✅ **Regression risk notes**
+- ✅ **Critical QA checklist**
+- ✅ **Rollback instructions**
+- ✅ **Google Android reference**
+
+**When to Use**:
+- Preparing a Google Play production or internal-test build
+- Answering Play Console optimization questions
+- Investigating a regression that only appears in Android release builds
+- Comparing optimized and non-optimized Android build sizes
+
+---
+
 ## 🎯 Quick Decision Map
 
 ### "I want to know..."
@@ -121,6 +142,12 @@ You now have **3 comprehensive guides** that contain EVERYTHING needed to develo
 
 **"What's the pre-launch checklist?"**
 → QUICK_REFERENCE.md → Pre-Launch Checklist
+
+**"How is Android release optimization configured?"**
+→ ANDROID_RELEASE_OPTIMIZATION.md → Configuration activee
+
+**"What should I test after enabling R8?"**
+→ ANDROID_RELEASE_OPTIMIZATION.md → Validation avant publication
 
 **"How do I build a component?"**
 → ARCHITECTURE_GUIDE.md → Component Structure
