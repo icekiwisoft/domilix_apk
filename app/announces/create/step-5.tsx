@@ -31,6 +31,15 @@ export default function CreateStep5Screen() {
     formData.append('address', draft.address);
     formData.append('city', draft.city);
     if (draft.state) formData.append('state', draft.state);
+    if (draft.country) formData.append('country', draft.country);
+    if (draft.postal_code) formData.append('postal_code', draft.postal_code);
+    if (draft.neighborhood) formData.append('neighborhood', draft.neighborhood);
+    formData.append('location_source', draft.location_source);
+    formData.append('hide_on_map', draft.hide_on_map ? '1' : '0');
+    if (draft.longitude != null && draft.latitude != null) {
+      formData.append('localization[0]', String(draft.longitude));
+      formData.append('localization[1]', String(draft.latitude));
+    }
     if (draft.size) formData.append('size', draft.size);
     if (draft.bedrooms) formData.append('bedrooms', String(draft.bedrooms));
     if (draft.standing) formData.append('standing', draft.standing);

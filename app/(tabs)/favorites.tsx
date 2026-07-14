@@ -117,6 +117,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.marginMobile,
+    paddingBottom: Spacing.sectionGap,
   },
   list: {
     paddingHorizontal: Spacing.marginMobile,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Dialog, Portal, TouchableRipple } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -177,20 +177,35 @@ export default function ProfileScreen() {
 
         {/* Activities */}
         <MenuSection title="Activité">
-          {isAnnouncer && (
-            <MenuRow
-              icon="home-work"
-              label="Mes annonces"
-              subtitle="Gérer vos publications"
-              onPress={() => router.push('/profile/my-listings')}
-            />
-          )}
           <MenuRow
             icon="favorite-border"
             label="Mes favoris"
             onPress={() => router.push('/(tabs)/favorites')}
           />
         </MenuSection>
+
+        {isAnnouncer && (
+          <MenuSection title="Annonceur">
+            <MenuRow
+              icon="home-work"
+              label="Mes annonces"
+              subtitle="Gérer vos publications"
+              onPress={() => router.push('/profile/my-listings')}
+            />
+            <MenuRow
+              icon="storefront"
+              label="Profil annonceur"
+              subtitle="Modifier vos informations"
+              onPress={() => router.push('/profile/announcer-profile')}
+            />
+            <MenuRow
+              icon="add-circle-outline"
+              label="Publier une annonce"
+              subtitle="Mettre en ligne un bien ou un meuble"
+              onPress={() => router.push('/announces/create/step-1')}
+            />
+          </MenuSection>
+        )}
 
         {/* Account */}
         <MenuSection title="Compte">
@@ -200,22 +215,7 @@ export default function ProfileScreen() {
             subtitle={activePlanLabel ?? 'Découvrir les packs'}
             onPress={() => router.push('/profile/subscriptions')}
           />
-          {isAnnouncer ? (
-            <>
-              <MenuRow
-                icon="add-circle-outline"
-                label="Publier une annonce"
-                subtitle="Mettre en ligne un bien ou un meuble"
-                onPress={() => router.push('/announces/create/step-1')}
-              />
-              <MenuRow
-                icon="storefront"
-                label="Profil annonceur"
-                subtitle="Modifier vos informations"
-                onPress={() => router.push('/profile/announcer-profile')}
-              />
-            </>
-          ) : (
+          {!isAnnouncer && (
             <MenuRow
               icon="add-business"
               label="Devenir annonceur"
