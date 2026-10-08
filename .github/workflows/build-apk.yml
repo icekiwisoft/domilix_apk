@@ -1,4 +1,4 @@
-name: Build and Release APK
+name: Build and Release APK and AAB
 
 on:
   push:
@@ -60,7 +60,7 @@ jobs:
       - name: ⚡ Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 22.x
           cache: 'npm'
 
       - name: 🏗 Setup Expo and EAS
@@ -74,26 +74,33 @@ jobs:
         run: npm ci
 
       - name: 🚀 Build APK
-        run: eas build --platform android --profile preview --non-interactive --local
+        run: eas build --platform android --profile preview --non-interactive --local --output domilix-v${{ github.run_number }}.apk
         env:
           EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
 
-      - name: 📥 Get APK filename
-        id: get-apk
-        run: echo "path=$(ls *.apk)" >> $GITHUB_OUTPUT
+      - name: 🚀 Build AAB
+        run: eas build --platform android --profile production --non-interactive --local --output domilix-v${{ github.run_number }}.aab
+        env:
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
 
-      - name: 📥 Upload APK artifact
+      - name: 📥 Upload APK and AAB artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: domilix-apk
-          path: ${{ steps.get-apk.outputs.path }}
+          name: domilix-android
+          path: |
+            domilix-v${{ github.run_number }}.apk
+            domilix-v${{ github.run_number }}.aab
+          if-no-files-found: error
 
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
           name: Domilix v${{ github.run_number }}
-          files: ${{ steps.get-apk.outputs.path }}
+          files: |
+            domilix-v${{ github.run_number }}.apk
+            domilix-v${{ github.run_number }}.aab
+          fail_on_unmatched_files: true
           generate_release_notes: true
           draft: false
           prerelease: false
