@@ -78,11 +78,20 @@ export function useKeyboardReveal(bannerBottom: number) {
     if (keyboardTop.current != null) reveal();
   }
 
+  /**
+   * Moving focus from one field to another with the keyboard already open
+   * fires neither keyboardDidShow nor a resize, so the button stayed under the
+   * keyboard (sign-up, password field). Pass this as the fields' onFocus.
+   */
+  function revealOnFocus() {
+    if (keyboardTop.current != null) setTimeout(reveal, 80);
+  }
+
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     scrollY.current = e.nativeEvent.contentOffset.y;
     const past = scrollY.current >= bannerBottom;
     if (past !== pastBanner) setPastBanner(past);
   }
 
-  return { scrollRef, targetRef, onScroll, onLayout, pastBanner };
+  return { scrollRef, targetRef, onScroll, onLayout, revealOnFocus, pastBanner };
 }

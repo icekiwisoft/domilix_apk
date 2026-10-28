@@ -82,7 +82,7 @@ function serverFieldErrors(error: unknown): { phone?: string; email?: string } {
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
-  const { scrollRef, targetRef, onScroll, onLayout, pastBanner } = useKeyboardReveal(Sizes.authBannerShort);
+  const { scrollRef, targetRef, onScroll, onLayout, revealOnFocus, pastBanner } = useKeyboardReveal(Sizes.authBannerShort);
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const router = useRouter();
@@ -163,6 +163,7 @@ export default function RegisterScreen() {
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  onFocus={revealOnFocus}
                   placeholder="Votre prénom ou pseudo"
                   autoCapitalize="words"
                   autoComplete="name"
@@ -185,6 +186,7 @@ export default function RegisterScreen() {
                   value={value}
                   onChangeText={(text) => onChange(normalizePhone(text))}
                   onBlur={onBlur}
+                  onFocus={revealOnFocus}
                   placeholder="6XX XXX XXX"
                   keyboardType="phone-pad"
                   autoComplete="tel-national"
@@ -222,6 +224,7 @@ export default function RegisterScreen() {
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  onFocus={revealOnFocus}
                   placeholder="vous@exemple.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -246,6 +249,7 @@ export default function RegisterScreen() {
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  onFocus={revealOnFocus}
                   secureTextEntry={!showPwd}
                   autoComplete="new-password"
                   textContentType="newPassword"

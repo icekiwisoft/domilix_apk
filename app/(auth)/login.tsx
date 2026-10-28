@@ -45,7 +45,7 @@ export default function LoginScreen() {
     content.height && viewportHeight
       ? Math.min(Sizes.authBannerTall, Math.max(Sizes.authBannerShort, Sizes.authBannerTall - overflowAtTall))
       : Sizes.authBannerTall;
-  const { scrollRef, targetRef, onScroll, onLayout, pastBanner } = useKeyboardReveal(bannerHeight);
+  const { scrollRef, targetRef, onScroll, onLayout, revealOnFocus, pastBanner } = useKeyboardReveal(bannerHeight);
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const router = useRouter();
@@ -137,6 +137,7 @@ export default function LoginScreen() {
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  onFocus={revealOnFocus}
                   placeholder={fontScale > 1.3 ? '6XX XXX XXX' : '+237 6XX XXX XXX ou email'}
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -171,6 +172,7 @@ export default function LoginScreen() {
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
+                  onFocus={revealOnFocus}
                   secureTextEntry={!showPwd}
                   autoComplete="current-password"
                   textContentType="password"
