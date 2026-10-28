@@ -6,7 +6,6 @@ import { Controller, useForm } from 'react-hook-form';
 import {
   KeyboardAvoidingView,
   Linking,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,11 +16,13 @@ import {
 import { Button } from 'react-native-paper';
 import Svg, { Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 import { AuthBanner } from '@/components/auth/auth-banner';
 import { AuthDivider } from '@/components/auth/auth-divider';
 import { AuthField } from '@/components/auth/auth-field';
 import { GoogleSignInButton } from '@/components/auth/google-signin-button';
+import { useKeyboardReveal } from '@/components/auth/use-keyboard-reveal';
 import { Colors, Fonts, Radius, Sizes, Spacing, Typography } from '@/constants/theme';
 import { useRegister } from '@/hooks/queries/use-auth-queries';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -52,6 +53,7 @@ function CameroonFlag() {
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
+  const { scrollRef, targetRef, onScroll, pastBanner } = useKeyboardReveal(Sizes.authBannerShort);
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const router = useRouter();
@@ -89,9 +91,14 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: C.surface }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      // 'padding' on Android too: with edge-to-edge the window is not resized, and
+      // 'height' left a blank band at the bottom after the keyboard closed.
+      behavior="padding"
     >
       <ScrollView
+        ref={scrollRef}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + Spacing.sm }]}
         keyboardShouldPersistTaps="handled"
       >
@@ -314,19 +321,21 @@ export default function RegisterScreen() {
               </View>
             )}
 
-            <Button
-              mode="contained"
-              onPress={handleSubmit(onSubmit)}
-              loading={register.isPending}
-              disabled={register.isPending}
-              buttonColor={C.cta}
-              textColor={C.onCta}
-              contentStyle={styles.submitContent}
-              labelStyle={styles.submitLabel}
-              style={styles.submit}
-            >
-              Créer mon compte
-            </Button>
+            <View ref={targetRef} collapsable={false}>
+              <Button
+                mode="contained"
+                onPress={handleSubmit(onSubmit)}
+                loading={register.isPending}
+                disabled={register.isPending}
+                buttonColor={C.cta}
+                textColor={C.onCta}
+                contentStyle={styles.submitContent}
+                labelStyle={styles.submitLabel}
+                style={styles.submit}
+              >
+                Créer mon compte
+              </Button>
+            </View>
           </View>
 
           <Pressable
@@ -342,6 +351,11 @@ export default function RegisterScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      {pastBanner && (
+        <View style={[styles.statusBand, { height: insets.top, backgroundColor: C.surface }]} />
+      )}
+      {/* Dark icons over the light photo, theme icons once the band is shown. */}
+      <StatusBar style={pastBanner && scheme === 'dark' ? 'light' : 'dark'} />
     </KeyboardAvoidingView>
   );
 }
@@ -349,6 +363,12 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
+  },
+  statusBand: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   body: {
     flexGrow: 1,
