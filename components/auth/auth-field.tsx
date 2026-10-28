@@ -100,11 +100,14 @@ const styles = StyleSheet.create({
   group: {
     gap: 6,
   },
+  // Wraps so that, at large font sizes, the action ("Mot de passe oublié ?")
+  // moves under the label instead of squeezing it onto several lines.
   labelRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.sm,
+    columnGap: Spacing.sm,
   },
   label: {
     flexShrink: 1,

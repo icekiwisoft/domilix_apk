@@ -11,6 +11,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { Button } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +29,8 @@ import { loginSchema, resolveLoginDto, type LoginFormValues } from '@/lib/valida
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
+  // The full example no longer fits on one line from about 130 % font size.
+  const { fontScale } = useWindowDimensions();
   const { scrollRef, targetRef, onScroll, pastBanner } = useKeyboardReveal(Sizes.authBannerTall);
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
@@ -111,7 +114,7 @@ export default function LoginScreen() {
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  placeholder="+237 6XX XXX XXX ou email"
+                  placeholder={fontScale > 1.3 ? '6XX XXX XXX' : '+237 6XX XXX XXX ou email'}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -213,13 +216,16 @@ export default function LoginScreen() {
             </Pressable>
             <Pressable
               onPress={() => router.replace('/(tabs)')}
-              style={[styles.footerLink, styles.exploreLink]}
+              style={styles.footerLink}
               accessibilityRole="link"
+              accessibilityLabel="Explorer les annonces sans compte"
             >
+              {/* Arrow inside the text so it follows the last word when the
+                  label wraps at large font sizes. */}
               <Text style={[Typography.bodyMd, styles.centered, { color: C.onSurface, fontFamily: Fonts.semiBold }]}>
-                Explorer les annonces sans compte
+                {'Explorer les annonces sans compte '}
+                <MaterialIcons name="arrow-forward" size={18} color={C.onSurface} />
               </Text>
-              <MaterialIcons name="arrow-forward" size={18} color={C.onSurface} />
             </Pressable>
           </View>
         </View>
@@ -298,11 +304,6 @@ const styles = StyleSheet.create({
     minHeight: Sizes.touchTarget,
     justifyContent: 'center',
     paddingHorizontal: Spacing.sm,
-  },
-  exploreLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
   },
   centered: {
     textAlign: 'center',
