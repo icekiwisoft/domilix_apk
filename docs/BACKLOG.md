@@ -119,6 +119,13 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 
 ### UI-01 — Écran de connexion plus attrayant (P1)
 
+- **Maquette validée par l'utilisateur (2026-10-28)** : canvas
+  https://claude.ai/artifact/WLXBZm78scsjXm9epfNcnC (planches « Après », clair et sombre). Bandeau
+  mascotte + pastille logo, titre du site « Logements, terrains et meubles au Cameroun », bouton
+  Google officiel en premier, champs Email ou téléphone / Mot de passe, bouton « Se connecter »
+  texte `#291800` sur ambre `#f5a623` (contraste ~8,5:1, le blanc sur `#E8921A` du site et de l'app
+  ne fait que ~2,5:1), liens `#835500`, lien « Explorer les annonces sans compte », police Mona Sans.
+
 - **Demande (2026-10-28)** : les utilisateurs non connectés arrivent sur l'écran de connexion
   (décision confirmée) ; cet écran doit être plus attrayant.
 - **Attendu** : identité du site (logo, couleurs `primary`, typographie, ton des libellés de
@@ -133,7 +140,22 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   - Clavier : le champ actif et le bouton principal restent visibles.
   - Pas de régression de B-04 (aucun clignotement au démarrage).
 
+### UI-02 — Écran d'inscription aligné sur la connexion (P1)
+
+- **Demande (2026-10-28)** : refaire l'écran d'inscription dans le même esprit que UI-01.
+- **Maquette** : même canvas, rangée « Inscription » (en attente de validation).
+- **Changements proposés** : bandeau mascotte réduit avec bouton Retour 48 dp ; « S'inscrire avec
+  Google » en premier ; champs Nom d'utilisateur (« Votre prénom ou pseudo », libellés du site),
+  Téléphone avec préfixe +237 et aide « code par SMS », Email (facultatif), Mot de passe avec bouton
+  Afficher et règle « Au moins 8 caractères » en direct ; **suppression de « Confirmer le mot de
+  passe »** (le backend ne l'exige pas : `register.dto.ts` prend `name`, `email?`, `phone_number?`,
+  `password`) ; case CGU de 48 dp ; bouton « Créer mon compte » (libellé du site) ; « Déjà
+  inscrit ? Se connecter ».
+- **Critères d'acceptation** : ceux de UI-01, plus : erreurs de validation affichées sous le champ
+  concerné, en français ; le clavier numérique s'ouvre pour le téléphone ; l'écran défile sans que
+  le bouton principal soit masqué par le clavier ; le parcours SMS (`verify-phone`) reste inchangé.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 (développés, en QA) ; B-02 après mesure.
-2. **Lot 2 — écran de connexion** : UI-01 (avec B-02 si la mesure conduit à changer le flux Google).
+2. **Lot 2 — connexion et inscription** : UI-01, UI-02 et B-02 (connexion Google native).
