@@ -51,6 +51,21 @@ export const Colors = {
     icon: '#534435',
     tabIconDefault: '#867462',
     tabIconSelected: '#885200',
+    // Sign-in and sign-up screens (UI-01, UI-02). The main button uses dark text
+    // on a lighter amber: white on #e8921a only reaches ~2.5:1 (fails AA).
+    cta: '#f5a623',
+    onCta: '#291800',
+    link: '#835500',
+    fieldSurface: '#ffffff',
+    fieldPrefix: '#fff1e4',
+    success: '#2f6b3a',
+    // Badge over the mascot photo: same light chip in both themes.
+    bannerChip: 'rgba(255,255,255,0.94)',
+    onBannerChip: '#211a12',
+    // Google sign-in button, Google's official colours (light theme).
+    googleSurface: '#ffffff',
+    googleOutline: '#747775',
+    onGoogleSurface: '#1f1f1f',
   },
   dark: {
     // Surfaces
@@ -104,6 +119,19 @@ export const Colors = {
     icon: '#d9c3af',
     tabIconDefault: '#867462',
     tabIconSelected: '#ffb869',
+    // Sign-in and sign-up screens (UI-01, UI-02)
+    cta: '#ffb955',
+    onCta: '#291800',
+    link: '#ffb955',
+    fieldSurface: '#221b14',
+    fieldPrefix: '#2c241b',
+    success: '#8fd19e',
+    bannerChip: 'rgba(255,255,255,0.94)',
+    onBannerChip: '#211a12',
+    // Google sign-in button, Google's official colours (dark theme).
+    googleSurface: '#131314',
+    googleOutline: '#8e918f',
+    onGoogleSurface: '#e3e3e3',
   },
 } as const;
 
@@ -165,6 +193,34 @@ export const Typography = {
     lineHeight: 14,
     letterSpacing: 1.12,
   },
+  // Screen title of the sign-in and sign-up screens
+  titleLg: {
+    fontFamily: Fonts.bold,
+    fontSize: 26,
+    fontWeight: '700' as const,
+    lineHeight: 32,
+    letterSpacing: -0.26,
+  },
+  // Field labels and small links
+  labelMd: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 14,
+    fontWeight: '600' as const,
+    lineHeight: 20,
+  },
+  bodySm: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    fontWeight: '400' as const,
+    lineHeight: 20,
+  },
+  // Helper text under a field
+  helper: {
+    fontFamily: Fonts.regular,
+    fontSize: 13,
+    fontWeight: '400' as const,
+    lineHeight: 18,
+  },
   caption: {
     fontFamily: Fonts.medium,
     fontSize: 12,
@@ -194,7 +250,16 @@ export const Radius = {
   md: 12,   // 0.75rem – buttons & inputs
   lg: 16,   // 1rem    – cards
   xl: 24,   // 1.5rem
+  banner: 28, // bottom corners of the sign-in mascot banner
   full: 9999,
+} as const;
+
+// Fixed component sizes (dp)
+export const Sizes = {
+  touchTarget: 48, // minimum touch target (Material 3, WCAG)
+  control: 52, // text fields and full-width buttons on the sign-in screens
+  authBannerTall: 236, // mascot banner, sign-in
+  authBannerShort: 148, // mascot banner, sign-up
 } as const;
 
 // Shadow system — amber-tinted ambient shadows

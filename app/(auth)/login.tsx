@@ -1,23 +1,26 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { Button, IconButton } from 'react-native-paper';
+import { Button } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AuthBanner } from '@/components/auth/auth-banner';
+import { AuthDivider } from '@/components/auth/auth-divider';
+import { AuthField } from '@/components/auth/auth-field';
 import { GoogleSignInButton } from '@/components/auth/google-signin-button';
-import { Input } from '@/components/ui/input';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Sizes, Spacing, Typography } from '@/constants/theme';
 import { useLogin } from '@/hooks/queries/use-auth-queries';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { loginSchema, resolveLoginDto, type LoginFormValues } from '@/lib/validators/auth.schema';
@@ -26,7 +29,9 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+  const router = useRouter();
   const [showPwd, setShowPwd] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
   const login = useLogin();
   const { redirect } = useLocalSearchParams<{ redirect?: string }>();
 
@@ -52,137 +57,148 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
-        contentContainerStyle={[
-          styles.scroll,
-          { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl },
-        ]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + Spacing.sm }]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Back */}
-        {router.canGoBack() && (
-          <IconButton
-            icon="arrow-left"
-            mode="outlined"
-            size={22}
-            onPress={() => router.back()}
-            accessibilityLabel="Retour"
-            style={styles.backBtn}
-          />
-        )}
+        <AuthBanner
+          height={Sizes.authBannerTall}
+          focusY="28%"
+          onBack={router.canGoBack() ? () => router.back() : undefined}
+        />
 
-        {/* Headline */}
-        <View style={styles.header}>
-          <Text style={[Typography.headlineLg, { color: C.primary }]}>Se connecter</Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs }]}>
-            Bon retour parmi nous.
-          </Text>
-        </View>
+        <View style={styles.body}>
+          <View style={styles.header}>
+            <Text style={[Typography.titleLg, { color: C.onSurface }]} accessibilityRole="header">
+              Logements, terrains et meubles au Cameroun
+            </Text>
+            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
+              Connectez-vous pour contacter les annonceurs et retrouver vos favoris.
+            </Text>
+          </View>
 
-        {/* Form */}
-        <View style={styles.form}>
-          {/* Identifiant */}
-          <Controller
-            control={control}
-            name="identifier"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Email ou numéro de téléphone"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="email@exemple.com ou +237 6XX XXX XXX"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                error={errors.identifier?.message}
-                leftElement={
-                  <MaterialIcons name="person-outline" size={20} color={C.onSurfaceVariant} />
-                }
-              />
-            )}
-          />
-
-          {/* Mot de passe */}
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Mot de passe"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry={!showPwd}
-                error={errors.password?.message}
-                leftElement={
-                  <MaterialIcons name="lock-outline" size={20} color={C.onSurfaceVariant} />
-                }
-                rightElement={
-                  <Pressable
-                    onPress={() => setShowPwd((v) => !v)}
-                    hitSlop={12}
-                    accessibilityRole="button"
-                    accessibilityLabel={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                  >
-                    <MaterialIcons
-                      name={showPwd ? 'visibility' : 'visibility-off'}
-                      size={22}
-                      color={C.onSurfaceVariant}
-                    />
-                  </Pressable>
-                }
-              />
-            )}
-          />
-
-          {/* Mot de passe oublié */}
-          <Pressable
-            onPress={() => router.push('/(auth)/forgot-password')}
-            style={styles.forgotRow}
-            accessibilityRole="link"
-          >
-            <Text style={[Typography.caption, { color: C.primary }]}>Mot de passe oublié ?</Text>
-          </Pressable>
-
-          {/* Erreur serveur */}
-          {login.error && (
-            <View style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}>
-              <MaterialIcons name="error-outline" size={16} color={C.error} />
-              <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
-                Identifiant ou mot de passe incorrect.
-              </Text>
-            </View>
-          )}
-
-          {/* Bouton */}
-          <Button
-            mode="contained"
-            onPress={handleSubmit(onSubmit)}
-            loading={login.isPending}
-            disabled={login.isPending}
-            contentStyle={styles.submitBtnContent}
-            style={styles.submitBtn}
-          >
-            Se connecter
-          </Button>
-        </View>
-
-        <View style={styles.googleRow}>
           <GoogleSignInButton redirectTo={redirect} />
-        </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
-            {'Pas encore de compte ? '}
-            <Text
-              style={{ color: C.primary, fontFamily: Fonts.bold }}
+          <AuthDivider label="ou avec votre email ou téléphone" />
+
+          <View style={styles.form}>
+            <Controller
+              control={control}
+              name="identifier"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <AuthField
+                  label="Email ou téléphone"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  placeholder="+237 6XX XXX XXX ou email"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="username"
+                  textContentType="username"
+                  returnKeyType="next"
+                  submitBehavior="submit"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  error={errors.identifier?.message}
+                  leftIcon={<MaterialIcons name="person-outline" size={20} color={C.onSurfaceVariant} />}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <AuthField
+                  ref={passwordRef}
+                  label="Mot de passe"
+                  labelAction={
+                    <Pressable
+                      onPress={() => router.push('/(auth)/forgot-password')}
+                      hitSlop={{ top: 14, bottom: 14, left: Spacing.sm, right: Spacing.sm }}
+                      accessibilityRole="link"
+                    >
+                      <Text style={[Typography.labelMd, { color: C.link }]}>Mot de passe oublié ?</Text>
+                    </Pressable>
+                  }
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  secureTextEntry={!showPwd}
+                  autoComplete="current-password"
+                  textContentType="password"
+                  returnKeyType="go"
+                  onSubmitEditing={handleSubmit(onSubmit)}
+                  error={errors.password?.message}
+                  leftIcon={<MaterialIcons name="lock-outline" size={20} color={C.onSurfaceVariant} />}
+                  rightElement={
+                    <Pressable
+                      onPress={() => setShowPwd((v) => !v)}
+                      style={styles.iconBtn}
+                      accessibilityRole="button"
+                      accessibilityLabel={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    >
+                      <MaterialIcons
+                        name={showPwd ? 'visibility-off' : 'visibility'}
+                        size={22}
+                        color={C.onSurfaceVariant}
+                      />
+                    </Pressable>
+                  }
+                />
+              )}
+            />
+
+            {login.error && (
+              <View
+                style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}
+                accessibilityLiveRegion="polite"
+              >
+                <MaterialIcons name="error-outline" size={16} color={C.error} />
+                <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
+                  Identifiant ou mot de passe incorrect.
+                </Text>
+              </View>
+            )}
+
+            <Button
+              mode="contained"
+              onPress={handleSubmit(onSubmit)}
+              loading={login.isPending}
+              disabled={login.isPending}
+              buttonColor={C.cta}
+              textColor={C.onCta}
+              contentStyle={styles.submitContent}
+              labelStyle={styles.submitLabel}
+              style={styles.submit}
+            >
+              Se connecter
+            </Button>
+          </View>
+
+          <View style={styles.footer}>
+            <Pressable
               onPress={() => router.push('/(auth)/register')}
+              style={styles.footerLink}
+              accessibilityRole="link"
+              accessibilityLabel="Pas encore de compte ? S'inscrire"
+            >
+              <Text style={[Typography.bodyMd, styles.centered, { color: C.onSurfaceVariant }]}>
+                {'Pas encore de compte ? '}
+                <Text style={{ color: C.link, fontFamily: Fonts.bold }}>{"S'inscrire"}</Text>
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.replace('/(tabs)')}
+              style={[styles.footerLink, styles.exploreLink]}
               accessibilityRole="link"
             >
-              {"S'inscrire"}
-            </Text>
-          </Text>
+              <Text style={[Typography.bodyMd, styles.centered, { color: C.onSurface, fontFamily: Fonts.semiBold }]}>
+                Explorer les annonces sans compte
+              </Text>
+              <MaterialIcons name="arrow-forward" size={18} color={C.onSurface} />
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -192,25 +208,24 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.marginMobile,
   },
-  backBtn: {
-    alignSelf: 'flex-start',
-    margin: 0,
-    marginBottom: Spacing.xl,
+  body: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    gap: Spacing.marginMobile,
   },
   header: {
-    marginBottom: Spacing.xl,
+    gap: Spacing.xs,
   },
   form: {
-    gap: Spacing.lg,
+    gap: Spacing.md,
   },
-  googleRow: {
-    marginTop: Spacing.xl,
-  },
-  forgotRow: {
-    alignSelf: 'flex-end',
-    marginTop: -Spacing.sm,
+  iconBtn: {
+    width: Sizes.touchTarget,
+    height: Sizes.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   errorBanner: {
     flexDirection: 'row',
@@ -220,16 +235,35 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     padding: Spacing.md,
   },
-  submitBtn: {
-    borderRadius: Radius.md,
-    marginTop: Spacing.sm,
+  submit: {
+    borderRadius: Radius.full,
+    marginTop: Spacing.xs,
   },
-  submitBtnContent: {
-    height: 50,
+  submitContent: {
+    minHeight: Sizes.control,
+  },
+  submitLabel: {
+    fontFamily: Fonts.bold,
+    fontSize: Typography.bodyMd.fontSize,
+    lineHeight: 22,
+    letterSpacing: 0,
   },
   footer: {
     marginTop: 'auto',
-    paddingTop: Spacing.xxl,
     alignItems: 'center',
+  },
+  footerLink: {
+    minHeight: Sizes.touchTarget,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  exploreLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  centered: {
+    textAlign: 'center',
+    flexShrink: 1,
   },
 });
