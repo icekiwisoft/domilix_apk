@@ -127,10 +127,18 @@ export default function AnnounceDetailScreen() {
     }
   }
 
+  // Same text and public URL as the website's ShareModal (domilix.com
+  // src/views/Ad/Ad.tsx + src/utils/adPath.ts). Android ignores `url`, so the
+  // link goes inside `message`.
   function handleShare() {
-    const title = announce!.description.split('.')[0];
-    const message = `${title} — ${announce!.address}, ${announce!.city}\n${announce!.price.toLocaleString('fr-FR')} ${announce!.devise}`;
-    Share.share({ title, message });
+    const a = announce!;
+    const path = a.type === 'furniture' ? 'furnitures' : 'houses';
+    const url = `https://domilix.com/fr/${path}/${a.id}`;
+    const title = `${a.category?.name || 'Annonce'} · ${a.city || a.address || 'Localisation'}`;
+    const currency = !a.devise || a.devise === 'XAF' ? 'FCFA' : a.devise;
+    const price = `${a.price.toLocaleString('fr-FR')} ${currency}`;
+    const message = `${title} - ${price}\n${url}`;
+    Share.share({ title, message }).catch(() => {});
   }
 
   return (
@@ -373,7 +381,7 @@ export default function AnnounceDetailScreen() {
           {/* ── Announcer card ── */}
           <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: C.onSurface }]}>L'annonceur</Text>
+            <Text style={[styles.sectionTitle, { color: C.onSurface }]}>{"L'annonceur"}</Text>
             <AnnouncerCard
               announcer={announce.announcer}
               announcesCount={announcerListingsCount}
