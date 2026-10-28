@@ -33,7 +33,7 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   // Keys must match the family names in constants/theme.ts (Fonts).
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     [Fonts.regular]: MonaSans_400Regular,
     [Fonts.medium]: MonaSans_500Medium,
     [Fonts.semiBold]: MonaSans_600SemiBold,
@@ -44,11 +44,15 @@ export default function RootLayout() {
   // a signed-in user never sees the login screen flash at startup.
   const authHydrated = useAuthStore((s) => s.hydrated);
 
-  useEffect(() => {
-    if (fontsLoaded && authHydrated) SplashScreen.hideAsync();
-  }, [fontsLoaded, authHydrated]);
+  // A font load error counts as ready: the app falls back to the system font
+  // instead of leaving the splash screen up forever (UI-03).
+  const fontsReady = fontsLoaded || !!fontError;
 
-  if (!fontsLoaded) return null;
+  useEffect(() => {
+    if (fontsReady && authHydrated) SplashScreen.hideAsync();
+  }, [fontsReady, authHydrated]);
+
+  if (!fontsReady) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
