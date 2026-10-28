@@ -34,6 +34,7 @@ export default function CreateStep3Screen() {
   const canContinue = !!draft.address && !!draft.city && !!draft.description;
 
   function applyLocation(suggestion: GeoapifyAddressSuggestion) {
+    setLocationError(null);
     setDraft({
       address: suggestion.text || suggestion.place_name,
       city: suggestion.city || draft.city,
@@ -49,6 +50,7 @@ export default function CreateStep3Screen() {
   }
 
   function applyCity(suggestion: GeoapifyAddressSuggestion) {
+    setLocationError(null);
     setDraft({
       city: suggestion.city || suggestion.text || suggestion.place_name,
       state: suggestion.state || '',
@@ -163,13 +165,17 @@ export default function CreateStep3Screen() {
           <SectionLabel>Adresse</SectionLabel>
           <AddressAutocomplete
             value={draft.address}
-            onChange={(v) => setDraft({
-              address: v,
-              longitude: undefined,
-              latitude: undefined,
-              location_source: 'manual',
-              hide_on_map: true,
-            })}
+            onChange={(v) => {
+              // Typing the address manually answers the GPS error banner.
+              setLocationError(null);
+              setDraft({
+                address: v,
+                longitude: undefined,
+                latitude: undefined,
+                location_source: 'manual',
+                hide_on_map: true,
+              });
+            }}
             onSelect={applyLocation}
           />
           {draft.latitude != null && draft.longitude != null && (
