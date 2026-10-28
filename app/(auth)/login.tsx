@@ -33,7 +33,9 @@ export default function LoginScreen() {
   const [showPwd, setShowPwd] = useState(false);
   const passwordRef = useRef<TextInput>(null);
   const login = useLogin();
-  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const { redirect, reason } = useLocalSearchParams<{ redirect?: string; reason?: string }>();
+  // Set by AuthProvider when the server refused the session (B-05).
+  const sessionExpired = reason === 'session-expired';
 
   const {
     control,
@@ -75,6 +77,18 @@ export default function LoginScreen() {
               Connectez-vous pour contacter les annonceurs et retrouver vos favoris.
             </Text>
           </View>
+
+          {sessionExpired && !login.error && (
+            <View
+              style={[styles.noticeBanner, { backgroundColor: C.surfaceContainerHigh, borderColor: C.outlineVariant }]}
+              accessibilityLiveRegion="polite"
+            >
+              <MaterialIcons name="info-outline" size={18} color={C.onSurface} />
+              <Text style={[Typography.bodySm, { color: C.onSurface, flex: 1 }]}>
+                Votre session a expiré, reconnectez-vous.
+              </Text>
+            </View>
+          )}
 
           <GoogleSignInButton redirectTo={redirect} />
 
@@ -226,6 +240,14 @@ const styles = StyleSheet.create({
     height: Sizes.touchTarget,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  noticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
   },
   errorBanner: {
     flexDirection: 'row',

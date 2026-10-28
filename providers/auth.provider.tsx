@@ -7,7 +7,16 @@ import { AuthService } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/auth.store';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { accessToken, hydrated, setTokens, setUser, clearAuth, setHydrated } = useAuthStore();
+  const {
+    accessToken,
+    hydrated,
+    sessionExpired,
+    setTokens,
+    setUser,
+    expireSession,
+    acknowledgeSessionExpired,
+    setHydrated,
+  } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -44,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // A 401 here means the refresh in api.client.ts succeeded but the new
         // token was still refused. A rejected refresh already cleared the
         // session there. Anything else (offline, timeout, 5xx) keeps it.
-        if (isAxiosError(err) && err.response?.status === 401) clearAuth();
+        if (isAxiosError(err) && err.response?.status === 401) expireSession();
       }
     }
 
@@ -58,12 +67,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const inAuthGroup = segments[0] === '(auth)';
 
+    // The server refused the session (B-05): back to the login screen with a
+    // short message. The flag is cleared right away, so this runs once per
+    // expiry and "Explorer les annonces sans compte" is not redirected again.
+    if (sessionExpired) {
+      acknowledgeSessionExpired();
+      // The cached profile belongs to the refused session.
+      queryClient.removeQueries({ queryKey: ['me'] });
+      if (!inAuthGroup) {
+        router.replace({ pathname: '/(auth)/login', params: { reason: 'session-expired' } });
+      }
+      return;
+    }
+
     // Authenticated users landing on auth screens are sent to the app
     if (accessToken && inAuthGroup) {
       router.replace('/(tabs)');
     }
     // Unauthenticated users can browse freely — protected routes handle their own gate
-  }, [accessToken, hydrated, segments, router]);
+  }, [accessToken, hydrated, sessionExpired, segments, router, acknowledgeSessionExpired, queryClient]);
 
   return <>{children}</>;
 }
