@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useGlobalSearchParams, usePathname, useSegments, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
@@ -22,6 +22,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const searchParams = useGlobalSearchParams();
   const router = useRouter();
   const queryClient = useQueryClient();
+  // Route seen by the guard on its previous run, to tell a navigation onto an
+  // auth screen apart from a sign-in made on that screen (QA-01).
+  const lastRoute = useRef<string | null>(null);
 
   // ── Hydrate tokens on cold start ─────────────────────────────────────────────
   // The session decision rests on the locally stored token only, so the app
@@ -68,6 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const route = segments.join('/');
+    const routeChanged = route !== lastRoute.current;
+    lastRoute.current = route;
 
     // The server refused the session (B-05): back to the login screen with a
     // short message. The flag is cleared right away, so this runs once per
@@ -92,8 +98,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Authenticated users landing on auth screens are sent to the app
-    if (accessToken && inAuthGroup) {
+    // A signed-in user who lands on an auth screen (cold start on the login
+    // anchor, back navigation) is sent to the app. Only on arrival: when the
+    // token appears while the user is still on the login screen, that screen
+    // signed them in and decides where to go (redirect param). Replacing to
+    // the tabs here unmounted it first, so React Query dropped its
+    // mutate() onSuccess and the redirect never ran (QA-01).
+    if (accessToken && inAuthGroup && routeChanged) {
       router.replace('/(tabs)');
     }
     // Unauthenticated users can browse freely — protected routes handle their own gate
