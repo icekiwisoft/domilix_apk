@@ -3,6 +3,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+
+import { goAfterAuth } from '@/components/auth/go-after-auth';
 import { Colors, Fonts, Radius, Sizes, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useGoogleSignIn } from '@/hooks/use-google-signin';
@@ -11,6 +13,8 @@ import { GoogleLogo } from './google-logo';
 
 interface GoogleSignInButtonProps {
   redirectTo?: string;
+  /** The screen to go back to is still under this one (see goAfterAuth). */
+  targetBelow?: boolean;
   /** "Continuer avec Google" on sign-in, "S'inscrire avec Google" on sign-up. */
   label?: string;
 }
@@ -19,7 +23,7 @@ interface GoogleSignInButtonProps {
  * Google sign-in button in Google's official style (white or #131314 surface,
  * grey outline, multicolour logo), as required by Google's branding guidelines.
  */
-export function GoogleSignInButton({ redirectTo, label = 'Continuer avec Google' }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ redirectTo, targetBelow = false, label = 'Continuer avec Google' }: GoogleSignInButtonProps) {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const router = useRouter();
@@ -32,7 +36,7 @@ export function GoogleSignInButton({ redirectTo, label = 'Continuer avec Google'
     const idToken = await signIn();
     if (!idToken) return;
     firebaseLogin.mutate(idToken, {
-      onSuccess: () => router.replace((redirectTo ?? '/(tabs)') as never),
+      onSuccess: () => goAfterAuth(router, redirectTo, targetBelow),
       onError: () => setError(true),
     });
   }

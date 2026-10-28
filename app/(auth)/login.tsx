@@ -22,6 +22,7 @@ import { AuthBanner } from '@/components/auth/auth-banner';
 import { AuthDivider } from '@/components/auth/auth-divider';
 import { AuthField } from '@/components/auth/auth-field';
 import { GoogleSignInButton } from '@/components/auth/google-signin-button';
+import { goAfterAuth } from '@/components/auth/go-after-auth';
 import { useKeyboardReveal } from '@/components/auth/use-keyboard-reveal';
 import { Colors, Fonts, Radius, Sizes, Spacing, Typography } from '@/constants/theme';
 import { useLogin } from '@/hooks/queries/use-auth-queries';
@@ -68,7 +69,7 @@ export default function LoginScreen() {
   function onSubmit(data: LoginFormValues) {
     login.mutate(
       resolveLoginDto(data.identifier.trim(), data.password),
-      { onSuccess: () => redirect ? router.replace(redirect as never) : router.replace('/(tabs)') }
+      { onSuccess: () => goAfterAuth(router, redirect, !sessionExpired) }
     );
   }
 
@@ -123,7 +124,7 @@ export default function LoginScreen() {
             </View>
           )}
 
-          <GoogleSignInButton redirectTo={redirect} />
+          <GoogleSignInButton redirectTo={redirect} targetBelow={!sessionExpired} />
 
           <AuthDivider label="ou avec votre email ou téléphone" />
 
