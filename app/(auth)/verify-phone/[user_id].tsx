@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { Button, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
@@ -32,6 +32,7 @@ export default function VerifyPhoneScreen() {
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const toast = useToast();
+  const router = useRouter();
   const { user_id, phone } = useLocalSearchParams<{ user_id: string; phone?: string }>();
   const verifyPhone = useVerifyPhone();
   const resendCode = useResendVerificationCode();

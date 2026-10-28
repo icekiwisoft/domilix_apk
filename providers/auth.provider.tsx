@@ -104,7 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // signed them in and decides where to go (redirect param). Replacing to
     // the tabs here unmounted it first, so React Query dropped its
     // mutate() onSuccess and the redirect never ran (QA-01).
-    if (accessToken && inAuthGroup && routeChanged) {
+    // verify-phone is the exception: sign-up stores the tokens (POST
+    // /auth/register returns them, as on the website) and then opens it to
+    // confirm the number by SMS (UI-02).
+    const verifyingPhone = segments[1] === 'verify-phone';
+    if (accessToken && inAuthGroup && routeChanged && !verifyingPhone) {
       router.replace('/(tabs)');
     }
     // Unauthenticated users can browse freely — protected routes handle their own gate
