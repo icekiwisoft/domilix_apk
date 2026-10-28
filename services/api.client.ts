@@ -98,10 +98,16 @@ client.interceptors.response.use(
       return client(original);
     } catch (err) {
       drainQueue(err, null);
-      // Log out only when the server refused the refresh (400/401/403) or there
-      // is nothing to refresh with. Offline, timeout and 429 keep the session.
+      // Log out only when the server refused the refresh (400/401/403), there
+      // is nothing to refresh with, or the answer carried no access token.
+      // Offline, timeout, 429 or a local failure (e.g. SecureStore throwing
+      // on read) keep the session.
       const status = isAxiosError(err) ? err.response?.status ?? 0 : 0;
-      let refused = !isAxiosError(err) || [400, 401, 403].includes(status);
+      const message = err instanceof Error ? err.message : '';
+      let refused =
+        [400, 401, 403].includes(status) ||
+        message === 'no_refresh_token' ||
+        message === 'no_access_token_in_refresh_response';
       // 5xx: the server was reachable (it just answered 401) but could not
       // verify the refresh token. Give up at once if the token is expired, or
       // after a few in a row, so the user is not stuck half signed in.
