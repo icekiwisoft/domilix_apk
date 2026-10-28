@@ -57,6 +57,11 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   feuille système avec les comptes du téléphone, sans navigateur. Prérequis à vérifier : client
   OAuth Android avec l'empreinte SHA-1 de la clé de signature de production (EAS) et de la clé
   Google Play si l'app y est publiée.
+- **Bibliothèque retenue (2026-10-28, utilisateur)** : `@thoughtbot/react-native-social-auth`
+  (MIT, thoughtbot, Turbo Module, Credential Manager via `androidx.credentials` 1.5.0 et `googleid`
+  1.1.1, plugin Expo, boutons Google conformes). Version figée (0.4.0 au moment du choix, API en
+  0.x) ; `signIn()` → `idToken` (audience = client Web) → Firebase JS → `POST /auth/firebase`
+  inchangé. Repli : module Expo local sur Credential Manager.
 - **Critères d'acceptation**
   - Du tap sur « Continuer avec Google » à l'écran connecté : < 3 s pour un compte déjà choisi
     (réseau 4G correct), mesure citée dans le rapport.
