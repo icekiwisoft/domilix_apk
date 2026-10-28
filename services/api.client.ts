@@ -1,4 +1,4 @@
-import axios, { type InternalAxiosRequestConfig } from 'axios';
+import axios, { isAxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { TokenStorage } from '@/lib/secure-storage';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -32,7 +32,13 @@ client.interceptors.response.use(
   async (error) => {
     const original: InternalAxiosRequestConfig & { _retry?: boolean } = error.config;
 
-    if (error.response?.status !== 401 || original?._retry) {
+    // The refresh call itself must never wait in the queue for its own result
+    // (it would hang forever): its 401 is rejected right away.
+    if (
+      error.response?.status !== 401 ||
+      original?._retry ||
+      original?.url?.includes('/auth/refresh')
+    ) {
       return Promise.reject(error);
     }
 
@@ -72,7 +78,10 @@ client.interceptors.response.use(
       return client(original);
     } catch (err) {
       drainQueue(err, null);
-      useAuthStore.getState().clearAuth();
+      // Log out only when the server refused the refresh (400/401/403) or there
+      // is nothing to refresh with. Offline, timeout, 429 or 5xx keep the session.
+      const refused = !isAxiosError(err) || [400, 401, 403].includes(err.response?.status ?? 0);
+      if (refused) useAuthStore.getState().clearAuth();
       return Promise.reject(err);
     } finally {
       isRefreshing = false;
