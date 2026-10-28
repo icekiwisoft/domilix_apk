@@ -115,6 +115,40 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   - Non connecté : l'app s'ouvre sur l'écran de connexion (décision de l'utilisateur, 2026-10-28),
     sans clignotement.
 
+### B-05 — Session refusée : l'app reste en invité au lieu d'afficher la connexion (P2)
+
+- **Source** : QA lot 1 (QA-02), 2026-10-28.
+- **Constat** : après un 401 confirmé et un refresh refusé, la session est effacée mais l'app reste
+  sur l'accueil en invité ; l'écran de connexion n'apparaît qu'au démarrage suivant.
+- **Attendu** (décision « non connecté → écran de connexion ») : à la fin de session, retour à
+  l'écran de connexion avec un message court (« Votre session a expiré, reconnectez-vous »).
+
+### À vérifier (QA lot 1)
+
+- **QA-01** : sur l'émulateur, après une première position réussie, « Utiliser ma position »
+  renvoie parfois « Position introuvable » alors qu'un fix existe. À reproduire sur le Pixel ; si
+  confirmé, essayer `getLastKnownPositionAsync` en repli et un délai plus long.
+- **QA-04** : le filtre « Mobilier » de l'Explorer affichait 0 annonce alors que
+  `GET /announces?type=furniture` en renvoyait une (données locales sans médias). À vérifier
+  quand la prod aura des annonces de mobilier.
+- Partage réel vers WhatsApp, Facebook, SMS : seul l'aperçu du sélecteur Android a été vérifié.
+
+## À demander à l'équipe backend et site (lecture seule pour nous)
+
+1. **Critique** : `POST /auth/refresh` accepte un jeton d'accès non vérifié (`jwt.decode`) ;
+   message prêt dans le vault (`10_Projects/Domilix/2026-10-28 Audit - Sécurité du
+   rafraîchissement JWT (backend).md`). Vérifier aussi `JWT_SECRET` / `JWT_REFRESH_SECRET` en prod.
+2. Refresh token à signature invalide → 500 au lieu de 401 (l'app ne peut pas conclure tout de
+   suite que la session est morte ; QA-03).
+3. Refresh tokens révoqués gardés en mémoire (perdus au redémarrage, non partagés).
+4. `docker-compose.yml` de la racine du repo décrit encore l'ancien backend Laravel ; les
+   migrations Prisma échouent sur une base vide (`20260428000000_add_real_estate_amenities`).
+5. Site : `public/logo.png` contient un faux damier de transparence (pixels gris/blancs dans
+   l'image, mode RGB sans canal alpha).
+6. Site : boutons blanc sur `#E8921A` à ~2,5:1 de contraste (minimum AA 4,5:1).
+7. Ouverture des liens d'annonce dans l'app (Android App Links) : `/.well-known/assetlinks.json`
+   sur `domilix.com` (B-03, hors lot).
+
 ## Améliorations demandées par l'utilisateur
 
 ### UI-01 — Écran de connexion plus attrayant (P1)
@@ -170,6 +204,6 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 
 ## Lots proposés
 
-1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 (développés, en QA) ; B-02 après mesure.
+1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
 2. **Lot 2 — connexion, inscription et police** : UI-03 d'abord (base des deux écrans), puis UI-01,
-   UI-02 et B-02 (connexion Google native). À démarrer sur une branche issue du lot 1 après sa QA.
+   UI-02, B-02 (connexion Google native) et B-05.
