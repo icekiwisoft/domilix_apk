@@ -37,7 +37,7 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
     un 429 (quota) donne un message clair et laisse la saisie manuelle.
   - L'absence de clé fait échouer le build (contrôle au démarrage du workflow), pas l'utilisateur.
 
-### B-02 — La connexion Google est trop lente (P1)
+### B-02 — La connexion Google est trop lente (P2, non reproduit)
 
 - **Constat (utilisateur)** : « the google connection option takes too much time ».
 - **Piste** : `hooks/use-google-signin.ts` enchaîne trois étapes séquentielles : flux OAuth
@@ -45,8 +45,17 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   Firebase JS, puis `POST /auth/firebase` vers le backend. La connexion native Android
   (Credential Manager, ex. `@react-native-google-signin/google-signin`) évite le navigateur et
   renvoie l'`id_token` en une feuille système. À mesurer avant de choisir.
-- **À faire d'abord** : mesurer sur le Pixel, en build release, la durée de chaque étape (tap →
-  retour du navigateur → jeton Firebase → réponse du backend).
+- **Mesure (2026-10-28, Pixel 9, APK 1.0.0 installé, Wi-Fi)** : non reproduit. Tap → onglet du
+  navigateur ouvert en 0,3 s ; 6,3 s dans l'onglet (choix du compte par l'utilisateur) ; retour à
+  l'app puis accueil en moins d'une seconde selon l'utilisateur.
+- **Constat** : le flux passe par l'onglet du **navigateur par défaut** (Brave sur ce téléphone),
+  pas par une feuille Google native. Causes probables de la lenteur ressentie : navigateur à
+  froid ou non connecté à Google (saisie du mot de passe), réseau mobile lent, première connexion
+  (création du compte côté serveur). À préciser avec l'utilisateur.
+- **Proposition** : connexion Google native (Credential Manager) dans le lot 2, avec UI-01 :
+  feuille système avec les comptes du téléphone, sans navigateur. Prérequis à vérifier : client
+  OAuth Android avec l'empreinte SHA-1 de la clé de signature de production (EAS) et de la clé
+  Google Play si l'app y est publiée.
 - **Critères d'acceptation**
   - Du tap sur « Continuer avec Google » à l'écran connecté : < 3 s pour un compte déjà choisi
     (réseau 4G correct), mesure citée dans le rapport.
