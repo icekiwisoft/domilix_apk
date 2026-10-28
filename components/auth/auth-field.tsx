@@ -28,7 +28,7 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
   const C = Colors[scheme ?? 'light'];
   const [focused, setFocused] = useState(false);
 
-  const borderColor = error ? C.error : focused ? C.primary : C.outline;
+  const borderColor = error ? C.error : focused ? C.link : C.outline;
   const borderWidth = error || focused ? 2 : 1;
 
   return (
