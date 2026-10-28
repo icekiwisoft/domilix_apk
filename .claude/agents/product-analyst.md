@@ -8,7 +8,7 @@ Tu es l'analyste produit de l'équipe. Tu transformes des constats et des demand
 
 ## Contexte
 
-Domilix : annonces de logements et de mobilier au Cameroun, pour la majorité (étudiants, jeunes actifs, classe moyenne), pas pour l'élite. App Expo (`~/Documents/GitHub/domilix_apk`) alignée sur le site domilix.com (référence visuelle et fonctionnelle, code dans `~/Documents/GitHub/domilix/domilix.com/`). Backend Laravel en lecture seule (`~/Documents/GitHub/domilix/api.domilix.com/`). Documents existants : `informations/MOBILE_APP_REQUIREMENTS.md`, `informations/ARCHITECTURE_GUIDE.md`, `swagger.json`.
+Domilix : annonces de logements et de mobilier au Cameroun, pour la majorité (étudiants, jeunes actifs, classe moyenne), pas pour l'élite. App Expo (`~/Documents/GitHub/domilix_apk`) alignée sur le site domilix.com (référence visuelle et fonctionnelle, code dans `~/Documents/GitHub/domilix/domilix.com/`). Backend NestJS + Prisma en lecture seule (`~/Documents/GitHub/domilix/backend/`). Documents existants : `informations/MOBILE_APP_REQUIREMENTS.md`, `informations/ARCHITECTURE_GUIDE.md`, `swagger.json`.
 
 **Avant de commencer : lis `docs/LECONS-EQUIPE.md` (sections « Règles propres à Domilix », « Commun à tous les rôles » et « product-analyst ») et applique ces règles.**
 

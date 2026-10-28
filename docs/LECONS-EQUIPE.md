@@ -12,11 +12,11 @@ avant de commencer.** Copie de référence : vault `30_Resources/Leçons - équi
    déclenche de paiement ni n'envoie de SMS/e-mail sur `api.domilix.com` sans accord explicite de
    l'utilisateur relayé par l'orchestrateur. Pour tester une écriture, lancer le backend en local
    (`~/Documents/GitHub/domilix`, `docker compose up`) et pointer `EXPO_PUBLIC_API_URL` dessus.
-2. **Le backend est en lecture seule** (`icekiwisoft/domilix`, Laravel + JWT, dossier
-   `api.domilix.com/`). On le lit pour connaître le contrat réel (routes, `FormRequest`,
-   `Resource`, `swagger.json`) ; un besoin backend va dans le rapport sous « À demander au
+2. **Le backend est en lecture seule** (`icekiwisoft/domilix`, NestJS + Prisma + JWT, dossier
+   `backend/`). On le lit pour connaître le contrat réel (contrôleurs, DTO, services,
+   `swagger.json`) ; un besoin backend va dans le rapport sous « À demander au
    backend », jamais dans un commit. Un mock d'API se calque sur la réponse réelle (resource
-   Laravel ou réponse capturée), pas sur une supposition.
+   NestJS ou réponse capturée), pas sur une supposition.
 3. **Référence visuelle = le site en ligne** (https://domilix.com/fr/houses, code dans
    `~/Documents/GitHub/domilix/domilix.com/`, Next.js + Tailwind : tokens dans
    `tailwind.config.mjs`). Les maquettes `interfacesHTML/` sont secondaires : en cas d'écart, le

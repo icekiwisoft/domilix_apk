@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Domilix is a marketplace for housing and furniture listings in Cameroon (French copy, prices in XAF / FCFA), aimed at students, young workers and middle-class families. This repo is the Expo mobile app (Android first, package `com.jack0237.domilix`). The website and the API live in another repo, `icekiwisoft/domilix`, cloned at `~/Documents/GitHub/domilix`:
 
 - `domilix.com/`: the website (Next.js + Tailwind). **It is the reference for the brand identity** (https://domilix.com/fr/houses): colors, typography, iconography, copy and formats. Design tokens are in `domilix.com/tailwind.config.mjs`, copy in `domilix.com/messages/`. Layouts are adapted to mobile, not copied from the desktop site.
-- `api.domilix.com/`: the Laravel + JWT backend behind `https://api.domilix.com/api`. **Read-only from this repo**: read it to learn the real API contract (routes, `FormRequest`, `Resource`), never change it. Server-side needs are listed for its maintainers.
+- `backend/`: the NestJS + Prisma + JWT backend behind `https://api.domilix.com`. **Read-only from this repo**: read it to learn the real API contract (controllers, DTOs, services, `prisma/schema.prisma`), never change it. Server-side needs are listed for its maintainers.
 
 ## Commands
 
