@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { OtpInput } from '@/components/ui/otp-input';
 import { useToast } from '@/components/ui/toast';
@@ -112,7 +112,7 @@ export default function VerifyPhoneScreen() {
         <Text style={[Typography.headlineLg, { color: C.primary }]}>Vérifier votre numéro</Text>
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.sm }]}>
           {'Un code à 6 chiffres a été envoyé au '}
-          <Text style={{ color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+          <Text style={{ color: C.onSurface, fontFamily: Fonts.semiBold }}>
             {maskPhone(phone)}
           </Text>
         </Text>
@@ -133,7 +133,7 @@ export default function VerifyPhoneScreen() {
         {seconds > 0 ? (
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
             {'Renvoyer dans '}
-            <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+            <Text style={{ color: C.primary, fontFamily: Fonts.semiBold }}>
               {seconds}s
             </Text>
           </Text>

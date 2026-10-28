@@ -18,7 +18,7 @@ import { SectionHeader } from '@/components/home/section-header';
 import { ListingCard } from '@/components/listing/listing-card';
 import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { SearchBar } from '@/components/search/search-bar';
-import { Colors, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useAnnounces, useCities, useToggleLike } from '@/hooks/queries/use-announces';
 import { useBroadcasts } from '@/hooks/queries/use-broadcasts';
 import { useUnreadCount } from '@/hooks/queries/use-notifications';
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   logo: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 24,
     fontWeight: '700',
     lineHeight: 32,

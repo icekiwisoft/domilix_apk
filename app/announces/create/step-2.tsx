@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Button, Chip, SegmentedButtons, TextInput } from 'react-native-paper';
 import { CreateStepHeader } from '@/components/forms/create-step-header';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCategories } from '@/hooks/queries/use-categories';
 import { useCreateListingStore } from '@/stores/create-listing.store';
@@ -32,7 +32,7 @@ export default function CreateStep2Screen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_700Bold' }]}>
+        <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: Fonts.bold }]}>
           Catégorie & Prix
         </Text>
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs, marginBottom: Spacing.xl }]}>

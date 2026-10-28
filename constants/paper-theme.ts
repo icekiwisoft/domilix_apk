@@ -1,8 +1,19 @@
 import { MD3DarkTheme, MD3LightTheme, configureFonts, type MD3Theme } from 'react-native-paper';
 
-import { Colors } from '@/constants/theme';
+import { Colors, Fonts } from '@/constants/theme';
 
-const fonts = configureFonts({ config: { fontFamily: 'PlusJakartaSans_400Regular' } });
+// Paper's MD3 variants carry a fontWeight ('400' or '500'); map each one to the
+// Mona Sans family of that weight so Android does not fake the weight.
+const fonts = configureFonts({
+  config: Object.fromEntries(
+    Object.entries(MD3LightTheme.fonts)
+      .filter(([key]) => key !== 'default')
+      .map(([key, font]) => {
+        const weight = 'fontWeight' in font ? font.fontWeight : '400';
+        return [key, { fontFamily: weight === '500' ? Fonts.medium : Fonts.regular }];
+      }),
+  ),
+});
 
 export const PaperLightTheme: MD3Theme = {
   ...MD3LightTheme,

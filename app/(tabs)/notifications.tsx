@@ -5,7 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { NotifItem } from '@/components/notifications/notif-item';
 import { NotifGroup } from '@/components/notifications/notif-group';
 import { NotifSkeleton } from '@/components/notifications/notif-skeleton';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useNotifications, useMarkAllRead, useMarkAsRead, useDeleteNotification } from '@/hooks/queries/use-notifications';
 import { useAuthStore } from '@/stores/auth.store';
@@ -75,7 +75,7 @@ export default function NotificationsScreen() {
           </Text>
           {unreadCount > 0 && (
             <View style={[styles.unreadPill, { backgroundColor: C.primary + '18' }]}>
-              <Text style={[Typography.caption, { color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }]}>
+              <Text style={[Typography.caption, { color: C.primary, fontFamily: Fonts.bold }]}>
                 {unreadCount} non {unreadCount > 1 ? 'lues' : 'lue'}
               </Text>
             </View>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
   },
-  title: { fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold' },
+  title: { fontSize: 24, fontFamily: Fonts.bold },
   unreadPill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,

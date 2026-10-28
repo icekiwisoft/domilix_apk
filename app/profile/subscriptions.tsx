@@ -13,7 +13,7 @@ import { Button, IconButton, TextInput, TouchableRipple } from 'react-native-pap
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useSubscriptions, useCreateSubscription, usePlans } from '@/hooks/queries/use-subscriptions';
 import { useToast } from '@/components/ui/toast';
@@ -105,14 +105,14 @@ function ActivePackRow({ sub }: { sub: Subscription }) {
           <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
             {sub.plan_name}
           </Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 1 }]}>
+          <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: Fonts.semiBold, marginTop: 1 }]}>
             {sub.credits} Domicoins restants
           </Text>
         </View>
         {expiry ? (
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>Expire le</Text>
-            <Text style={[Typography.caption, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: 1 }]}>
+            <Text style={[Typography.caption, { color: C.onSurface, fontFamily: Fonts.semiBold, marginTop: 1 }]}>
               {formatExpiry(expiry)}
             </Text>
           </View>
@@ -229,7 +229,7 @@ function PaymentModal({
                     <View style={[styles.methodIconWrap, { backgroundColor: m.accent + '22' }]}>
                       <MaterialIcons name={m.icon} size={20} color={m.accent} />
                     </View>
-                    <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
+                    <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: Fonts.semiBold }]}>
                       {m.label}
                     </Text>
                     <MaterialIcons name="chevron-right" size={20} color={C.onSurfaceVariant} />
@@ -256,7 +256,7 @@ function PaymentModal({
                     <View style={[styles.methodIconWrap, { backgroundColor: method.accent + '22' }]}>
                       <MaterialIcons name={method.icon} size={18} color={method.accent} />
                     </View>
-                    <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14 }]}>
+                    <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: Fonts.semiBold, fontSize: 14 }]}>
                       {method.label}
                     </Text>
                     <Text style={[Typography.caption, { color: C.primary }]}>Changer</Text>
@@ -377,7 +377,7 @@ export default function SubscriptionsScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Intro */}
         <View>
-          <Text style={[Typography.headlineLg, { color: C.onSurface, textAlign: 'center', fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold' }]}>
+          <Text style={[Typography.headlineLg, { color: C.onSurface, textAlign: 'center', fontSize: 24, fontFamily: Fonts.bold }]}>
             Choisissez votre pack idéal !
           </Text>
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm, lineHeight: 22 }]}>

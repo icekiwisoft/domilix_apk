@@ -3,7 +3,7 @@ import { Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe } from '@/hooks/queries/use-auth-queries';
 import { useUnlockAnnounce } from '@/hooks/queries/use-announces';
@@ -53,11 +53,11 @@ export default function UnlockConfirmScreen() {
         </Text>
         <Text style={[Typography.bodyMd, styles.body, { color: C.onSurfaceVariant }]}>
           Déverrouiller cette annonce utilisera{' '}
-          <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}>1 crédit</Text>.
+          <Text style={{ color: C.primary, fontFamily: Fonts.bold }}>1 crédit</Text>.
           {'\n'}Il vous reste{' '}
           <Text style={{
             color: hasEnoughCredits ? C.primary : C.error,
-            fontFamily: 'PlusJakartaSans_700Bold',
+            fontFamily: Fonts.bold,
           }}>
             {userCredits} crédit{userCredits > 1 ? 's' : ''}
           </Text>.

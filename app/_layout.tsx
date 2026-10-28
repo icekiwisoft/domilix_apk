@@ -1,10 +1,10 @@
 import {
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
+  MonaSans_400Regular,
+  MonaSans_500Medium,
+  MonaSans_600SemiBold,
+  MonaSans_700Bold,
   useFonts,
-} from '@expo-google-fonts/plus-jakarta-sans';
+} from '@expo-google-fonts/mona-sans';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -16,6 +16,7 @@ import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { PaperDarkTheme, PaperLightTheme } from '@/constants/paper-theme';
+import { Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DomilixThemeProvider } from '@/providers/theme.provider';
 import { QueryProvider } from '@/providers/query.provider';
@@ -31,11 +32,12 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  // Keys must match the family names in constants/theme.ts (Fonts).
   const [fontsLoaded] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_500Medium,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
+    [Fonts.regular]: MonaSans_400Regular,
+    [Fonts.medium]: MonaSans_500Medium,
+    [Fonts.semiBold]: MonaSans_600SemiBold,
+    [Fonts.bold]: MonaSans_700Bold,
   });
 
   // Keep the splash until the stored session has been read (AuthProvider), so

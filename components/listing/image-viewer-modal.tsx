@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { IconButton } from 'react-native-paper';
+import { Fonts } from '@/constants/theme';
 
 const MAX_SCALE = 4;
 
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     top: 56,
     alignSelf: 'center',
     color: '#fff',
-    fontFamily: 'PlusJakartaSans_500Medium',
+    fontFamily: Fonts.medium,
     fontSize: 13,
     zIndex: 10,
   },

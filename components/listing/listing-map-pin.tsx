@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors, Radius, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface ListingMapPinProps {
@@ -35,7 +35,7 @@ export function ListingMapPin({ price, devise, selected = false }: ListingMapPin
           style={[
             Typography.caption,
             styles.label,
-            { color: selected ? C.onPrimary : C.primary, fontFamily: 'PlusJakartaSans_700Bold' },
+            { color: selected ? C.onPrimary : C.primary, fontFamily: Fonts.bold },
           ]}
         >
           {formatShort(price)} {currency}

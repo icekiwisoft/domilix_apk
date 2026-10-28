@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Button, SegmentedButtons } from 'react-native-paper';
 import { CreateStepHeader } from '@/components/forms/create-step-header';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCreateListingStore } from '@/stores/create-listing.store';
 import type { AdType, AnnounceType } from '@/types/announce';
@@ -30,7 +30,7 @@ export default function CreateStep1Screen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_700Bold' }]}>
+        <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: Fonts.bold }]}>
           Type de bien
         </Text>
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs, marginBottom: Spacing.xl }]}>
@@ -62,7 +62,7 @@ export default function CreateStep1Screen() {
                   <View style={[styles.typeIconBox, { backgroundColor: active ? C.primary : C.surfaceContainerHighest }]}>
                     <MaterialIcons name={opt.icon} size={28} color={active ? C.onPrimary : C.onSurfaceVariant} />
                   </View>
-                  <Text style={[Typography.bodyMd, { color: active ? C.primary : C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: Spacing.sm }]}>
+                  <Text style={[Typography.bodyMd, { color: active ? C.primary : C.onSurface, fontFamily: Fonts.semiBold, marginTop: Spacing.sm }]}>
                     {opt.label}
                   </Text>
                 </Pressable>

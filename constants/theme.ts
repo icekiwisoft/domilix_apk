@@ -107,55 +107,66 @@ export const Colors = {
   },
 } as const;
 
-// Typography scale – Plus Jakarta Sans
+// Mona Sans, the website's typeface (domilix.com tailwind.config.mjs fontFamily.sans).
+// These are the family names registered by useFonts in app/_layout.tsx: on Android a
+// custom font needs one family per weight, so always pick the family that matches the
+// weight instead of relying on fontWeight alone.
+export const Fonts = {
+  regular: 'MonaSans_400Regular',
+  medium: 'MonaSans_500Medium',
+  semiBold: 'MonaSans_600SemiBold',
+  bold: 'MonaSans_700Bold',
+} as const;
+
+// Typography scale – Mona Sans
 // lineHeight and letterSpacing are in px (RN numeric values)
 export const Typography = {
   displayLg: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 60,
     fontWeight: '700' as const,
     lineHeight: 66,
     letterSpacing: -1.2,
   },
   headlineLg: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 40,
     fontWeight: '700' as const,
     lineHeight: 48,
   },
   headlineMd: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 32,
     fontWeight: '700' as const,
     lineHeight: 38,
   },
   headlineSm: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 24,
     fontWeight: '600' as const,
     lineHeight: 32,
   },
   bodyLg: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 18,
     fontWeight: '400' as const,
     lineHeight: 29,
   },
   bodyMd: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 16,
     fontWeight: '400' as const,
     lineHeight: 26,
   },
   labelSm: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 14,
     fontWeight: '600' as const,
     lineHeight: 14,
     letterSpacing: 1.12,
   },
   caption: {
-    fontFamily: 'PlusJakartaSans_500Medium',
+    fontFamily: Fonts.medium,
     fontSize: 12,
     fontWeight: '500' as const,
     lineHeight: 17,

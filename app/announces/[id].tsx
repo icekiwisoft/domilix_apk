@@ -18,7 +18,7 @@ import { Button, IconButton } from 'react-native-paper';
 import { ListingGallery } from '@/components/listing/listing-gallery';
 import { AnnouncerCard } from '@/components/announcer/announcer-card';
 import { AnnounceDetailSkeleton } from '@/components/listing/announce-detail-skeleton';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
   useAnnounce,
@@ -461,12 +461,12 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 22,
     lineHeight: 28,
   },
   subtitle: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
@@ -496,18 +496,18 @@ const styles = StyleSheet.create({
     height: 44,
   },
   statsNum: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 18,
     lineHeight: 22,
   },
   statsSub: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 11,
     lineHeight: 14,
     textAlign: 'center',
   },
   statsBold: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 12,
   },
 
@@ -535,12 +535,12 @@ const styles = StyleSheet.create({
   },
   hostAvatarImg: { width: '100%', height: '100%' },
   hostName: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 15,
     lineHeight: 20,
   },
   hostSub: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 13,
     marginTop: 2,
   },
@@ -554,12 +554,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   featureTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 15,
     lineHeight: 20,
   },
   featureSub: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 3,
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   bannerText: {
-    fontFamily: 'PlusJakartaSans_500Medium',
+    fontFamily: Fonts.medium,
     fontSize: 13,
   },
 
@@ -585,7 +585,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 18,
     lineHeight: 24,
     marginBottom: 4,
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
 
   // Description
   descText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 15,
     lineHeight: 24,
   },
@@ -604,7 +604,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   expandLink: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 14,
     textDecorationLine: 'underline',
   },
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   amenityLabel: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 15,
   },
   showAllBtn: {
@@ -644,12 +644,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   bottomPrice: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 20,
     textDecorationLine: 'underline',
   },
   bottomPeriod: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 13,
   },
   ctaPill: {
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   ctaText: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 15,
   },
 });

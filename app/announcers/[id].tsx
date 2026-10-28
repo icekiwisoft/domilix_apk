@@ -18,7 +18,7 @@ import { ListingSkeleton } from '@/components/listing/listing-skeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SearchBar } from '@/components/search/search-bar';
 import { AnnouncerDetailSkeleton } from '@/components/announcer/announcer-detail-skeleton';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAnnouncer } from '@/hooks/queries/use-announcers';
 import { useInfiniteAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
@@ -47,8 +47,8 @@ function StatPill({ value, label }: { value: number; label: string }) {
 }
 const statS = StyleSheet.create({
   col: { flex: 1, alignItems: 'center', gap: 2 },
-  value: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22, lineHeight: 28 },
-  label: { fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, lineHeight: 16 },
+  value: { fontFamily: Fonts.bold, fontSize: 22, lineHeight: 28 },
+  label: { fontFamily: Fonts.medium, fontSize: 11, lineHeight: 16 },
 });
 
 // ── ContactInfoCard ───────────────────────────────────────────────────────────
@@ -95,8 +95,8 @@ const ctS = StyleSheet.create({
     flexShrink: 0,
   },
   text: { flex: 1, minWidth: 0 },
-  label: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 11, lineHeight: 16, marginBottom: 2 },
-  value: { fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 14, lineHeight: 20 },
+  label: { fontFamily: Fonts.regular, fontSize: 11, lineHeight: 16, marginBottom: 2 },
+  value: { fontFamily: Fonts.semiBold, fontSize: 14, lineHeight: 20 },
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -467,7 +467,7 @@ const s = StyleSheet.create({
     gap: Spacing.sm,
   },
   errorTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 18,
     lineHeight: 24,
     textAlign: 'center',
@@ -521,11 +521,11 @@ const s = StyleSheet.create({
   avatarFallback: { alignItems: 'center', justifyContent: 'center' },
   identityCol: { flex: 1, paddingBottom: 4, gap: 2 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  name: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18, lineHeight: 24, flexShrink: 1 },
+  name: { fontFamily: Fonts.bold, fontSize: 18, lineHeight: 24, flexShrink: 1 },
   verifiedRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   verifiedDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#22c55e' },
   bioPreview: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 14,
     lineHeight: 21,
     marginBottom: Spacing.md,
@@ -561,7 +561,7 @@ const s = StyleSheet.create({
 
   // Empty state
   emptyState: { alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xxl },
-  emptyTitle: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 18, lineHeight: 24 },
+  emptyTitle: { fontFamily: Fonts.bold, fontSize: 18, lineHeight: 24 },
 
   // Listings
   listingsCol: { gap: Spacing.md },
@@ -570,12 +570,12 @@ const s = StyleSheet.create({
   // Media gallery
   sectionHeader: { marginBottom: Spacing.md, gap: 3 },
   sectionTag: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 10,
     letterSpacing: 2.2,
     textTransform: 'uppercase',
   },
-  sectionTitle: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22, lineHeight: 28 },
+  sectionTitle: { fontFamily: Fonts.bold, fontSize: 22, lineHeight: 28 },
   mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   mediaThumb: {
     width: '48%',
@@ -593,6 +593,6 @@ const s = StyleSheet.create({
     padding: Spacing.lg,
     gap: Spacing.md,
   },
-  aboutCardTitle: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16, lineHeight: 22 },
+  aboutCardTitle: { fontFamily: Fonts.bold, fontSize: 16, lineHeight: 22 },
   contactCards: { gap: Spacing.sm },
 });

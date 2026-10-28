@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GoogleSignInButton } from '@/components/auth/google-signin-button';
 import { Input } from '@/components/ui/input';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useRegister } from '@/hooks/queries/use-auth-queries';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { registerSchema, type RegisterFormValues } from '@/lib/validators/auth.schema';
@@ -244,12 +244,12 @@ export default function RegisterScreen() {
                 </Pressable>
                 <Text style={[Typography.bodyMd, styles.termsText, { color: C.onSurfaceVariant }]}>
                   {"J'accepte les "}
-                  <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}>
+                  <Text style={{ color: C.primary, fontFamily: Fonts.bold }}>
                     {"conditions d'utilisation"}
                   </Text>
                   {' et la '}
                   <Text
-                    style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
+                    style={{ color: C.primary, fontFamily: Fonts.bold }}
                     onPress={() => Linking.openURL('https://domilix.com/privacy-policy')}
                     accessibilityRole="link"
                   >
@@ -298,7 +298,7 @@ export default function RegisterScreen() {
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
             {'Déjà un compte ? '}
             <Text
-              style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
+              style={{ color: C.primary, fontFamily: Fonts.bold }}
               onPress={() => router.push('/(auth)/login')}
               accessibilityRole="link"
             >

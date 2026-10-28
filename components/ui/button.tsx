@@ -1,7 +1,7 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, type PressableProps, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 
 export type ButtonVariant = 'primary' | 'cta' | 'ghost' | 'icon' | 'outline';
 
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   label: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 14,
     letterSpacing: 1.1,
     textTransform: 'uppercase',

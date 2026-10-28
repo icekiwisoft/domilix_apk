@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GoogleSignInButton } from '@/components/auth/google-signin-button';
 import { Input } from '@/components/ui/input';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useLogin } from '@/hooks/queries/use-auth-queries';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { loginSchema, resolveLoginDto, type LoginFormValues } from '@/lib/validators/auth.schema';
@@ -176,7 +176,7 @@ export default function LoginScreen() {
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
             {'Pas encore de compte ? '}
             <Text
-              style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
+              style={{ color: C.primary, fontFamily: Fonts.bold }}
               onPress={() => router.push('/(auth)/register')}
               accessibilityRole="link"
             >
