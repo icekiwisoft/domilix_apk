@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Button, TextInput } from 'react-native-paper';
@@ -9,7 +9,7 @@ import { CreateStepHeader } from '@/components/forms/create-step-header';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCreateListingStore } from '@/stores/create-listing.store';
-import { GeoapifyService, type GeoapifyAddressSuggestion } from '@/services/geoapify.service';
+import { GeoapifyError, GeoapifyService, type GeoapifyAddressSuggestion } from '@/services/geoapify.service';
 
 function SectionLabel({ children }: { children: string }) {
   const scheme = useColorScheme();
@@ -27,10 +27,14 @@ export default function CreateStep3Screen() {
   const { draft, setDraft } = useCreateListingStore();
   const total = draft.type === 'furniture' ? 4 : 5;
   const [locating, setLocating] = useState(false);
+  // Shown under the GPS button; `openSettings` when the permission can only be
+  // granted from the system settings (Android "Ne plus demander").
+  const [locationError, setLocationError] = useState<{ message: string; openSettings?: boolean } | null>(null);
 
   const canContinue = !!draft.address && !!draft.city && !!draft.description;
 
   function applyLocation(suggestion: GeoapifyAddressSuggestion) {
+    setLocationError(null);
     setDraft({
       address: suggestion.text || suggestion.place_name,
       city: suggestion.city || draft.city,
@@ -46,6 +50,7 @@ export default function CreateStep3Screen() {
   }
 
   function applyCity(suggestion: GeoapifyAddressSuggestion) {
+    setLocationError(null);
     setDraft({
       city: suggestion.city || suggestion.text || suggestion.place_name,
       state: suggestion.state || '',
@@ -59,20 +64,41 @@ export default function CreateStep3Screen() {
 
   async function useMyLocation() {
     setLocating(true);
+    setLocationError(null);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission refusée',
-          "Autorisez l'accès à la localisation dans les paramètres de votre téléphone pour utiliser cette fonctionnalité."
+        setLocationError(
+          canAskAgain
+            ? { message: "Accès à la position refusé. Saisissez l'adresse manuellement ou réessayez." }
+            : {
+                message:
+                  "L'accès à la position est bloqué pour Domilix. Autorisez-le dans les réglages ou saisissez l'adresse manuellement.",
+                openSettings: true,
+              }
         );
         return;
       }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const result = await GeoapifyService.reverseGeocode(loc.coords.longitude, loc.coords.latitude);
-      applyLocation(result);
-    } catch {
-      Alert.alert('Erreur', 'Impossible de récupérer votre position. Réessayez ou saisissez manuellement.');
+
+      let coords: Location.LocationObjectCoords;
+      try {
+        coords = (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })).coords;
+      } catch {
+        setLocationError({
+          message:
+            "Position introuvable. Vérifiez que la localisation du téléphone est activée ou saisissez l'adresse manuellement.",
+        });
+        return;
+      }
+
+      applyLocation(await GeoapifyService.reverseGeocode(coords.longitude, coords.latitude));
+    } catch (err) {
+      setLocationError({
+        message:
+          err instanceof GeoapifyError
+            ? err.message
+            : "Impossible de récupérer votre adresse. Réessayez ou saisissez l'adresse manuellement.",
+      });
     } finally {
       setLocating(false);
     }
@@ -107,6 +133,27 @@ export default function CreateStep3Screen() {
           {locating ? 'Localisation en cours…' : 'Utiliser ma position actuelle'}
         </Button>
 
+        {locationError && (
+          <View
+            style={[styles.locationError, { backgroundColor: C.errorContainer }]}
+            accessibilityLiveRegion="polite"
+          >
+            <Text style={[Typography.bodyMd, { color: C.onErrorContainer }]}>{locationError.message}</Text>
+            {locationError.openSettings && (
+              <Button
+                mode="text"
+                icon="cog-outline"
+                textColor={C.onErrorContainer}
+                onPress={() => Linking.openSettings()}
+                style={styles.settingsBtn}
+                contentStyle={styles.settingsBtnContent}
+              >
+                Ouvrir les réglages
+              </Button>
+            )}
+          </View>
+        )}
+
         <View style={[styles.dividerRow, { marginVertical: Spacing.lg }]}>
           <View style={[styles.dividerLine, { backgroundColor: C.outlineVariant }]} />
           <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginHorizontal: Spacing.sm }]}>ou saisir manuellement</Text>
@@ -118,13 +165,17 @@ export default function CreateStep3Screen() {
           <SectionLabel>Adresse</SectionLabel>
           <AddressAutocomplete
             value={draft.address}
-            onChange={(v) => setDraft({
-              address: v,
-              longitude: undefined,
-              latitude: undefined,
-              location_source: 'manual',
-              hide_on_map: true,
-            })}
+            onChange={(v) => {
+              // Typing the address manually answers the GPS error banner.
+              setLocationError(null);
+              setDraft({
+                address: v,
+                longitude: undefined,
+                latitude: undefined,
+                location_source: 'manual',
+                hide_on_map: true,
+              });
+            }}
             onSelect={applyLocation}
           />
           {draft.latitude != null && draft.longitude != null && (
@@ -211,6 +262,18 @@ const styles = StyleSheet.create({
   },
   textArea: {
     minHeight: 100,
+  },
+  locationError: {
+    marginTop: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: Radius.sm,
+  },
+  settingsBtn: {
+    alignSelf: 'flex-start',
+    marginTop: Spacing.xs,
+  },
+  settingsBtnContent: {
+    minHeight: 48,
   },
   locationStatus: {
     marginTop: Spacing.sm,

@@ -23,6 +23,15 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: 🔑 Check required build variables
+        env:
+          EXPO_PUBLIC_GEOAPIFY_API_KEY: ${{ secrets.EXPO_PUBLIC_GEOAPIFY_API_KEY }}
+        run: |
+          if [ -z "$EXPO_PUBLIC_GEOAPIFY_API_KEY" ]; then
+            echo "::error title=Missing secret::EXPO_PUBLIC_GEOAPIFY_API_KEY is empty. Add it under Settings > Secrets and variables > Actions; without it, location and address search fail in the app."
+            exit 1
+          fi
+
       - name: 🏗 Checkout
         uses: actions/checkout@v4
 
@@ -76,7 +85,10 @@ jobs:
       - name: 🚀 Build APK
         run: eas build --platform android --profile preview --non-interactive --local
         env:
-          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          # An unset secret would expand to "" and override the app's fallback
+          # (`??` keeps an empty string), so default to the production API here.
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || 'https://api.domilix.com' }}
+          EXPO_PUBLIC_GEOAPIFY_API_KEY: ${{ secrets.EXPO_PUBLIC_GEOAPIFY_API_KEY }}
 
       - name: 📥 Get APK filename
         id: get-apk

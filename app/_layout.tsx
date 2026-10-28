@@ -20,6 +20,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DomilixThemeProvider } from '@/providers/theme.provider';
 import { QueryProvider } from '@/providers/query.provider';
 import { AuthProvider } from '@/providers/auth.provider';
+import { useAuthStore } from '@/stores/auth.store';
 import { ToastProvider } from '@/components/ui/toast';
 
 SplashScreen.preventAutoHideAsync();
@@ -37,9 +38,13 @@ export default function RootLayout() {
     PlusJakartaSans_700Bold,
   });
 
+  // Keep the splash until the stored session has been read (AuthProvider), so
+  // a signed-in user never sees the login screen flash at startup.
+  const authHydrated = useAuthStore((s) => s.hydrated);
+
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+    if (fontsLoaded && authHydrated) SplashScreen.hideAsync();
+  }, [fontsLoaded, authHydrated]);
 
   if (!fontsLoaded) return null;
 
