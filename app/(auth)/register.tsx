@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { isAxiosError } from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -51,6 +52,34 @@ function CameroonFlag() {
   );
 }
 
+/**
+ * Field errors returned by POST /auth/register (backend auth.service.ts):
+ * 400 { errors: { phone_number: ['The phone number has already been taken.'] } },
+ * { errors: { email: ['The email has already been taken.'] } } and
+ * { errors: { phone_number: ['Le numero de telephone est invalide.'] } }.
+ * Anything else (other 4xx/5xx, network) keeps the generic banner.
+ */
+function serverFieldErrors(error: unknown): { phone?: string; email?: string } {
+  if (!isAxiosError(error) || error.response?.status !== 400) return {};
+  const fields = (error.response.data as { errors?: Record<string, unknown> } | undefined)?.errors;
+  if (!fields) return {};
+  const first = (v: unknown) => (Array.isArray(v) && typeof v[0] === 'string' ? (v[0] as string) : undefined);
+  const out: { phone?: string; email?: string } = {};
+  const phone = first(fields.phone_number);
+  if (phone) {
+    out.phone = /already been taken/i.test(phone)
+      ? 'Ce numéro est déjà utilisé. Connectez-vous ou utilisez un autre numéro.'
+      : 'Ce numéro de téléphone est invalide.';
+  }
+  const email = first(fields.email);
+  if (email) {
+    out.email = /already been taken/i.test(email)
+      ? 'Cette adresse e-mail est déjà utilisée. Connectez-vous ou utilisez une autre adresse.'
+      : 'Cette adresse e-mail est invalide.';
+  }
+  return out;
+}
+
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const { scrollRef, targetRef, onScroll, pastBanner } = useKeyboardReveal(Sizes.authBannerShort);
@@ -72,6 +101,7 @@ export default function RegisterScreen() {
     resolver: zodResolver(registerSchema),
     defaultValues: { name: '', email: '', phone: '', password: '', terms: undefined as any },
   });
+  const serverErrors = serverFieldErrors(register.error);
   const passwordLongEnough = watch('password').length >= MIN_PASSWORD;
 
   function onSubmit(data: RegisterFormValues) {
@@ -162,7 +192,7 @@ export default function RegisterScreen() {
                   submitBehavior="submit"
                   onSubmitEditing={() => emailRef.current?.focus()}
                   accessibilityLabel="Numéro de téléphone, après l'indicatif +237"
-                  error={errors.phone?.message}
+                  error={errors.phone?.message ?? serverErrors.phone}
                   prefix={
                     <>
                       <CameroonFlag />
@@ -200,7 +230,7 @@ export default function RegisterScreen() {
                   returnKeyType="next"
                   submitBehavior="submit"
                   onSubmitEditing={() => passwordRef.current?.focus()}
-                  error={errors.email?.message}
+                  error={errors.email?.message ?? serverErrors.email}
                 />
               )}
             />
@@ -309,7 +339,7 @@ export default function RegisterScreen() {
               )}
             />
 
-            {register.error && (
+            {register.error && !serverErrors.phone && !serverErrors.email && (
               <View
                 style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}
                 accessibilityLiveRegion="polite"
