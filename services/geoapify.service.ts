@@ -126,9 +126,19 @@ async function request(path: string, params: Record<string, string | number>, si
     throw geoapifyError('network');
   }
   if (response.status === 429) throw geoapifyError('quota');
+  // Geoapify answers 401/403 to an invalid, revoked or restricted key:
+  // retrying cannot help, it is the same case as a key missing from the build.
+  if (response.status === 401 || response.status === 403) throw geoapifyError('missing_key');
   if (!response.ok) throw geoapifyError('unavailable');
 
-  return response.json() as Promise<GeoapifyResponse>;
+  try {
+    return (await response.json()) as GeoapifyResponse;
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    // A truncated or non-JSON body (proxy page, captive portal) must not
+    // surface as a raw SyntaxError.
+    throw geoapifyError('unavailable');
+  }
 }
 
 export const GeoapifyService = {
