@@ -30,8 +30,14 @@ export function OtpInput({ value, onChange, error }: OtpInputProps) {
   // One slot per digit, a space for an empty one (padding with '' added nothing,
   // so no cell was rendered while the code was empty).
   const digits = value.padEnd(OTP_LENGTH, ' ').slice(0, OTP_LENGTH).split('');
+  const isEmpty = (index: number) => digits[index] === ' ';
 
   function handleChange(text: string, index: number) {
+    // Typing over a filled cell gives the old and the new digit (e.g. "57"):
+    // keep the new one instead of reading it as a pasted code.
+    if (text.length === 2 && !isEmpty(index) && text.includes(digits[index])) {
+      text = text[0] === digits[index] ? text[1] : text[0];
+    }
     // Handle paste: text.length > 1
     if (text.length > 1) {
       const pasted = text.replace(/\D/g, '').slice(0, OTP_LENGTH);
@@ -53,7 +59,7 @@ export function OtpInput({ value, onChange, error }: OtpInputProps) {
     e: NativeSyntheticEvent<TextInputKeyPressEventData>,
     index: number
   ) {
-    if (e.nativeEvent.key === 'Backspace' && !digits[index] && index > 0) {
+    if (e.nativeEvent.key === 'Backspace' && isEmpty(index) && index > 0) {
       const next = digits.map((d, i) => (i === index - 1 ? '' : d));
       onChange(next.join('').replace(/ /g, ''));
       refs.current[index - 1]?.focus();
@@ -64,7 +70,7 @@ export function OtpInput({ value, onChange, error }: OtpInputProps) {
     <View style={styles.row}>
       {digits.map((digit, index) => {
         const isFocusedSlot = false; // focus state tracked by native
-        const filled = digit !== ' ';
+        const filled = !isEmpty(index);
         const borderColor = error ? errorColor : filled ? primary : outlineVariant;
         const borderWidth = filled ? 2 : 1;
         return (
