@@ -36,6 +36,17 @@ function getIconConfig(type: string, C: (typeof Colors)['light'] | (typeof Color
       return { icon: 'celebration', bg: C.tertiaryContainer, color: C.onTertiaryContainer };
     case 'new_login':
       return { icon: 'login', bg: C.surfaceContainerHigh, color: C.onSurfaceVariant };
+    // Search alerts & engagement
+    case 'search_alert_match':
+      return { icon: 'notifications-active', bg: C.primaryFixed, color: C.primary };
+    case 'domicoin_reminder':
+      return { icon: 'toll', bg: C.primaryFixed, color: C.primary };
+    case 'inactivity_reminder':
+      return { icon: 'waving-hand', bg: C.tertiaryContainer, color: C.onTertiaryContainer };
+    // Announcer account
+    case 'announcer_account_activated':
+    case 'announcer_account_reactivated':
+      return { icon: 'storefront', bg: C.primaryFixed, color: C.primary };
     // Announcer subscription
     case 'announcer_subscription_assigned':
       return { icon: 'workspace-premium', bg: C.primaryFixed, color: C.primary };

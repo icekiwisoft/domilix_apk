@@ -59,4 +59,24 @@ export const AuthService = {
     new_password: string;
     new_password_confirmation: string;
   }) => client.post('/auth/changePassword', dto).then((r) => r.data),
+
+  // Instantly activates the announcer profile of the current user (no
+  // review). The optional CNI verification is a separate request, see
+  // AnnouncerRequestsService.
+  becomeAnnouncer: () =>
+    client.post<{ message?: string }>('/auth/become-announcer').then((r) => r.data),
+
+  // Soft-deletes the account; the backend asks for the current password.
+  deleteAccount: (password: string) =>
+    client
+      .delete<{ message: string }>('/auth/me', { data: { password } })
+      .then((r) => r.data),
+
+  sendEmailVerification: () =>
+    client.post<{ message?: string }>('/auth/sendEmailVerification').then((r) => r.data),
+
+  verifyEmail: (verificationCode: string) =>
+    client
+      .post<{ message?: string }>('/auth/verifyEmail', { verification_code: verificationCode })
+      .then((r) => r.data),
 };

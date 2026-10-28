@@ -2,9 +2,10 @@ import type { Announcer } from './announcer';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type AnnounceType = 'realestate' | 'furniture';
+export type AnnounceType = 'realestate' | 'furniture' | 'land';
 export type AdType = 'location' | 'sale';
 export type Standing = 'standard' | 'confort' | 'haut_standing';
+export type LandUse = 'residential' | 'agricultural' | 'commercial' | 'industrial';
 // Note: category type uses 'house' (not 'realestate') per the backend schema
 export type CategoryType = 'furniture' | 'house';
 
@@ -57,10 +58,36 @@ export interface Announce {
   state?: string;
   country: string;
   postal_code?: string;
+  zip?: string;
   contact_phone?: string;
   contact_email?: string;
   size?: number;
   bedrooms?: number;
+  // Field names used by the current API (the legacy names above are kept for
+  // screens that predate the API change).
+  neighbourhood?: string;
+  bedroom?: number;
+  toilet?: number;
+  mainroom?: number;
+  kitchen?: number;
+  caution?: number;
+  // Furniture
+  condition?: 'used' | 'new' | null;
+  height?: number | null;
+  width?: number | null;
+  length?: number | null;
+  weight?: number | null;
+  location_source?: 'auto' | 'manual' | 'mixed' | null;
+  latitude?: number;
+  longitude?: number;
+  views?: number;
+  is_owner?: boolean;
+  publisher_type?: 'AGENT' | 'LANDLORD' | 'OWNER';
+  // Land listings
+  land_use?: LandUse | null;
+  land_title?: boolean;
+  // Domicoins needed to unlock the contact (6 for land, 1 otherwise)
+  unlock_cost?: number;
   standing?: Standing;
   // Amenities (boolean flags — present on detail endpoint)
   wifi?: boolean;
@@ -70,6 +97,9 @@ export interface Announce {
   equipped_kitchen?: boolean;
   gate?: boolean;
   pool?: boolean;
+  garage?: boolean;
+  furnitured?: boolean;
+  garden?: boolean;
   // Relations
   category_id?: string;
   category?: Category;
@@ -97,6 +127,11 @@ export interface AnnounceFilters {
   bedroom_min?: number;
   bedroom_max?: number;
   amenities?: string[];
+  // Land filters
+  size_min?: number;
+  size_max?: number;
+  land_use?: LandUse;
+  land_title?: boolean;
   search?: string;
   orderBy?: string;
   AnnouncerId?: string;

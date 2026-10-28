@@ -4,12 +4,18 @@ import { FilterBar } from '@/components/search/filter-bar';
 import { ResultsCount } from '@/components/search/results-count';
 import { SearchBar } from '@/components/search/search-bar';
 import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useToast } from '@/components/ui/toast';
+import { useCreateAlert } from '@/hooks/queries/use-alerts';
 import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { announceFiltersToAlertFilters } from '@/lib/alert-helpers';
+import { getApiErrorMessage } from '@/lib/api-error';
+import { SearchHistoryService } from '@/services/search-history.service';
+import { useAuthStore } from '@/stores/auth.store';
 import { useFilterStore } from '@/stores/filter.store';
 import type { AdType, AnnounceType } from '@/types/announce';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   RefreshControl,
@@ -34,9 +40,18 @@ export default function ExploreScreen() {
 
   const { filters, setFilter, clearFilters } = useFilterStore();
   const toggleLike = useToggleLike();
+  const toast = useToast();
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const createAlert = useCreateAlert();
+  const lastLoggedKey = useRef<string | null>(null);
+
+  // Land-only filters must not leak into real-estate / furniture searches.
+  const { size_min, size_max, land_use, land_title, ...commonFilters } = filters;
+  const queryFilters =
+    announceType === 'land' ? { ...commonFilters, size_min, size_max, land_use, land_title } : commonFilters;
 
   const { data, isLoading, isFetching, refetch } = useAnnounces({
-    ...filters,
+    ...queryFilters,
     type: announceType,
     ad_type: adType,
     search: search.trim() || undefined,
@@ -46,6 +61,45 @@ export default function ExploreScreen() {
   const announces = data?.data ?? [];
   const total = data?.meta.total ?? 0;
   const hasMore = data ? data.meta.current_page < data.meta.last_page : false;
+
+  // Record the search (type, text, filters, result count) once the user has
+  // stopped typing and the results are in, so admins can see what people look
+  // for. Skipped for pagination and never blocks the UI.
+  useEffect(() => {
+    if (!data || isFetching || page !== 1) return;
+    const key = JSON.stringify([announceType, adType, search.trim(), filters]);
+    if (key === lastLoggedKey.current) return;
+    const timer = setTimeout(() => {
+      lastLoggedKey.current = key;
+      void SearchHistoryService.log({
+        type: announceType,
+        search_text: search.trim() || undefined,
+        filters: { ...filters, search: search.trim() || undefined, ad_type: adType },
+        results_count: total,
+      });
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [data, isFetching, page, announceType, adType, search, filters, total]);
+
+  function handleCreateAlert() {
+    if (!accessToken) {
+      router.push('/(auth)/login');
+      return;
+    }
+    if (announceType === 'land') return;
+    createAlert.mutate(
+      {
+        requestType: announceType,
+        description: search.trim() ? `Recherche à ${search.trim()}` : 'Alerte de recherche',
+        filters: announceFiltersToAlertFilters(filters, { search, ad_type: adType }),
+      },
+      {
+        onSuccess: () =>
+          toast.show('Votre alerte est active. Nous vous préviendrons dès qu\'une annonce correspondra.', 'success'),
+        onError: (err) => toast.show(getApiErrorMessage(err, "Impossible de créer l'alerte pour le moment."), 'error'),
+      }
+    );
+  }
 
   function handleFilterPress() {
     router.push('/(modals)/filter-sheet');
@@ -71,9 +125,10 @@ export default function ExploreScreen() {
             buttons={[
               { value: 'realestate', label: 'Immobilier' },
               { value: 'furniture', label: 'Mobilier' },
+              { value: 'land', label: 'Terrain' },
             ]}
           />
-          {announceType === 'realestate' && (
+          {announceType !== 'furniture' && (
             <SegmentedButtons
               style={styles.segmented}
               value={adType}
@@ -127,6 +182,23 @@ export default function ExploreScreen() {
               <Button mode="text" onPress={clearFilters}>
                 Réinitialiser les filtres
               </Button>
+              {announceType !== 'land' && (
+                <View style={styles.alertBox}>
+                  <Button
+                    mode="contained"
+                    icon="bell-plus-outline"
+                    onPress={handleCreateAlert}
+                    loading={createAlert.isPending}
+                    disabled={createAlert.isPending}
+                  >
+                    Créer une alerte
+                  </Button>
+                  <Text style={[Typography.caption, { color: C.onSurfaceVariant, textAlign: 'center', lineHeight: 18 }]}>
+                    Vous serez averti par email et dans Domilix lorsqu&apos;une nouvelle annonce correspondra à ces critères,
+                    tant que l&apos;alerte restera active.
+                  </Text>
+                </View>
+              )}
             </View>
           )
         }
@@ -193,5 +265,10 @@ const styles = StyleSheet.create({
   },
   loadMore: {
     marginTop: Spacing.lg,
+  },
+  alertBox: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
   },
 });

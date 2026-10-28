@@ -6,7 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe } from '@/hooks/queries/use-auth-queries';
-import { useUnlockAnnounce } from '@/hooks/queries/use-announces';
+import { useAnnounce, useUnlockAnnounce } from '@/hooks/queries/use-announces';
 import { useToast } from '@/components/ui/toast';
 
 export default function UnlockConfirmScreen() {
@@ -14,11 +14,15 @@ export default function UnlockConfirmScreen() {
   const C = Colors[scheme ?? 'light'];
   const { announceId } = useLocalSearchParams<{ announceId: string }>();
   const { data: me } = useMe();
+  const { data: announce } = useAnnounce(announceId ?? '');
   const unlockAnnounce = useUnlockAnnounce();
   const toast = useToast();
 
+  // Land listings cost more Domicoins than other ads; the API exposes the cost.
+  const cost = announce?.unlock_cost ?? 1;
+  const costLabel = `${cost} crédit${cost > 1 ? 's' : ''}`;
   const userCredits = me?.credits ?? 0;
-  const hasEnoughCredits = userCredits >= 1;
+  const hasEnoughCredits = userCredits >= cost;
 
   function handleConfirm() {
     if (!announceId || !hasEnoughCredits) return;
@@ -53,7 +57,7 @@ export default function UnlockConfirmScreen() {
         </Text>
         <Text style={[Typography.bodyMd, styles.body, { color: C.onSurfaceVariant }]}>
           Déverrouiller cette annonce utilisera{' '}
-          <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}>1 crédit</Text>.
+          <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}>{costLabel}</Text>.
           {'\n'}Il vous reste{' '}
           <Text style={{
             color: hasEnoughCredits ? C.primary : C.error,
@@ -100,7 +104,7 @@ export default function UnlockConfirmScreen() {
             style={styles.btn}
             contentStyle={styles.btnContent}
           >
-            Confirmer (1 crédit)
+            Confirmer ({costLabel})
           </Button>
         </View>
       </View>

@@ -138,3 +138,37 @@ export function useChangePassword() {
     mutationFn: AuthService.changePassword,
   });
 }
+
+export function useBecomeAnnouncer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: AuthService.becomeAnnouncer,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['me'] }),
+  });
+}
+
+export function useDeleteAccount() {
+  const { clearAuth } = useAuthStore.getState();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (password: string) => AuthService.deleteAccount(password),
+    onSuccess: () => {
+      clearAuth();
+      qc.clear();
+    },
+  });
+}
+
+export function useSendEmailVerification() {
+  return useMutation({
+    mutationFn: AuthService.sendEmailVerification,
+  });
+}
+
+export function useVerifyEmail() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (code: string) => AuthService.verifyEmail(code),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['me'] }),
+  });
+}

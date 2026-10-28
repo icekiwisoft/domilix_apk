@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { AnnouncesService } from '@/services/announces.service';
+import { buildCreatePayload } from '@/lib/listing-payload';
+import { UploadsService, type PickedFile } from '@/services/uploads.service';
+import type { CreateListingDraft } from '@/stores/create-listing.store';
 import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
+import type { UploadResponse } from '@/types/verification';
 
 function flipLiked(id: string) {
   return (a: Announce): Announce =>
@@ -40,10 +44,40 @@ export function useAnnounce(id: string) {
   });
 }
 
+export interface UploadProgress {
+  current: number;
+  total: number;
+  fileName: string;
+  percent: number;
+}
+
+// Same sequence as the website: upload every photo/video one by one (so a
+// large video cannot stall the others), then create the listing from JSON.
 export function useCreateAnnounce() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (formData: FormData) => AnnouncesService.create(formData),
+    mutationFn: async ({
+      draft,
+      onProgress,
+    }: {
+      draft: CreateListingDraft;
+      onProgress?: (progress: UploadProgress) => void;
+    }) => {
+      const uploaded: UploadResponse[] = [];
+      const total = draft.medias.length;
+      for (const [index, media] of draft.medias.entries()) {
+        const report = (filePercent: number) =>
+          onProgress?.({
+            current: index + 1,
+            total,
+            fileName: media.name,
+            percent: Math.round(((index + filePercent / 100) / total) * 100),
+          });
+        report(0);
+        uploaded.push(await UploadsService.upload('media', media, report));
+      }
+      return AnnouncesService.create(buildCreatePayload(draft, uploaded));
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['announces'] });
       qc.invalidateQueries({ queryKey: ['announces-infinite'] });
@@ -117,8 +151,37 @@ export function useUnlockAnnounce() {
 export function useUpdateAnnounce() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
-      AnnouncesService.update(id, formData),
+    mutationFn: async ({
+      id,
+      payload,
+      newMedia,
+      keepMediaIds,
+      onProgress,
+    }: {
+      id: string;
+      payload: Record<string, unknown>;
+      newMedia: PickedFile[];
+      keepMediaIds: string[];
+      onProgress?: (progress: UploadProgress) => void;
+    }) => {
+      const uploadedIds: string[] = [];
+      for (const [index, file] of newMedia.entries()) {
+        const report = (filePercent: number) =>
+          onProgress?.({
+            current: index + 1,
+            total: newMedia.length,
+            fileName: file.name,
+            percent: Math.round(((index + filePercent / 100) / newMedia.length) * 100),
+          });
+        report(0);
+        const uploaded = await UploadsService.upload('media', file, report);
+        uploadedIds.push(uploaded.id);
+      }
+      return AnnouncesService.update(id, {
+        ...payload,
+        media_ids: [...keepMediaIds, ...uploadedIds],
+      });
+    },
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: ['announce', id] });
       qc.invalidateQueries({ queryKey: ['announces'] });
@@ -156,5 +219,12 @@ export function useCities(params?: Parameters<typeof AnnouncesService.cities>[0]
     queryKey: ['cities', params],
     queryFn: () => AnnouncesService.cities(params),
     staleTime: 1000 * 60 * 10,
+  });
+}
+
+export function useReportAnnounce() {
+  return useMutation({
+    mutationFn: ({ id, reason, details }: { id: string; reason: string; details?: string }) =>
+      AnnouncesService.report(id, { reason, details }),
   });
 }

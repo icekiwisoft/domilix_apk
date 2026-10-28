@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Image,
   Linking,
@@ -18,6 +18,7 @@ import { Button, IconButton } from 'react-native-paper';
 import { ListingGallery } from '@/components/listing/listing-gallery';
 import { AnnouncerCard } from '@/components/announcer/announcer-card';
 import { AnnounceDetailSkeleton } from '@/components/listing/announce-detail-skeleton';
+import { ReportDialog } from '@/components/listing/report-dialog';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
@@ -25,8 +26,16 @@ import {
   useToggleLike,
   useAnnounces,
 } from '@/hooks/queries/use-announces';
+import { AnnouncesService } from '@/services/announces.service';
 import { useAuthStore } from '@/stores/auth.store';
-import type { Announce } from '@/types/announce';
+import type { Announce, LandUse } from '@/types/announce';
+
+const LAND_USE_LABELS: Record<LandUse, string> = {
+  residential: 'Habitation',
+  agricultural: 'Agricole',
+  commercial: 'Commercial',
+  industrial: 'Industriel',
+};
 
 // ─── Amenities ────────────────────────────────────────────────────────────────
 const AMENITIES: {
@@ -61,6 +70,13 @@ export default function AnnounceDetailScreen() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const [expanded, setExpanded] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
+  const [reportVisible, setReportVisible] = useState(false);
+
+  // Count one view per opened listing (deduplicated server-side, non-blocking).
+  const announceId = announce?.id;
+  useEffect(() => {
+    if (announceId) AnnouncesService.markSeen(String(announceId));
+  }, [announceId]);
 
   const GALLERY_H = insets.top + 320;
 
@@ -100,8 +116,9 @@ export default function AnnounceDetailScreen() {
   const locationLine = [announce.category?.name, announce.city, announce.country]
     .filter(Boolean)
     .join(', ');
+  const bedroomCount = announce.bedroom ?? announce.bedrooms;
   const statsLine = [
-    announce.bedrooms != null ? `${announce.bedrooms} chambre${announce.bedrooms > 1 ? 's' : ''}` : null,
+    bedroomCount != null ? `${bedroomCount} chambre${bedroomCount > 1 ? 's' : ''}` : null,
     announce.size != null ? `${announce.size} m²` : null,
   ]
     .filter(Boolean)
@@ -125,6 +142,17 @@ export default function AnnounceDetailScreen() {
         params: { announceId: announce!.id },
       });
     }
+  }
+
+  function handleReport() {
+    if (!accessToken) {
+      router.push({
+        pathname: '/(auth)/login',
+        params: { redirect: `/announces/${announce!.id}` },
+      });
+      return;
+    }
+    setReportVisible(true);
   }
 
   function handleShare() {
@@ -177,6 +205,17 @@ export default function AnnounceDetailScreen() {
               size={20}
               style={styles.iconBtn}
             />
+            {!announce.is_owner && (
+              <IconButton
+                icon="flag-outline"
+                accessibilityLabel="Signaler l'annonce"
+                onPress={handleReport}
+                iconColor="#222"
+                containerColor="rgba(255,255,255,0.95)"
+                size={20}
+                style={styles.iconBtn}
+              />
+            )}
             <IconButton
               icon={announce.liked ? 'heart' : 'heart-outline'}
               accessibilityLabel={announce.liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
@@ -274,7 +313,7 @@ export default function AnnounceDetailScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.hostName, { color: C.onSurface }]}>Annoncé par {displayName}</Text>
               <Text style={[styles.hostSub, { color: C.onSurfaceVariant }]}>
-                Certifié{announcerListingsCount > 0 ? ` · ${announcerListingsCount} annonce${announcerListingsCount > 1 ? 's' : ''}` : ''}
+                {announce.announcer?.verified ? 'Certifié' : 'Annonceur'}{announcerListingsCount > 0 ? ` · ${announcerListingsCount} annonce${announcerListingsCount > 1 ? 's' : ''}` : ''}
               </Text>
             </View>
           </Pressable>
@@ -341,6 +380,38 @@ export default function AnnounceDetailScreen() {
               />
             </Pressable>
           </View>
+
+          {/* ── Land characteristics ── */}
+          {announce.type === 'land' && (
+            <>
+              <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: C.onSurface }]}>Caractéristiques du terrain</Text>
+                {announce.size != null && (
+                  <View style={styles.amenityRow}>
+                    <MaterialIcons name="straighten" size={22} color={C.onSurface} />
+                    <Text style={[styles.amenityLabel, { color: C.onSurface }]}>
+                      Surface : {announce.size.toLocaleString('fr-FR')} m²
+                    </Text>
+                  </View>
+                )}
+                {!!announce.land_use && (
+                  <View style={styles.amenityRow}>
+                    <MaterialIcons name="landscape" size={22} color={C.onSurface} />
+                    <Text style={[styles.amenityLabel, { color: C.onSurface }]}>
+                      Usage : {LAND_USE_LABELS[announce.land_use]}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.amenityRow}>
+                  <MaterialIcons name="description" size={22} color={C.onSurface} />
+                  <Text style={[styles.amenityLabel, { color: C.onSurface }]}>
+                    Titre foncier : {announce.land_title ? 'Oui' : 'Non précisé'}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
 
           {/* ── Amenities ── */}
           {announce.type === 'realestate' && activeAmenities.length > 0 && (
@@ -412,6 +483,12 @@ export default function AnnounceDetailScreen() {
           {announce.unlocked ? 'Contacter' : 'Débloquer'}
         </Button>
       </View>
+
+      <ReportDialog
+        visible={reportVisible}
+        announceId={String(announce.id)}
+        onDismiss={() => setReportVisible(false)}
+      />
     </View>
   );
 }

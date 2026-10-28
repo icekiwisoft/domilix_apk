@@ -2,7 +2,11 @@ export interface Notification {
   id: string;
   type: string;
   title: string;
+  // Text of the notification. The API field is `message`; the service maps it
+  // to `body` so screens keep a single field to read.
   body: string;
+  // In-app path the notification points to (e.g. /settings?tab=announcer)
+  link?: string | null;
   data?: Record<string, unknown>;
   read_at: string | null;
   created_at: string;

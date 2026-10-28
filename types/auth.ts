@@ -4,6 +4,9 @@ export interface User {
   email?: string;
   phone_number?: string;
   phone_verified: boolean;
+  email_verified?: boolean;
+  announcer_verified?: boolean;
+  avatar?: string | null;
   is_admin: boolean;
   is_announcer?: boolean;
   credits?: number;

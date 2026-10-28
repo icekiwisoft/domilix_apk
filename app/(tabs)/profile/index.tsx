@@ -152,9 +152,9 @@ export default function ProfileScreen() {
           )}
           {isAnnouncer && (
             <View style={[styles.announcerBadge, { backgroundColor: C.primary + '15', borderColor: C.primary + '30' }]}>
-              <MaterialIcons name="verified" size={14} color={C.primary} />
+              <MaterialIcons name={user?.announcer_verified ? 'verified' : 'storefront'} size={14} color={C.primary} />
               <Text style={[Typography.caption, { color: C.primary, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
-                Annonceur certifié
+                {user?.announcer_verified ? 'Annonceur certifié' : 'Annonceur'}
               </Text>
             </View>
           )}
@@ -182,6 +182,12 @@ export default function ProfileScreen() {
             label="Mes favoris"
             onPress={() => router.push('/(tabs)/favorites')}
           />
+          <MenuRow
+            icon="notifications-none"
+            label="Mes alertes"
+            subtitle="Soyez averti des nouvelles annonces"
+            onPress={() => router.push('/profile/alerts')}
+          />
         </MenuSection>
 
         {isAnnouncer && (
@@ -197,6 +203,12 @@ export default function ProfileScreen() {
               label="Profil annonceur"
               subtitle="Modifier vos informations"
               onPress={() => router.push('/profile/announcer-profile')}
+            />
+            <MenuRow
+              icon="verified-user"
+              label="Vérification du profil"
+              subtitle={user?.announcer_verified ? 'Profil vérifié' : 'Obtenir le badge annonceur vérifié'}
+              onPress={() => router.push('/profile/become-announcer')}
             />
             <MenuRow
               icon="add-circle-outline"
@@ -219,9 +231,16 @@ export default function ProfileScreen() {
             <MenuRow
               icon="add-business"
               label="Devenir annonceur"
-              onPress={() => router.push('/profile/announcer-profile')}
+              subtitle="Publiez vos biens sur Domilix"
+              onPress={() => router.push('/profile/become-announcer')}
             />
           )}
+          <MenuRow
+            icon="school"
+            label="Statut étudiant"
+            subtitle="Faire vérifier votre statut"
+            onPress={() => router.push('/profile/student-verification')}
+          />
           <MenuRow
             icon="settings"
             label="Paramètres"

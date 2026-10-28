@@ -2,16 +2,24 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, IconButton, SegmentedButtons } from 'react-native-paper';
+import { Button, Dialog, IconButton, Portal, SegmentedButtons } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { Input } from '@/components/ui/input';
+import { OtpInput } from '@/components/ui/otp-input';
 import { useToast } from '@/components/ui/toast';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useChangePassword } from '@/hooks/queries/use-auth-queries';
+import {
+  useChangePassword,
+  useDeleteAccount,
+  useMe,
+  useSendEmailVerification,
+  useVerifyEmail,
+} from '@/hooks/queries/use-auth-queries';
+import { getApiErrorMessage } from '@/lib/api-error';
 import { changePasswordSchema, type ChangePasswordFormValues } from '@/lib/validators/auth.schema';
 import { useThemeStore, type ThemePreference } from '@/stores/theme.store';
 
@@ -31,6 +39,15 @@ export default function SettingsScreen() {
   const toast = useToast();
   const { preference, setPreference } = useThemeStore();
   const changePassword = useChangePassword();
+  const { data: me } = useMe();
+  const sendEmailVerification = useSendEmailVerification();
+  const verifyEmail = useVerifyEmail();
+  const deleteAccount = useDeleteAccount();
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
+  const [emailCode, setEmailCode] = useState('');
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const needsEmailVerification = !!me?.email && me.email_verified === false;
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -63,6 +80,37 @@ export default function SettingsScreen() {
         },
       }
     );
+  }
+
+  function handleSendEmailCode() {
+    sendEmailVerification.mutate(undefined, {
+      onSuccess: () => {
+        setEmailCodeSent(true);
+        toast.show('Code envoyé. Consultez votre boîte email.', 'success');
+      },
+      onError: (err) => toast.show(getApiErrorMessage(err, "Impossible d'envoyer le code."), 'error'),
+    });
+  }
+
+  function handleVerifyEmail() {
+    verifyEmail.mutate(emailCode, {
+      onSuccess: () => {
+        setEmailCode('');
+        setEmailCodeSent(false);
+        toast.show('Email vérifié avec succès.', 'success');
+      },
+      onError: (err) => toast.show(getApiErrorMessage(err, 'Code de vérification incorrect.'), 'error'),
+    });
+  }
+
+  function handleDeleteAccount() {
+    deleteAccount.mutate(deletePassword, {
+      onSuccess: () => {
+        setDeleteVisible(false);
+        router.replace('/(auth)');
+      },
+      onError: (err) => toast.show(getApiErrorMessage(err, 'Mot de passe incorrect ou erreur serveur.'), 'error'),
+    });
   }
 
   return (
@@ -101,6 +149,37 @@ export default function SettingsScreen() {
               ]}
             />
           </View>
+
+          {/* Vérification de l'email */}
+          {needsEmailVerification && (
+            <View style={styles.section}>
+              <SectionLabel>Vérification de l&apos;email</SectionLabel>
+              <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, lineHeight: 22 }]}>
+                Votre adresse {me?.email} n&apos;est pas encore vérifiée. Un code à 6 chiffres vous sera envoyé.
+              </Text>
+              {emailCodeSent && (
+                <View style={{ gap: Spacing.md }}>
+                  <OtpInput value={emailCode} onChange={setEmailCode} />
+                  <Button
+                    mode="contained"
+                    onPress={handleVerifyEmail}
+                    loading={verifyEmail.isPending}
+                    disabled={verifyEmail.isPending || emailCode.length < 6}
+                  >
+                    Vérifier
+                  </Button>
+                </View>
+              )}
+              <Button
+                mode={emailCodeSent ? 'text' : 'contained'}
+                onPress={handleSendEmailCode}
+                loading={sendEmailVerification.isPending}
+                disabled={sendEmailVerification.isPending}
+              >
+                {emailCodeSent ? 'Renvoyer le code' : 'Envoyer le code'}
+              </Button>
+            </View>
+          )}
 
           {/* Sécurité */}
           <View style={styles.section}>
@@ -193,8 +272,58 @@ export default function SettingsScreen() {
               </Button>
             </View>
           </View>
+
+          {/* Suppression du compte */}
+          <View style={styles.section}>
+            <SectionLabel>Supprimer mon compte</SectionLabel>
+            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, lineHeight: 22 }]}>
+              Cette action désactive votre compte Domilix. Vous serez déconnecté immédiatement et ne pourrez plus
+              accéder à votre espace.
+            </Text>
+            <Button
+              mode="outlined"
+              textColor={C.error}
+              style={{ borderColor: C.error }}
+              onPress={() => {
+                setDeletePassword('');
+                setDeleteVisible(true);
+              }}
+            >
+              Supprimer mon compte
+            </Button>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Portal>
+        <Dialog visible={deleteVisible} onDismiss={() => setDeleteVisible(false)}>
+          <Dialog.Title>Confirmer la suppression</Dialog.Title>
+          <Dialog.Content style={{ gap: Spacing.md }}>
+            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
+              Saisissez votre mot de passe pour supprimer votre compte Domilix. Cette action est irréversible.
+            </Text>
+            <Input
+              label="Votre mot de passe"
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button mode="text" onPress={() => setDeleteVisible(false)}>Annuler</Button>
+            <Button
+              mode="text"
+              textColor={C.error}
+              onPress={handleDeleteAccount}
+              loading={deleteAccount.isPending}
+              disabled={deleteAccount.isPending || !deletePassword}
+            >
+              Supprimer définitivement
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 }

@@ -1,74 +1,123 @@
 import { create } from 'zustand';
-import type { AdType, AnnounceType, Standing } from '@/types/announce';
+import type { AmenityKey } from '@/constants/listing';
+import type { PickedMedia } from '@/services/uploads.service';
+import type { AdType, LandUse, Standing } from '@/types/announce';
 
+export type CreatableType = 'realestate' | 'furniture' | 'land';
+
+// Same fields as the draft of the domilix.com publish dialog.
 export interface CreateListingDraft {
-  type: AnnounceType;
-  ad_type: AdType;
+  // Step 1 — type, category, mode
+  type: CreatableType;
   category_id: string;
-  medias: string[];
-  price: string;
-  devise: string;
-  description: string;
+  ad_type: AdType;
+
+  // Step 2 — characteristics
+  bedroom: number;
+  mainroom: number;
+  toilet: number;
+  kitchen: number;
+  size: string;
+  standing: Standing;
+  amenities: Record<AmenityKey, boolean>;
+  // furniture
+  condition: 'used' | 'new';
+  height: string;
+  width: string;
+  length: string;
+  weight: string;
+  // land
+  land_use: LandUse;
+  land_title: boolean;
+
+  // Step 3 — location & photos
+  location_source: 'auto' | 'manual';
+  hide_on_map: boolean;
   address: string;
+  neighbourhood: string;
   city: string;
   state: string;
   country: string;
-  postal_code: string;
-  neighborhood: string;
+  zip: string;
   longitude?: number;
   latitude?: number;
-  location_source: 'auto' | 'manual';
-  hide_on_map: boolean;
-  bedrooms: number;
-  size: string;
-  standing: Standing | undefined;
-  wifi: boolean;
-  air_conditioning: boolean;
-  security_24h: boolean;
-  equipped_kitchen: boolean;
-  gate: boolean;
-  pool: boolean;
-  smart_tv: boolean;
+  medias: PickedMedia[];
+
+  // Step 4 — price & description
+  price: string;
+  devise: string;
+  period: string;
+  description: string;
+  contact_phone: string;
+  contact_email: string;
 }
+
+const NO_AMENITIES: Record<AmenityKey, boolean> = {
+  wifi: false,
+  pool: false,
+  air_conditioning: false,
+  security_24h: false,
+  gate: false,
+  equipped_kitchen: false,
+  smart_tv: false,
+  furnitured: false,
+  garage: false,
+  garden: false,
+};
 
 const DEFAULT_DRAFT: CreateListingDraft = {
   type: 'realestate',
-  ad_type: 'location',
   category_id: '',
-  medias: [],
-  price: '',
-  devise: 'FCFA',
-  description: '',
+  ad_type: 'location',
+
+  bedroom: 0,
+  mainroom: 0,
+  toilet: 0,
+  kitchen: 0,
+  size: '',
+  standing: 'standard',
+  amenities: NO_AMENITIES,
+  condition: 'used',
+  height: '',
+  width: '',
+  length: '',
+  weight: '',
+  land_use: 'residential',
+  land_title: false,
+
+  location_source: 'auto',
+  hide_on_map: false,
   address: '',
-  city: 'Douala',
+  neighbourhood: '',
+  city: '',
   state: '',
-  country: 'Cameroun',
-  postal_code: '',
-  neighborhood: '',
+  country: '',
+  zip: '',
   longitude: undefined,
   latitude: undefined,
-  location_source: 'manual',
-  hide_on_map: true,
-  bedrooms: 0,
-  size: '',
-  standing: undefined,
-  wifi: false,
-  air_conditioning: false,
-  security_24h: false,
-  equipped_kitchen: false,
-  gate: false,
-  pool: false,
-  smart_tv: false,
+  medias: [],
+
+  price: '',
+  devise: 'XAF',
+  period: 'month',
+  description: '',
+  contact_phone: '',
+  contact_email: '',
 };
 
 interface CreateListingStore {
   draft: CreateListingDraft;
   setDraft: (patch: Partial<CreateListingDraft>) => void;
+  toggleAmenity: (key: AmenityKey) => void;
   resetDraft: () => void;
 }
 
 export const useCreateListingStore = create<CreateListingStore>((set) => ({
-  draft: { ...DEFAULT_DRAFT },
+  draft: { ...DEFAULT_DRAFT, amenities: { ...NO_AMENITIES } },
   setDraft: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
-  resetDraft: () => set({ draft: { ...DEFAULT_DRAFT } }),
+  toggleAmenity: (key) =>
+    set((s) => ({
+      draft: { ...s.draft, amenities: { ...s.draft.amenities, [key]: !s.draft.amenities[key] } },
+    })),
+  resetDraft: () => set({ draft: { ...DEFAULT_DRAFT, amenities: { ...NO_AMENITIES } } }),
 }));

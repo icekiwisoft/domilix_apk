@@ -12,7 +12,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useFilterStore } from '@/stores/filter.store';
-import type { AnnounceFilters, Standing } from '@/types/announce';
+import type { AnnounceFilters, LandUse, Standing } from '@/types/announce';
 
 const AMENITY_OPTIONS: { key: string; label: string; icon: React.ComponentProps<typeof MaterialIcons>['name'] }[] = [
   { key: 'wifi', label: 'Wifi', icon: 'wifi' },
@@ -27,6 +27,13 @@ const STANDING_OPTIONS: { value: Standing; label: string }[] = [
   { value: 'standard', label: 'Standard' },
   { value: 'confort', label: 'Confort' },
   { value: 'haut_standing', label: 'Haut standing' },
+];
+
+const LAND_USE_OPTIONS: { value: LandUse; label: string }[] = [
+  { value: 'residential', label: 'Habitation' },
+  { value: 'agricultural', label: 'Agricole' },
+  { value: 'commercial', label: 'Commercial' },
+  { value: 'industrial', label: 'Industriel' },
 ];
 
 function SectionTitle({ children }: { children: string }) {
@@ -51,6 +58,10 @@ export default function FilterSheetScreen() {
   const [bedroomMin, setBedroomMin] = useState(filters.bedroom_min ?? 0);
   const [amenities, setAmenities] = useState<string[]>(filters.amenities ?? []);
   const [standing, setStanding] = useState<Standing | undefined>(filters.standing);
+  const [sizeMin, setSizeMin] = useState(filters.size_min ? String(filters.size_min) : '');
+  const [sizeMax, setSizeMax] = useState(filters.size_max ? String(filters.size_max) : '');
+  const [landUse, setLandUse] = useState<LandUse | undefined>(filters.land_use);
+  const [landTitle, setLandTitle] = useState(!!filters.land_title);
 
   function toggleAmenity(key: string) {
     setAmenities((prev) =>
@@ -65,6 +76,10 @@ export default function FilterSheetScreen() {
     setBedroomMin(0);
     setAmenities([]);
     setStanding(undefined);
+    setSizeMin('');
+    setSizeMax('');
+    setLandUse(undefined);
+    setLandTitle(false);
     setAdType('location');
   }
 
@@ -76,6 +91,10 @@ export default function FilterSheetScreen() {
       bedroom_min: bedroomMin > 0 ? bedroomMin : undefined,
       amenities: amenities.length > 0 ? amenities : undefined,
       standing,
+      size_min: sizeMin ? Number(sizeMin.replace(/\s/g, '')) : undefined,
+      size_max: sizeMax ? Number(sizeMax.replace(/\s/g, '')) : undefined,
+      land_use: landUse,
+      land_title: landTitle ? true : undefined,
     };
     setFilters(patch);
     router.back();
@@ -163,6 +182,58 @@ export default function FilterSheetScreen() {
                 </Chip>
               );
             })}
+          </View>
+        </View>
+
+        {/* Terrain */}
+        <View style={styles.section}>
+          <SectionTitle>Terrains — surface (m²)</SectionTitle>
+          <View style={styles.budgetRow}>
+            <TextInput
+              mode="outlined"
+              label="Min"
+              value={sizeMin}
+              onChangeText={setSizeMin}
+              keyboardType="numeric"
+              style={styles.budgetInput}
+            />
+            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>—</Text>
+            <TextInput
+              mode="outlined"
+              label="Max"
+              value={sizeMax}
+              onChangeText={setSizeMax}
+              keyboardType="numeric"
+              style={styles.budgetInput}
+            />
+          </View>
+          <View style={[styles.amenityGrid, { marginTop: Spacing.sm }]}>
+            {LAND_USE_OPTIONS.map((opt) => {
+              const active = landUse === opt.value;
+              return (
+                <Chip
+                  key={opt.value}
+                  compact
+                  selected={active}
+                  showSelectedCheck={false}
+                  onPress={() => setLandUse(active ? undefined : opt.value)}
+                  style={active ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
+                  textStyle={{ color: active ? C.primary : C.onSurface }}
+                >
+                  {opt.label}
+                </Chip>
+              );
+            })}
+            <Chip
+              compact
+              selected={landTitle}
+              showSelectedCheck={false}
+              onPress={() => setLandTitle((v) => !v)}
+              style={landTitle ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
+              textStyle={{ color: landTitle ? C.primary : C.onSurface }}
+            >
+              Titre foncier
+            </Chip>
           </View>
         </View>
 

@@ -18,6 +18,15 @@ const FILTER_LABELS: Partial<Record<keyof AnnounceFilters, (v: unknown) => strin
   bedroom_min: (v) => `${v}+ ch.`,
   budget_max: (v) => `≤ ${Number(v).toLocaleString('fr')} FCFA`,
   budget_min: (v) => `≥ ${Number(v).toLocaleString('fr')} FCFA`,
+  size_min: (v) => `≥ ${Number(v).toLocaleString('fr')} m²`,
+  size_max: (v) => `≤ ${Number(v).toLocaleString('fr')} m²`,
+  land_use: (v) => ({
+    residential: 'Habitation',
+    agricultural: 'Agricole',
+    commercial: 'Commercial',
+    industrial: 'Industriel',
+  }[v as string] ?? String(v)),
+  land_title: () => 'Titre foncier',
 };
 
 const EXCLUDED: (keyof AnnounceFilters)[] = ['page', 'orderBy', 'type', 'ad_type', 'AnnouncerId', 'liked'];
