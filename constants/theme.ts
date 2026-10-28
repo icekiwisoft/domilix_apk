@@ -1,3 +1,5 @@
+import { Platform, type TextStyle } from 'react-native';
+
 export const Colors = {
   light: {
     // Surfaces
@@ -146,50 +148,62 @@ export const Fonts = {
   bold: 'MonaSans_700Bold',
 } as const;
 
+/**
+ * fontWeight to pair with a Mona Sans family: none on Android, where the family
+ * already encodes the weight. expo-font registers each family in React
+ * Native's ReactFontManager under the NORMAL style only; a fontWeight of 700 or
+ * more (or 'bold') makes it look up the BOLD style of that family, finds none
+ * and falls back to Typeface.create(family, BOLD), i.e. Roboto Bold (UI-03).
+ * Weights below 700 used the NORMAL entry, which is why only bold broke.
+ */
+export function fontWeight<W extends TextStyle['fontWeight']>(weight: W): W | undefined {
+  return Platform.OS === 'android' ? undefined : weight;
+}
+
 // Typography scale – Mona Sans
 // lineHeight and letterSpacing are in px (RN numeric values)
 export const Typography = {
   displayLg: {
     fontFamily: Fonts.bold,
     fontSize: 60,
-    fontWeight: '700' as const,
+    fontWeight: fontWeight('700'),
     lineHeight: 66,
     letterSpacing: -1.2,
   },
   headlineLg: {
     fontFamily: Fonts.bold,
     fontSize: 40,
-    fontWeight: '700' as const,
+    fontWeight: fontWeight('700'),
     lineHeight: 48,
   },
   headlineMd: {
     fontFamily: Fonts.bold,
     fontSize: 32,
-    fontWeight: '700' as const,
+    fontWeight: fontWeight('700'),
     lineHeight: 38,
   },
   headlineSm: {
     fontFamily: Fonts.semiBold,
     fontSize: 24,
-    fontWeight: '600' as const,
+    fontWeight: fontWeight('600'),
     lineHeight: 32,
   },
   bodyLg: {
     fontFamily: Fonts.regular,
     fontSize: 18,
-    fontWeight: '400' as const,
+    fontWeight: fontWeight('400'),
     lineHeight: 29,
   },
   bodyMd: {
     fontFamily: Fonts.regular,
     fontSize: 16,
-    fontWeight: '400' as const,
+    fontWeight: fontWeight('400'),
     lineHeight: 26,
   },
   labelSm: {
     fontFamily: Fonts.semiBold,
     fontSize: 14,
-    fontWeight: '600' as const,
+    fontWeight: fontWeight('600'),
     lineHeight: 14,
     letterSpacing: 1.12,
   },
@@ -197,7 +211,7 @@ export const Typography = {
   titleLg: {
     fontFamily: Fonts.bold,
     fontSize: 26,
-    fontWeight: '700' as const,
+    fontWeight: fontWeight('700'),
     lineHeight: 32,
     letterSpacing: -0.26,
   },
@@ -205,26 +219,26 @@ export const Typography = {
   labelMd: {
     fontFamily: Fonts.semiBold,
     fontSize: 14,
-    fontWeight: '600' as const,
+    fontWeight: fontWeight('600'),
     lineHeight: 20,
   },
   bodySm: {
     fontFamily: Fonts.regular,
     fontSize: 14,
-    fontWeight: '400' as const,
+    fontWeight: fontWeight('400'),
     lineHeight: 20,
   },
   // Helper text under a field
   helper: {
     fontFamily: Fonts.regular,
     fontSize: 13,
-    fontWeight: '400' as const,
+    fontWeight: fontWeight('400'),
     lineHeight: 18,
   },
   caption: {
     fontFamily: Fonts.medium,
     fontSize: 12,
-    fontWeight: '500' as const,
+    fontWeight: fontWeight('500'),
     lineHeight: 17,
   },
 } as const;

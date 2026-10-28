@@ -2,7 +2,8 @@ import { MD3DarkTheme, MD3LightTheme, configureFonts, type MD3Theme } from 'reac
 
 import { Colors, Fonts } from '@/constants/theme';
 
-// Paper's MD3 variants carry a fontWeight ('400' or '500'); map each one to the
+// Paper's MD3 variants carry a fontWeight ('400' or '500', never 700+, see
+// fontWeight() in theme.ts); map each one to the
 // Mona Sans family of that weight so Android does not fake the weight.
 const fonts = configureFonts({
   config: Object.fromEntries(

@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { Typography } from '@/constants/theme';
+import { Fonts, Typography, fontWeight } from '@/constants/theme';
 
 type AvatarSize = 'sm' | 'md' | 'lg';
 
@@ -15,7 +15,7 @@ const sizeMap: Record<AvatarSize, number> = { sm: 32, md: 44, lg: 64 };
 
 const initialsTypography: Record<AvatarSize, object> = {
   sm: Typography.caption,
-  md: { ...Typography.bodyMd, fontWeight: '600' as const },
+  md: { ...Typography.bodyMd, fontFamily: Fonts.semiBold, fontWeight: fontWeight('600') },
   lg: { ...Typography.headlineMd, fontSize: 24, lineHeight: 28 },
 };
 
