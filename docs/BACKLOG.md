@@ -52,7 +52,8 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   pas par une feuille Google native. Causes probables de la lenteur ressentie : navigateur à
   froid ou non connecté à Google (saisie du mot de passe), réseau mobile lent, première connexion
   (création du compte côté serveur). À préciser avec l'utilisateur.
-- **Proposition** : connexion Google native (Credential Manager) dans le lot 2, avec UI-01 :
+- **Décision (2026-10-28, utilisateur)** : migration validée vers la connexion Google native
+  Android, dans le lot 2. Proposition retenue : connexion Google native (Credential Manager), avec UI-01 :
   feuille système avec les comptes du téléphone, sans navigateur. Prérequis à vérifier : client
   OAuth Android avec l'empreinte SHA-1 de la clé de signature de production (EAS) et de la clé
   Google Play si l'app y est publiée.
