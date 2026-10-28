@@ -4,7 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAddressSearch } from '@/hooks/queries/use-addresses';
-import type { GeoapifyAddressSuggestion } from '@/services/geoapify.service';
+import { GeoapifyError, type GeoapifyAddressSuggestion } from '@/services/geoapify.service';
 
 interface AddressAutocompleteProps {
   value: string;
@@ -19,7 +19,7 @@ export function AddressAutocomplete({ value, onChange, onSelect, kind = 'address
   const C = Colors[scheme ?? 'light'];
   const [open, setOpen] = useState(false);
 
-  const { data: suggestions = [], isFetching, isError } = useAddressSearch(value, open, kind === 'city' ? 'city' : undefined);
+  const { data: suggestions = [], isFetching, isError, error: searchError } = useAddressSearch(value, open, kind === 'city' ? 'city' : undefined);
 
   function select(suggestion: GeoapifyAddressSuggestion) {
     const selectedValue = kind === 'city'
@@ -59,7 +59,12 @@ export function AddressAutocomplete({ value, onChange, onSelect, kind = 'address
         <Text style={[Typography.caption, { color: C.error, marginTop: 4 }]}>{error}</Text>
       )}
       {isError && (
-        <Text style={[Typography.caption, { color: C.error, marginTop: 4 }]}>Suggestions indisponibles.</Text>
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[Typography.caption, { color: C.error, marginTop: 4 }]}
+        >
+          {searchError instanceof GeoapifyError ? searchError.message : 'Suggestions indisponibles.'}
+        </Text>
       )}
       {open && value.trim().length >= 3 && isFetching && suggestions.length === 0 && (
         <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: Spacing.xs }]}>Recherche en cours…</Text>
