@@ -143,7 +143,7 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 ### UI-02 — Écran d'inscription aligné sur la connexion (P1)
 
 - **Demande (2026-10-28)** : refaire l'écran d'inscription dans le même esprit que UI-01.
-- **Maquette** : même canvas, rangée « Inscription » (en attente de validation).
+- **Maquette validée par l'utilisateur (2026-10-28)** : même canvas, rangée « Inscription ».
 - **Changements proposés** : bandeau mascotte réduit avec bouton Retour 48 dp ; « S'inscrire avec
   Google » en premier ; champs Nom d'utilisateur (« Votre prénom ou pseudo », libellés du site),
   Téléphone avec préfixe +237 et aide « code par SMS », Email (facultatif), Mot de passe avec bouton
@@ -155,7 +155,21 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   concerné, en français ; le clavier numérique s'ouvre pour le téléphone ; l'écran défile sans que
   le bouton principal soit masqué par le clavier ; le parcours SMS (`verify-phone`) reste inchangé.
 
+### UI-03 — Police Mona Sans dans toute l'app (P1)
+
+- **Décision (2026-10-28, utilisateur)** : Mona Sans partout, comme le site
+  (`tailwind.config.mjs` : `fontFamily.sans = Mona Sans`), à la place de Plus Jakarta Sans.
+- **Constat** : `PlusJakartaSans_*` est écrit en dur dans 33 fichiers (107 occurrences) au lieu de
+  passer par le thème.
+- **Attendu** : paquet `@expo-google-fonts/mona-sans` (4 graisses utilisées : 400, 500, 600, 700),
+  noms de police centralisés dans `constants/theme.ts` (aucun nom de police en dur ailleurs), chargés
+  dans `app/_layout.tsx` avant de masquer le splash (B-04), ancien paquet retiré.
+- **Critères d'acceptation** : `grep PlusJakartaSans` ne trouve plus rien ; aucun texte tronqué ou
+  débordant sur les écrans principaux (Mona Sans est plus large) à 100 % et 200 % de police ; build
+  release vérifié sur l'appareil.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 (développés, en QA) ; B-02 après mesure.
-2. **Lot 2 — connexion et inscription** : UI-01, UI-02 et B-02 (connexion Google native).
+2. **Lot 2 — connexion, inscription et police** : UI-03 d'abord (base des deux écrans), puis UI-01,
+   UI-02 et B-02 (connexion Google native). À démarrer sur une branche issue du lot 1 après sa QA.
