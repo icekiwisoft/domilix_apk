@@ -82,7 +82,7 @@ function serverFieldErrors(error: unknown): { phone?: string; email?: string } {
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
-  const { scrollRef, targetRef, onScroll, pastBanner } = useKeyboardReveal(Sizes.authBannerShort);
+  const { scrollRef, targetRef, onScroll, onLayout, pastBanner } = useKeyboardReveal(Sizes.authBannerShort);
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const router = useRouter();
@@ -128,6 +128,7 @@ export default function RegisterScreen() {
       <ScrollView
         ref={scrollRef}
         onScroll={onScroll}
+        onLayout={onLayout}
         scrollEventThrottle={16}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + Spacing.sm }]}
         keyboardShouldPersistTaps="handled"

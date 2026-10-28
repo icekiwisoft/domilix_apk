@@ -34,28 +34,49 @@ export function useKeyboardReveal(bannerBottom: number) {
   const scrollY = useRef(0);
   const [pastBanner, setPastBanner] = useState(false);
 
+  // Top of the open keyboard in window coordinates, null when it is closed.
+  const keyboardTop = useRef<number | null>(null);
+
+  async function reveal() {
+    const scroll = scrollRef.current;
+    if (!scroll || keyboardTop.current == null) return;
+    const focused = TextInput.State.currentlyFocusedInput() as unknown as View | null;
+    const [viewport, target, field] = await Promise.all([
+      measure(scroll as unknown as View),
+      measure(targetRef.current),
+      measure(focused),
+    ]);
+    if (!viewport || !target || keyboardTop.current == null) return;
+    const visibleBottom = Math.min(viewport.y + viewport.height, keyboardTop.current);
+    let delta = target.y + target.height + Spacing.md - visibleBottom;
+    if (field) delta = Math.min(delta, field.y - viewport.y - Spacing.md);
+    if (delta > 0) scroll.scrollTo({ y: scrollY.current + delta, animated: true });
+  }
+
   useEffect(() => {
-    const sub = Keyboard.addListener('keyboardDidShow', (e) => {
-      const keyboardTop = e.endCoordinates.screenY;
-      // Let the layout settle after the window resize before measuring.
-      setTimeout(async () => {
-        const scroll = scrollRef.current;
-        if (!scroll) return;
-        const focused = TextInput.State.currentlyFocusedInput() as unknown as View | null;
-        const [viewport, target, field] = await Promise.all([
-          measure(scroll as unknown as View),
-          measure(targetRef.current),
-          measure(focused),
-        ]);
-        if (!viewport || !target) return;
-        const visibleBottom = Math.min(viewport.y + viewport.height, keyboardTop);
-        let delta = target.y + target.height + Spacing.md - visibleBottom;
-        if (field) delta = Math.min(delta, field.y - viewport.y - Spacing.md);
-        if (delta > 0) scroll.scrollTo({ y: scrollY.current + delta, animated: true });
-      }, 80);
+    const show = Keyboard.addListener('keyboardDidShow', (e) => {
+      keyboardTop.current = e.endCoordinates.screenY;
+      // Let the layout settle after the keyboard opens before measuring.
+      setTimeout(reveal, 80);
     });
-    return () => sub.remove();
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardTop.current = null;
+    });
+    return () => {
+      show.remove();
+      hide.remove();
+    };
   }, []);
+
+  /**
+   * The KeyboardAvoidingView shrinks the scroll view after keyboardDidShow.
+   * A scroll requested before that is capped by the old, taller viewport
+   * (less content left to scroll), which left "Créer mon compte" half under
+   * the keyboard (QA-07): measure again once the scroll view has its new size.
+   */
+  function onLayout() {
+    if (keyboardTop.current != null) reveal();
+  }
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     scrollY.current = e.nativeEvent.contentOffset.y;
@@ -63,5 +84,5 @@ export function useKeyboardReveal(bannerBottom: number) {
     if (past !== pastBanner) setPastBanner(past);
   }
 
-  return { scrollRef, targetRef, onScroll, pastBanner };
+  return { scrollRef, targetRef, onScroll, onLayout, pastBanner };
 }

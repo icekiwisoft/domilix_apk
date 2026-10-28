@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -31,7 +32,20 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   // The full example no longer fits on one line from about 130 % font size.
   const { fontScale } = useWindowDimensions();
-  const { scrollRef, targetRef, onScroll, pastBanner } = useKeyboardReveal(Sizes.authBannerTall);
+  // Content height and the banner height it was measured with.
+  const [content, setContent] = useState<{ height: number; banner: number }>({ height: 0, banner: Sizes.authBannerTall });
+  // Scroll view height with the keyboard closed (0 until laid out).
+  const [viewportHeight, setViewportHeight] = useState(0);
+  // QA-07: on a 1080×2400 phone at 100 % the screen was ~45 dp taller than the
+  // window, so "Explorer les annonces sans compte" rested under the gesture
+  // bar. The banner gives up that height (down to the sign-up banner size) so
+  // the whole form, footer and bottom inset fit; past that the screen scrolls.
+  const overflowAtTall = content.height - content.banner + Sizes.authBannerTall - viewportHeight;
+  const bannerHeight: number =
+    content.height && viewportHeight
+      ? Math.min(Sizes.authBannerTall, Math.max(Sizes.authBannerShort, Sizes.authBannerTall - overflowAtTall))
+      : Sizes.authBannerTall;
+  const { scrollRef, targetRef, onScroll, onLayout, pastBanner } = useKeyboardReveal(bannerHeight);
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const router = useRouter();
@@ -68,12 +82,21 @@ export default function LoginScreen() {
       <ScrollView
         ref={scrollRef}
         onScroll={onScroll}
+        onLayout={(e) => {
+          onLayout();
+          if (!Keyboard.isVisible()) setViewportHeight(e.nativeEvent.layout.height);
+        }}
+        onContentSizeChange={(_w, h) => {
+          // With the keyboard open the content shrinks with the viewport; keep
+          // the banner as it was instead of resizing it while typing.
+          if (!Keyboard.isVisible()) setContent({ height: h, banner: bannerHeight });
+        }}
         scrollEventThrottle={16}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + Spacing.sm }]}
         keyboardShouldPersistTaps="handled"
       >
         <AuthBanner
-          height={Sizes.authBannerTall}
+          height={bannerHeight}
           focusY="28%"
           onBack={router.canGoBack() ? () => router.back() : undefined}
         />
