@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { useSegments, useRouter } from 'expo-router';
+import { useGlobalSearchParams, usePathname, useSegments, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { TokenStorage } from '@/lib/secure-storage';
@@ -18,6 +18,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setHydrated,
   } = useAuthStore();
   const segments = useSegments();
+  const pathname = usePathname();
+  const searchParams = useGlobalSearchParams();
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -75,7 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The cached profile belongs to the refused session.
       queryClient.removeQueries({ queryKey: ['me'] });
       if (!inAuthGroup) {
-        router.replace({ pathname: '/(auth)/login', params: { reason: 'session-expired' } });
+        // Keep the user's place (pathname + query, without the dynamic segments
+        // already in the pathname) so login can send them back to it.
+        const query = Object.entries(searchParams)
+          .filter(([, v]) => typeof v === 'string' && !pathname.split('/').includes(encodeURIComponent(v)) && !pathname.split('/').includes(v))
+          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v as string)}`)
+          .join('&');
+        const redirect = pathname === '/' ? undefined : query ? `${pathname}?${query}` : pathname;
+        router.replace({
+          pathname: '/(auth)/login',
+          params: { reason: 'session-expired', ...(redirect ? { redirect } : {}) },
+        });
       }
       return;
     }
@@ -85,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.replace('/(tabs)');
     }
     // Unauthenticated users can browse freely — protected routes handle their own gate
-  }, [accessToken, hydrated, sessionExpired, segments, router, acknowledgeSessionExpired, queryClient]);
+  }, [accessToken, hydrated, sessionExpired, segments, pathname, searchParams, router, acknowledgeSessionExpired, queryClient]);
 
   return <>{children}</>;
 }
