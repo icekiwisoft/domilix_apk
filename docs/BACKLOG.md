@@ -97,8 +97,28 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
     arrière-plan (données de profil en cache affichées en attendant).
   - Démarrage hors ligne : l'utilisateur reste connecté ; seul un 401 confirmé après tentative de
     rafraîchissement le déconnecte.
-  - Non connecté : l'app s'ouvre sur l'accueil en navigation libre, comme aujourd'hui.
+  - Non connecté : l'app s'ouvre sur l'écran de connexion (décision de l'utilisateur, 2026-10-28),
+    sans clignotement.
+
+## Améliorations demandées par l'utilisateur
+
+### UI-01 — Écran de connexion plus attrayant (P1)
+
+- **Demande (2026-10-28)** : les utilisateurs non connectés arrivent sur l'écran de connexion
+  (décision confirmée) ; cet écran doit être plus attrayant.
+- **Attendu** : identité du site (logo, couleurs `primary`, typographie, ton des libellés de
+  `domilix.com/messages/`), mise en page pensée pour le mobile : promesse de Domilix en une phrase,
+  « Continuer avec Google » et la connexion par téléphone/mot de passe bien hiérarchisées, accès à
+  l'inscription, et une option « Explorer sans compte » à valider avec l'utilisateur (le site
+  permet de parcourir les annonces sans compte).
+- **Critères d'acceptation**
+  - Maquette ou capture avant/après validée par l'utilisateur avant le développement.
+  - Valeurs du thème uniquement (`constants/theme.ts`), contraste AA clair et sombre, cibles ≥ 48 dp,
+    lisible à 200 % de police, TalkBack lit les actions dans l'ordre.
+  - Clavier : le champ actif et le bouton principal restent visibles.
+  - Pas de régression de B-04 (aucun clignotement au démarrage).
 
 ## Lots proposés
 
-1. **Lot 1 — bugs signalés** : B-03 et B-04 (causes certaines), B-01, B-02 (après mesure).
+1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 (développés, en QA) ; B-02 après mesure.
+2. **Lot 2 — écran de connexion** : UI-01 (avec B-02 si la mesure conduit à changer le flux Google).
