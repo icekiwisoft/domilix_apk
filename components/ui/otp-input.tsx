@@ -27,7 +27,9 @@ export function OtpInput({ value, onChange, error }: OtpInputProps) {
   const errorColor = useThemeColor({}, 'error');
   const surfaceContainer = useThemeColor({}, 'surfaceContainer');
 
-  const digits = value.padEnd(OTP_LENGTH, '').slice(0, OTP_LENGTH).split('');
+  // One slot per digit, a space for an empty one (padding with '' added nothing,
+  // so no cell was rendered while the code was empty).
+  const digits = value.padEnd(OTP_LENGTH, ' ').slice(0, OTP_LENGTH).split('');
 
   function handleChange(text: string, index: number) {
     // Handle paste: text.length > 1
@@ -62,8 +64,9 @@ export function OtpInput({ value, onChange, error }: OtpInputProps) {
     <View style={styles.row}>
       {digits.map((digit, index) => {
         const isFocusedSlot = false; // focus state tracked by native
-        const borderColor = error ? errorColor : digit ? primary : outlineVariant;
-        const borderWidth = digit ? 2 : 1;
+        const filled = digit !== ' ';
+        const borderColor = error ? errorColor : filled ? primary : outlineVariant;
+        const borderWidth = filled ? 2 : 1;
         return (
           <TextInput
             key={index}
@@ -72,7 +75,7 @@ export function OtpInput({ value, onChange, error }: OtpInputProps) {
             style={[
               styles.cell,
               {
-                backgroundColor: digit ? surfaceContainer : surface,
+                backgroundColor: filled ? surfaceContainer : surface,
                 borderColor,
                 borderWidth,
                 color: onSurface,
