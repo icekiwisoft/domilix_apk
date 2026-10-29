@@ -30,5 +30,6 @@ export {
   type LoadingStateProps,
   type OfflineStateProps,
 } from './states';
+export { ProgressBar, StepHeader, type ProgressBarProps, type StepHeaderProps } from './step-header';
 export { Stepper, type StepperProps } from './stepper';
 export { ToastProvider, useToast, useToastOffset, type ToastType } from './toast';
