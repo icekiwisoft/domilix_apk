@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { GoogleAuthProvider, signInWithCredential } from '@firebase/auth';
 import { firebaseAuth } from '@/lib/firebase';
 
@@ -80,10 +80,12 @@ export function useGoogleSignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const google = getGoogle();
+  const inFlight = useRef(false);
 
   /** Resolves to a Firebase ID token, or null when cancelled or failed (see errorMessage). */
   async function signIn(): Promise<string | null> {
-    if (!google) return null;
+    if (!google || inFlight.current) return null;
+    inFlight.current = true;
     setErrorMessage(null);
     setIsLoading(true);
     try {
@@ -104,6 +106,7 @@ export function useGoogleSignIn() {
         return null;
       }
     } finally {
+      inFlight.current = false;
       setIsLoading(false);
     }
   }
