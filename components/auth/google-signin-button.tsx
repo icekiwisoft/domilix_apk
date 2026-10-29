@@ -27,7 +27,7 @@ export function GoogleSignInButton({ redirectTo, targetBelow = false, label = 'C
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const router = useRouter();
-  const { signIn, isReady, isLoading: isGoogleLoading } = useGoogleSignIn();
+  const { signIn, isReady, isLoading: isGoogleLoading, errorMessage: googleError } = useGoogleSignIn();
   const firebaseLogin = useFirebaseLogin();
   const [error, setError] = useState(false);
 
@@ -61,14 +61,14 @@ export function GoogleSignInButton({ redirectTo, targetBelow = false, label = 'C
         {label}
       </Button>
 
-      {error && (
+      {(error || googleError) && (
         <View
           style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}
           accessibilityLiveRegion="polite"
         >
           <MaterialIcons name="error-outline" size={16} color={C.error} />
           <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
-            Connexion avec Google impossible. Réessayez.
+            {error ? 'Connexion avec Google impossible. Réessayez.' : googleError}
           </Text>
         </View>
       )}
