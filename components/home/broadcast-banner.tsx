@@ -1,7 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
+import { Image } from 'expo-image';
+import { Pressable, View } from 'react-native';
+
+import { AppText, pressedStyle } from '@/components/ui';
+import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import type { Broadcast } from '@/types/announce';
 
 interface BroadcastBannerProps {
@@ -9,102 +12,75 @@ interface BroadcastBannerProps {
   onPress?: () => void;
 }
 
+/**
+ * Server broadcast (title, subtitle, badge, call to action, image) on the
+ * dark promo card of the mock-up. The texts come from the API as they are.
+ * The whole card is one button; the call to action is drawn as a pill.
+ */
 export function BroadcastBanner({ broadcast, onPress }: BroadcastBannerProps) {
+  const C = useThemeColors();
   const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-
+  const spoken = [broadcast.badge, broadcast.title, broadcast.subtitle, broadcast.cta].filter(Boolean).join('. ');
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={spoken}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.banner,
-        { backgroundColor: C.primary, opacity: pressed ? 0.95 : 1 },
+        {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: Spacing.md,
+          padding: Spacing.marginMobile,
+          borderRadius: Radii.card,
+          backgroundColor: C.promoSurface,
+        },
+        // The dark card barely stands out on the dark page: give it an edge there.
+        scheme === 'dark' ? { borderWidth: Borders.thin, borderColor: C.outlineVariant } : null,
+        pressedStyle(pressed),
       ]}
     >
-      {/* Decorative orbs */}
-      <View style={[styles.orb, styles.orbTopRight, { backgroundColor: '#ffffff0D' }]} />
-      <View style={[styles.orb, styles.orbBottomLeft, { backgroundColor: '#00000019' }]} />
-
-      {/* Content */}
-      <View style={styles.content}>
-        {broadcast.badge && (
-          <View style={[styles.badgePill, { backgroundColor: C.onPrimary }]}>
-            <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-              {broadcast.badge}
-            </Text>
-          </View>
-        )}
-        <Text style={[Typography.headlineMd, styles.title, { color: C.onPrimary }]}>
+      <View style={{ flex: 1, gap: Spacing.xs }}>
+        {broadcast.badge ? (
+          <AppText variant="caption" color="onPromoVariant">
+            {broadcast.badge}
+          </AppText>
+        ) : null}
+        <AppText variant="headline" color="onPromo">
           {broadcast.title}
-        </Text>
-        {broadcast.subtitle && (
-          <Text style={[Typography.bodyMd, { color: C.onPrimary, opacity: 0.9, marginTop: 4 }]}>
+        </AppText>
+        {broadcast.subtitle ? (
+          <AppText variant="body" color="onPromoVariant">
             {broadcast.subtitle}
-          </Text>
-        )}
+          </AppText>
+        ) : null}
+        {broadcast.cta ? (
+          <View
+            style={{
+              alignSelf: 'flex-start',
+              marginTop: Spacing.xs,
+              minHeight: Sizes.touchTarget,
+              justifyContent: 'center',
+              paddingHorizontal: Spacing.md,
+              borderRadius: Radii.full,
+              backgroundColor: C.cta,
+            }}
+          >
+            <AppText variant="label" color="onCta">
+              {broadcast.cta}
+            </AppText>
+          </View>
+        ) : null}
       </View>
-
-      {/* CTA */}
-      {broadcast.cta && (
-        <View style={[styles.cta, { backgroundColor: C.onPrimary }]}>
-          <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
-            {broadcast.cta}
-          </Text>
-          <MaterialIcons name="arrow-forward" size={14} color={C.primary} />
-        </View>
-      )}
+      {broadcast.image ? (
+        <Image
+          source={{ uri: broadcast.image }}
+          accessible={false}
+          contentFit="contain"
+          cachePolicy="memory-disk"
+          style={{ width: Sizes.avatarLg, height: Sizes.avatarLg, borderRadius: Radii.card, backgroundColor: C.background }}
+        />
+      ) : null}
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  banner: {
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    overflow: 'hidden',
-    gap: Spacing.lg,
-    shadowColor: 'rgb(82,69,52)',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 4,
-  },
-  orb: {
-    position: 'absolute',
-    borderRadius: Radius.full,
-  },
-  orbTopRight: {
-    width: 160,
-    height: 160,
-    top: -40,
-    right: -40,
-  },
-  orbBottomLeft: {
-    width: 120,
-    height: 120,
-    bottom: -40,
-    left: '25%',
-  },
-  content: {
-    gap: Spacing.sm,
-  },
-  badgePill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    marginBottom: Spacing.xs,
-  },
-  title: {
-    fontFamily: Fonts.bold,
-  },
-  cta: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-  },
-});
