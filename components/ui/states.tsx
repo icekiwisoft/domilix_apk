@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import type { ReactNode } from 'react';
-import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, type ReactNode } from 'react';
+import { AccessibilityInfo, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Radii, Sizes, Spacing, TextVariants, type ColorToken } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
@@ -23,7 +23,11 @@ export interface LoadingStateProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** Skeleton placeholder (never a bare spinner), announced as busy. */
+/**
+ * Skeleton placeholder (never a bare spinner), announced as busy. The end of
+ * loading is not announced: the content that replaces it is read when the
+ * user moves to it, and an extra "chargé" on every list would be noise.
+ */
 export function LoadingState({ label = 'Chargement…', count = 3, media = true, children, style }: LoadingStateProps) {
   const line = TextVariants.body.fontSize;
   return (
@@ -46,6 +50,17 @@ export function LoadingState({ label = 'Chargement…', count = 3, media = true,
   );
 }
 
+/**
+ * Reads `message` once when the state appears (or the message changes).
+ * Android does not reliably announce a live region that mounts with its
+ * text already in it, so error and offline states announce explicitly.
+ */
+function useAnnounce(message: string | null) {
+  useEffect(() => {
+    if (message) AccessibilityInfo.announceForAccessibility(message);
+  }, [message]);
+}
+
 interface StateLayoutProps {
   icon: IconName;
   iconColor: ColorToken;
@@ -55,7 +70,8 @@ interface StateLayoutProps {
   actionLabel?: string;
   onAction?: () => void;
   actionVariant?: 'primary' | 'secondary';
-  role?: 'alert';
+  /** Announced by TalkBack when shown (error, offline). */
+  announce?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -68,14 +84,13 @@ function StateLayout({
   actionLabel,
   onAction,
   actionVariant = 'primary',
-  role,
+  announce = false,
   style,
 }: StateLayoutProps) {
   const C = useThemeColors();
+  useAnnounce(announce ? [title, description].filter(Boolean).join('. ') : null);
   return (
     <View
-      accessibilityRole={role}
-      accessibilityLiveRegion={role ? 'polite' : undefined}
       style={[
         { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
         style,
@@ -149,7 +164,7 @@ export function ErrorState({
       description={description}
       actionLabel={retryLabel}
       onAction={onRetry}
-      role="alert"
+      announce
       style={style}
     />
   );
@@ -165,14 +180,16 @@ export interface OfflineStateProps {
   style?: StyleProp<ViewStyle>;
 }
 
+const OFFLINE_BANNER = 'Hors ligne : dernières données reçues, elles peuvent ne plus être à jour.';
+
 /** No network: full-screen state, or a banner above cached data. */
 export function OfflineState({ variant = 'screen', onRetry, style }: OfflineStateProps) {
   const C = useThemeColors();
+  useAnnounce(variant === 'banner' ? OFFLINE_BANNER : null);
   if (variant === 'banner') {
     return (
       <View
-        accessibilityRole="alert"
-        accessibilityLiveRegion="polite"
+        accessible
         style={[
           {
             flexDirection: 'row',
@@ -187,7 +204,7 @@ export function OfflineState({ variant = 'screen', onRetry, style }: OfflineStat
       >
         <MaterialIcons name="cloud-off" size={Sizes.icon} color={C.onSurfaceVariant} />
         <AppText variant="caption" color="onSurface" style={{ flex: 1 }}>
-          Hors ligne : dernières données reçues, elles peuvent ne plus être à jour.
+          {OFFLINE_BANNER}
         </AppText>
       </View>
     );
@@ -202,7 +219,7 @@ export function OfflineState({ variant = 'screen', onRetry, style }: OfflineStat
       actionLabel="Réessayer"
       onAction={onRetry}
       actionVariant="secondary"
-      role="alert"
+      announce
       style={style}
     />
   );
