@@ -10,6 +10,7 @@ export { ChipGroup, type ChipGroupProps, type ChipOption } from './chip-group';
 export { Divider, type DividerProps } from './divider';
 export { Field, type FieldProps } from './field';
 export { IconButton, type IconButtonProps, type IconName } from './icon-button';
+export { ListRow, Section, Switch, type ListRowProps, type SectionProps, type SwitchProps } from './list-row';
 export { PriceTag, formatAmount, periodLabel, type PriceTagProps, type PriceTagSize } from './price-tag';
 export { Radio, RadioRow, type RadioProps, type RadioRowProps } from './radio-row';
 export { KeyboardTarget, Screen, useScreenKeyboard, type ScreenProps } from './screen';
