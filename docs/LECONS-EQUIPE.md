@@ -46,6 +46,14 @@ avant de commencer.** Copie de référence : vault `30_Resources/Leçons - équi
 9. **Appareils** : Pixel 9 de l'utilisateur `48150DLAQ003HE` (téléphone personnel : apps et
    notifications privées, vérifier le premier plan avant toute capture) et émulateur
    `emulator-5554`. `adb` est dans `~/Android/Sdk/platform-tools/`. Paquet : `com.jack0237.domilix`.
+10. **Tout nouveau code d'écran passe par les composants partagés et les jetons** (UI-06) :
+   `components/ui` (`Screen`, `ScreenHeader`, `AppText`, `Button`, `Field`, `Card`, `Chip`,
+   `PriceTag`, états, `Toast`) et `constants/theme.ts` (`Colors`, `Spacing`, `Radii`,
+   `TextVariants`, `Sizes`). Une couleur en dur, un `fontSize`, un rayon ou un espacement chiffré
+   dans un écran est un constat de revue, même si le lint ne l'affiche qu'en avertissement hors de
+   `components/ui/**`. S'il manque une valeur, on l'ajoute au thème, pas à l'écran. *Constat
+   (2026-10-29) : 21 rayons, 14 tailles de police et plus d'une centaine d'espacements différents,
+   un bouton maison par écran : chaque page avait sa propre allure.*
 
 ## Commun à tous les rôles
 
