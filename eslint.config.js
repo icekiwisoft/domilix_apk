@@ -46,8 +46,6 @@ const LEGACY_UI = [
   'components/ui/otp-input.tsx',
   'components/ui/plan-card.tsx',
   // Rewritten or aligned by UI-06 step 2, then removed from this list.
-  'components/ui/button.tsx',
-  'components/ui/chip.tsx',
   'components/ui/empty-state.tsx',
   'components/ui/toast.tsx',
 ];
