@@ -108,6 +108,8 @@ function TabLabel({
 }
 
 function PublishTabButton({ color, iconColor }: { color: string; iconColor: string }) {
+  // Ring matches the tab bar background (a fixed white ring glared in dark mode).
+  const ringColor = Colors[useColorScheme() ?? 'light'].surfaceContainerLowest;
   const scale = useSharedValue(1);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -128,7 +130,7 @@ function PublishTabButton({ color, iconColor }: { color: string; iconColor: stri
       }}
       style={styles.publishSlot}
     >
-      <Animated.View style={[styles.publishButton, { backgroundColor: color }, Shadows.button, animStyle]}>
+      <Animated.View style={[styles.publishButton, { backgroundColor: color, borderColor: ringColor }, Shadows.button, animStyle]}>
         <IconSymbol name="plus" size={34} color={iconColor} />
       </Animated.View>
     </Pressable>
@@ -250,6 +252,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 5,
-    borderColor: '#ffffff',
   },
 });
