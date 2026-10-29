@@ -144,6 +144,9 @@ export const Colors = {
   },
 } as const;
 
+/** Name of a colour token, the same in both themes (AppText `color`, etc.). */
+export type ColorToken = keyof typeof Colors.light;
+
 // Mona Sans, the website's typeface (domilix.com tailwind.config.mjs fontFamily.sans).
 // These are the family names registered by useFonts in app/_layout.tsx: on Android a
 // custom font needs one family per weight, so always pick the family that matches the
@@ -250,9 +253,49 @@ export const Typography = {
   },
 } as const;
 
+/**
+ * Named text variants for new code (UI-06), built on Typography. AppText
+ * (components/ui/app-text.tsx) applies them; pick one instead of setting
+ * fontSize or fontFamily in a screen.
+ */
+export const TextVariants = {
+  // Screen title (sign-in and sign-up screens, top of a page)
+  title: Typography.titleLg,
+  // Section, card and sheet titles
+  headline: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 18,
+    fontWeight: fontWeight('600'),
+    lineHeight: 24,
+  },
+  body: Typography.bodyMd,
+  bodyStrong: {
+    ...Typography.bodyMd,
+    fontFamily: Fonts.semiBold,
+    fontWeight: fontWeight('600'),
+  },
+  // Field labels, buttons, chips
+  label: Typography.labelMd,
+  caption: Typography.caption,
+  // Listing price amount (the unit uses `label`, see PriceTag)
+  price: {
+    fontFamily: Fonts.bold,
+    fontSize: 22,
+    fontWeight: fontWeight('700'),
+    lineHeight: 28,
+    fontVariant: ['tabular-nums'],
+  },
+} as const satisfies Record<string, TextStyle>;
+
+export type TextVariant = keyof typeof TextVariants;
+
+// Spacing scale for padding, margin and gap. New code picks from xxs..xxl
+// (UI-06); the layout names below are kept for the existing screens.
 export const Spacing = {
+  xxs: 2,
   xs: 4,
   sm: 8,
+  ms: 12,
   md: 16,
   lg: 24,
   xl: 32,
@@ -265,7 +308,20 @@ export const Spacing = {
   base: 8,
 } as const;
 
-// Border radius values in px (DESIGN.md uses rem; 1rem = 16px)
+/**
+ * Closed corner-radius scale (UI-06), aligned on the website's Tailwind
+ * borderRadius (domilix.com tailwind.config.mjs). New code uses only these.
+ */
+export const Radii = {
+  badge: 4, // rounded (DEFAULT / sm): badges, tags, skeleton lines
+  tile: 8, // rounded-lg: thumbnails and blocks nested in a card
+  control: 12, // rounded-xl: fields, banners, toasts
+  card: 16, // rounded-2xl: cards, sheets, dialogs (ProductCard)
+  full: 9999, // rounded-full: buttons, chips, avatars, round icon buttons
+} as const;
+
+// Legacy radius names used by the existing screens (kept until they are
+// migrated to Radii, UI-06 step 4). xl and banner are outside the scale.
 export const Radius = {
   sm: 4,    // 0.25rem
   md: 12,   // 0.75rem – buttons & inputs
@@ -282,6 +338,12 @@ export const Sizes = {
   authBannerTall: 236, // mascot banner, sign-in
   authBannerShort: 148, // mascot banner, sign-up
   authBannerMin: 100, // smallest sign-in banner, when the "session expirée" notice adds height
+  iconSm: 16,
+  icon: 20,
+  iconLg: 24,
+  grabberWidth: 40, // drag handle at the top of a bottom sheet
+  grabberHeight: 4,
+  stateIcon: 72, // circle behind the icon of an empty / error / offline state
 } as const;
 
 // Shadow system — amber-tinted ambient shadows
