@@ -259,9 +259,33 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 - **Source** : revue du lot 3. `app/profile/subscriptions.tsx:396` ne passe jamais `current` à
   `PlanCard` : l'état « Plan actuel » est du code mort. Le brancher sur l'abonnement actif ou le retirer.
 
+### UI-06 — Système de design : échelles, garde-fous et composants partagés (P1)
+
+- **Demande (2026-10-29)** : rendre les éléments et composants cohérents sur toutes les pages, comme
+  sur Mass Gain Tracker. Étapes 1 et 2 du plan validées par l'utilisateur.
+- **Constat (mesuré le 2026-10-29)** : bouton Paper dans 25 fichiers, 58 `Pressable` faits main,
+  `components/ui/button.tsx` utilisé nulle part ; 21 rayons d'angle différents ; 92 `fontSize` en dur
+  (14 valeurs) ; 117 espacements en dur ; 41 codes couleur dans 13 fichiers ; spinner brut dans 10
+  fichiers, squelette dans 5, `EmptyState` dans 1 ; chaque écran refait en-tête, zones sûres, défilement
+  et clavier.
+- **Étape 1, échelles et garde-fous** : 4 rayons, une échelle d'espacement, des variantes de texte
+  nommées (titre, corps, libellé, légende, prix) dans `constants/theme.ts` ; règle ESLint qui refuse
+  couleurs en dur et nombres bruts de style (erreur dans `components/ui/**`, avertissement ailleurs
+  jusqu'à la migration) ; règle ajoutée aux leçons de l'équipe.
+- **Étape 2, composants partagés** (modèle Mass Gain Tracker, identité du site) : `Screen`,
+  `ScreenHeader`, `SheetHeader`, `AppText`, `Button` (primaire, secondaire, texte, danger, Google ;
+  48 dp, chargement, libellé qui passe à la ligne à 200 %), `Field`, `Card`, `Chip`, `PriceTag`,
+  `States` (chargement en squelette, vide, erreur, hors ligne), `Toast`.
+- **Critères d'acceptation** : aucun changement visible dans cette étape (les écrans ne sont pas
+  encore migrés) ; chaque composant n'utilise que les jetons du thème ; AA en clair et en sombre ;
+  cibles ≥ 48 dp ; libellés TalkBack ; correct à 200 % ; `tsc` et lint sans nouvelle erreur.
+- **Suite** : étape 3, maquettes des écrans principaux (accueil, explorer, détail, profil) à valider ;
+  étape 4, migration par zone et retrait de React Native Paper ; étape 5, écran catalogue en dev.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
 2. **Lot 2 — connexion, inscription et police** : UI-03 d'abord (base des deux écrans), puis UI-01,
    UI-02, B-02 (connexion Google native) et B-05.
-3. **Lot 3 — contraste et 200 %** : UI-04. Puis F-01 quand le backend renverra le `user_id`.
+3. **Lot 3 — contraste et 200 %** : UI-04 (fusionné). Puis F-01 quand le backend renverra le `user_id`.
+4. **Lot 4 — système de design** : UI-06 étapes 1 et 2, puis maquettes, migration par zone.
