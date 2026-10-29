@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -27,21 +27,38 @@ export function GoogleSignInButton({ redirectTo, targetBelow = false, label = 'C
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const router = useRouter();
-  const { signIn, isReady, isLoading: isGoogleLoading } = useGoogleSignIn();
+  const { signIn, isReady, isLoading: isGoogleLoading, errorMessage: googleError } = useGoogleSignIn();
   const firebaseLogin = useFirebaseLogin();
   const [error, setError] = useState(false);
+  // Covers the whole chain signIn -> backend login, so the button never re-enables between the two.
+  const busyRef = useRef(false);
+  const [isBusy, setIsBusy] = useState(false);
+
+  function release() {
+    busyRef.current = false;
+    setIsBusy(false);
+  }
 
   async function handlePress() {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setIsBusy(true);
     setError(false);
-    const idToken = await signIn();
+    let idToken: string | null = null;
+    try {
+      idToken = await signIn();
+    } finally {
+      if (!idToken) release();
+    }
     if (!idToken) return;
     firebaseLogin.mutate(idToken, {
       onSuccess: () => goAfterAuth(router, redirectTo, targetBelow),
       onError: () => setError(true),
+      onSettled: release,
     });
   }
 
-  const isLoading = isGoogleLoading || firebaseLogin.isPending;
+  const isLoading = isBusy || isGoogleLoading || firebaseLogin.isPending;
 
   return (
     <View style={styles.container}>
@@ -61,14 +78,14 @@ export function GoogleSignInButton({ redirectTo, targetBelow = false, label = 'C
         {label}
       </Button>
 
-      {error && (
+      {(error || googleError) && (
         <View
           style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}
           accessibilityLiveRegion="polite"
         >
           <MaterialIcons name="error-outline" size={16} color={C.error} />
           <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
-            Connexion avec Google impossible. Réessayez.
+            {error ? 'Connexion avec Google impossible. Réessayez.' : googleError}
           </Text>
         </View>
       )}
