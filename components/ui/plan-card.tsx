@@ -1,5 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -34,6 +33,7 @@ export function PlanCard({
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
+  const filled = !!recommended && !current;
   const borderColor = current ? C.primary : recommended ? C.primary : C.outlineVariant;
   const bg = current
     ? C.primaryContainer + '22'
@@ -84,12 +84,12 @@ export function PlanCard({
 
       <View style={styles.priceRow}>
         {price === null ? (
-          <Text style={[Typography.headlineLg, { color: C.primary, fontFamily: Fonts.bold, fontSize: 28 }]}>
+          <Text style={[Typography.headlineLg, { color: C.link, fontFamily: Fonts.bold, fontSize: 28 }]}>
             Gratuit
           </Text>
         ) : (
           <>
-            <Text style={[Typography.headlineLg, { color: C.primary, fontFamily: Fonts.bold, fontSize: 28 }]}>
+            <Text style={[Typography.headlineLg, { color: C.link, fontFamily: Fonts.bold, fontSize: 28 }]}>
               {price.toLocaleString('fr-FR')}
             </Text>
             <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
@@ -112,15 +112,32 @@ export function PlanCard({
         ))}
       </View>
 
-      <Button
-        mode={recommended && !current ? 'contained' : 'outlined'}
-        icon={current ? 'check-circle' : undefined}
+      {/* Not a Paper Button: its label is forced to one line, which truncated
+          "Débloquer mes contacts" at 200 % font size (QA-05). This one wraps. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !!current }}
         disabled={current}
         onPress={onPress}
-        style={styles.cta}
+        android_ripple={{ color: C.onSurface + '1F' }}
+        style={[
+          styles.cta,
+          filled
+            ? { backgroundColor: C.primary }
+            : { borderWidth: 1, borderColor: current ? C.primary : C.outline },
+        ]}
       >
-        {current ? 'Plan actuel' : ctaLabel}
-      </Button>
+        {current && <MaterialIcons name="check-circle" size={18} color={C.link} />}
+        <Text
+          style={[
+            Typography.labelMd,
+            styles.ctaLabel,
+            { color: filled ? C.onPrimary : C.link, fontFamily: Fonts.semiBold },
+          ]}
+        >
+          {current ? 'Plan actuel' : ctaLabel}
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -140,8 +157,9 @@ const styles = StyleSheet.create({
   },
   priceRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'baseline',
-    gap: 2,
+    columnGap: 2,
   },
   metaCol: {
     gap: Spacing.xs,
@@ -164,5 +182,16 @@ const styles = StyleSheet.create({
   },
   cta: {
     borderRadius: Radius.md,
+    minHeight: 48,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+  },
+  ctaLabel: {
+    flexShrink: 1,
+    textAlign: 'center',
   },
 });

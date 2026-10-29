@@ -26,7 +26,7 @@ function MenuRow({ icon, label, subtitle, onPress, destructive }: MenuRowProps) 
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const iconBg = destructive ? C.errorContainer + '55' : C.primaryFixed + '88';
-  const iconColor = destructive ? C.error : C.primary;
+  const iconColor = destructive ? C.error : C.onPrimaryFixed;
   return (
     <TouchableRipple
       onPress={onPress}
@@ -144,8 +144,8 @@ export default function ProfileScreen() {
 
           {activePlanLabel && (
             <View style={[styles.announcerBadge, { backgroundColor: C.primaryFixed + 'AA', borderColor: C.primary + '30' }]}>
-              <MaterialIcons name="workspace-premium" size={14} color={C.primary} />
-              <Text style={[Typography.caption, { color: C.primary, fontFamily: Fonts.semiBold }]}>
+              <MaterialIcons name="workspace-premium" size={14} color={C.onPrimaryFixed} />
+              <Text style={[Typography.caption, { color: C.onPrimaryFixed, fontFamily: Fonts.semiBold }]}>
                 {activePlanLabel}
               </Text>
             </View>
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
           {isAnnouncer && (
             <View style={[styles.announcerBadge, { backgroundColor: C.primary + '15', borderColor: C.primary + '30' }]}>
               <MaterialIcons name="verified" size={14} color={C.primary} />
-              <Text style={[Typography.caption, { color: C.primary, fontFamily: Fonts.semiBold }]}>
+              <Text style={[Typography.caption, { color: C.link, fontFamily: Fonts.semiBold }]}>
                 Annonceur certifié
               </Text>
             </View>

@@ -45,7 +45,7 @@ export default function UnlockConfirmScreen() {
 
         {/* Icon */}
         <View style={[styles.iconCircle, { backgroundColor: C.primaryFixed }]}>
-          <MaterialIcons name="lock-open" size={32} color={C.primary} />
+          <MaterialIcons name="lock-open" size={32} color={C.onPrimaryFixed} />
         </View>
 
         <Text style={[Typography.headlineMd, styles.title, { color: C.onSurface }]}>
@@ -53,10 +53,10 @@ export default function UnlockConfirmScreen() {
         </Text>
         <Text style={[Typography.bodyMd, styles.body, { color: C.onSurfaceVariant }]}>
           Déverrouiller cette annonce utilisera{' '}
-          <Text style={{ color: C.primary, fontFamily: Fonts.bold }}>1 crédit</Text>.
+          <Text style={{ color: C.link, fontFamily: Fonts.bold }}>1 crédit</Text>.
           {'\n'}Il vous reste{' '}
           <Text style={{
-            color: hasEnoughCredits ? C.primary : C.error,
+            color: hasEnoughCredits ? C.link : C.error,
             fontFamily: Fonts.bold,
           }}>
             {userCredits} crédit{userCredits > 1 ? 's' : ''}
@@ -85,6 +85,7 @@ export default function UnlockConfirmScreen() {
         <View style={styles.actions}>
           <Button
             mode="outlined"
+            textColor={C.link}
             onPress={() => router.back()}
             style={styles.btn}
             contentStyle={styles.btnContent}

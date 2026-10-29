@@ -71,8 +71,8 @@ export default function AnnouncerProfileEditScreen() {
       >
         {/* Info banner */}
         <View style={[styles.infoBanner, { backgroundColor: C.primaryContainer + '33', borderColor: C.primaryContainer }]}>
-          <MaterialIcons name="info-outline" size={18} color={C.primary} />
-          <Text style={[Typography.caption, { color: C.primary, flex: 1, lineHeight: 18 }]}>
+          <MaterialIcons name="info-outline" size={18} color={C.link} />
+          <Text style={[Typography.caption, { color: C.link, flex: 1, lineHeight: 18 }]}>
             Ces informations sont visibles sur votre profil public et vos annonces.
           </Text>
         </View>

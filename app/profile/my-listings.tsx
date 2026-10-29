@@ -119,7 +119,7 @@ function ManageCard({ announce, index, deleting, onView, onEdit, onDelete }: Man
             </View>
 
             <View style={styles.priceRow}>
-              <Text style={[styles.price, { color: C.primary }]}>
+              <Text style={[styles.price, { color: C.link }]}>
                 {formatPrice(announce.price)}
               </Text>
               <Text style={[styles.currency, { color: C.onSurfaceVariant }]}>
@@ -148,7 +148,7 @@ function ManageCard({ announce, index, deleting, onView, onEdit, onDelete }: Man
           <Button mode="text" icon="eye-outline" compact onPress={onView} textColor={C.onSurfaceVariant} style={styles.actionBtn} labelStyle={styles.actionLabel}>
             Voir
           </Button>
-          <Button mode="text" icon="pencil-outline" compact onPress={onEdit} textColor={C.primary} style={styles.actionBtn} labelStyle={styles.actionLabel}>
+          <Button mode="text" icon="pencil-outline" compact onPress={onEdit} textColor={C.link} style={styles.actionBtn} labelStyle={styles.actionLabel}>
             Modifier
           </Button>
           <Button
@@ -312,7 +312,7 @@ export default function MyListingsScreen() {
             </View>
           ) : listings.length > 0 ? (
             <View style={[styles.summary, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant + '66' }]}>
-              <SummaryItem value={total} label="Total" color={C.primary} mutedColor={C.onSurfaceVariant} />
+              <SummaryItem value={total} label="Total" color={C.link} mutedColor={C.onSurfaceVariant} />
               <View style={[styles.summarySep, { backgroundColor: C.outlineVariant }]} />
               <SummaryItem value={locationCount} label="Locations" color={C.tertiary} mutedColor={C.onSurfaceVariant} />
               <View style={[styles.summarySep, { backgroundColor: C.outlineVariant }]} />
@@ -327,7 +327,7 @@ export default function MyListingsScreen() {
               description="Vous n'avez pas encore publié d'annonce. Commencez dès maintenant."
               ctaLabel="Publier une annonce"
               onCta={() => router.push('/announces/create/step-1')}
-              icon={<MaterialIcons name="add-home" size={36} color={C.primary} />}
+              icon={<MaterialIcons name="add-home" size={36} color={C.onPrimaryFixed} />}
             />
           ) : null
         }
@@ -523,6 +523,7 @@ const styles = StyleSheet.create({
   },
   priceRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'baseline',
     gap: Spacing.xs,
   },

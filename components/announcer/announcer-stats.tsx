@@ -38,7 +38,7 @@ export function AnnouncerStats({ announcesCount, rating, memberSince }: Announce
           {i > 0 && <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />}
           <View style={styles.item}>
             <View style={styles.valueRow}>
-              <Text style={[Typography.headlineMd, styles.value, { color: C.primary, fontSize: 24 }]}>
+              <Text style={[Typography.headlineMd, styles.value, { color: C.link, fontSize: 24 }]}>
                 {s.value}
               </Text>
               {s.icon && <MaterialIcons name={s.icon} size={18} color={C.primary} />}
