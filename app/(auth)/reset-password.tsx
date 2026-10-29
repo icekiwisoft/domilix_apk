@@ -125,7 +125,7 @@ export default function ResetPasswordScreen() {
         {step === 'otp' && (
           <>
             <View style={styles.header}>
-              <Text style={[Typography.headlineLg, { color: C.primary }]}>Saisir le code</Text>
+              <Text style={[Typography.headlineLg, { color: C.link }]}>Saisir le code</Text>
               <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs }]}>
                 Entrez le code à 6 chiffres reçu par e-mail.
               </Text>
@@ -154,7 +154,7 @@ export default function ResetPasswordScreen() {
         {step === 'password' && (
           <>
             <View style={styles.header}>
-              <Text style={[Typography.headlineLg, { color: C.primary }]}>Nouveau mot de passe</Text>
+              <Text style={[Typography.headlineLg, { color: C.link }]}>Nouveau mot de passe</Text>
               <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs }]}>
                 Choisissez un mot de passe sécurisé.
               </Text>

@@ -93,7 +93,7 @@ export default function ForgotPasswordScreen() {
 
         {/* Headline */}
         <View style={styles.header}>
-          <Text style={[Typography.headlineLg, { color: C.primary }]}>Mot de passe oublié</Text>
+          <Text style={[Typography.headlineLg, { color: C.link }]}>Mot de passe oublié</Text>
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs }]}>
             Saisissez votre adresse e-mail pour recevoir un lien de réinitialisation.
           </Text>

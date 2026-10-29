@@ -75,7 +75,7 @@ export default function NotificationsScreen() {
           </Text>
           {unreadCount > 0 && (
             <View style={[styles.unreadPill, { backgroundColor: C.primary + '18' }]}>
-              <Text style={[Typography.caption, { color: C.primary, fontFamily: Fonts.bold }]}>
+              <Text style={[Typography.caption, { color: C.link, fontFamily: Fonts.bold }]}>
                 {unreadCount} non {unreadCount > 1 ? 'lues' : 'lue'}
               </Text>
             </View>
@@ -84,6 +84,7 @@ export default function NotificationsScreen() {
         {unreadCount > 0 && (
           <Button
             mode="text"
+            textColor={C.link}
             icon="check-all"
             compact
             onPress={() => markAllRead.mutate()}
@@ -100,7 +101,7 @@ export default function NotificationsScreen() {
       ) : notifs.length === 0 ? (
         <View style={styles.empty}>
           <View style={[styles.emptyIcon, { backgroundColor: C.primaryFixed }]}>
-            <MaterialIcons name="notifications-none" size={40} color={C.primary} />
+            <MaterialIcons name="notifications-none" size={40} color={C.onPrimaryFixed} />
           </View>
           <Text style={[Typography.headlineMd, { color: C.onSurface, textAlign: 'center', fontSize: 20 }]}>
             Tout est calme ici

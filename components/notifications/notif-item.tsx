@@ -21,16 +21,16 @@ function getIconConfig(type: string, C: (typeof Colors)['light'] | (typeof Color
   switch (type) {
     // Payment / Domicoin credits
     case 'payment_success':
-      return { icon: 'payment', bg: C.primaryFixed, color: C.primary };
+      return { icon: 'payment', bg: C.primaryFixed, color: C.onPrimaryFixed };
     case 'credits_received':
-      return { icon: 'toll', bg: C.primaryFixed, color: C.primary };
+      return { icon: 'toll', bg: C.primaryFixed, color: C.onPrimaryFixed };
     case 'signup_gift_received':
       return { icon: 'card-giftcard', bg: C.tertiaryContainer, color: C.onTertiaryContainer };
     // Announce lifecycle
     case 'ad_unlocked':
       return { icon: 'lock-open', bg: C.secondaryContainer, color: C.secondary };
     case 'ad_published':
-      return { icon: 'campaign', bg: C.primaryFixed, color: C.primary };
+      return { icon: 'campaign', bg: C.primaryFixed, color: C.onPrimaryFixed };
     // Account / auth
     case 'welcome':
       return { icon: 'celebration', bg: C.tertiaryContainer, color: C.onTertiaryContainer };
@@ -38,7 +38,7 @@ function getIconConfig(type: string, C: (typeof Colors)['light'] | (typeof Color
       return { icon: 'login', bg: C.surfaceContainerHigh, color: C.onSurfaceVariant };
     // Announcer subscription
     case 'announcer_subscription_assigned':
-      return { icon: 'workspace-premium', bg: C.primaryFixed, color: C.primary };
+      return { icon: 'workspace-premium', bg: C.primaryFixed, color: C.onPrimaryFixed };
     default:
       return { icon: 'info', bg: C.surfaceContainerHigh, color: C.onSurfaceVariant };
   }
