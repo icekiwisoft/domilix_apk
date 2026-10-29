@@ -421,6 +421,7 @@ export default function EditAnnounceScreen() {
           <Section>
             <TextInput
               mode="outlined"
+              activeOutlineColor={C.link}
               label="Prix"
               value={price}
               onChangeText={setPrice}
@@ -439,6 +440,7 @@ export default function EditAnnounceScreen() {
           <Section>
             <TextInput
               mode="outlined"
+              activeOutlineColor={C.link}
               label="Description"
               value={description}
               onChangeText={setDescription}
@@ -510,6 +512,7 @@ export default function EditAnnounceScreen() {
                 <View style={{ width: 120 }}>
                   <TextInput
                     mode="outlined"
+                    activeOutlineColor={C.link}
                     label="Surface (m²)"
                     value={size}
                     onChangeText={setSize}
@@ -542,11 +545,11 @@ export default function EditAnnounceScreen() {
                         selected={active}
                         showSelectedCheck={false}
                         icon={({ size }) => (
-                          <MaterialIcons name={a.icon} size={size} color={active ? C.primary : C.onSurfaceVariant} />
+                          <MaterialIcons name={a.icon} size={size} color={active ? C.onPrimaryFixed : C.onSurfaceVariant} />
                         )}
                         onPress={() => toggleAmenity(a.key)}
                         style={active ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
-                        textStyle={{ color: active ? C.primary : C.onSurface }}
+                        textStyle={{ color: active ? C.onPrimaryFixed : C.onSurface }}
                       >
                         {a.label}
                       </Chip>

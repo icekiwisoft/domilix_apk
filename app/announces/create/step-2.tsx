@@ -61,6 +61,7 @@ export default function CreateStep2Screen() {
         <View style={[styles.section, { marginTop: Spacing.xl }]}>
           <TextInput
             mode="outlined"
+            activeOutlineColor={C.link}
             label={`Prix${draft.ad_type === 'location' ? ' (par mois)' : ''}`}
             value={draft.price}
             onChangeText={(t) => setDraft({ price: t })}
@@ -79,6 +80,7 @@ export default function CreateStep2Screen() {
           <View style={[styles.section, { marginTop: Spacing.lg }]}>
             <TextInput
               mode="outlined"
+              activeOutlineColor={C.link}
               label="Surface (m²) — optionnel"
               value={draft.size}
               onChangeText={(t) => setDraft({ size: t })}
