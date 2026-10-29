@@ -186,7 +186,7 @@ export function Section({ title, footer, children, accessibilityRole, style }: S
           {title}
         </AppText>
       ) : null}
-      <Card padding="none" accessibilityRole={accessibilityRole} accessibilityLabel={accessibilityRole ? title : undefined} style={{ gap: 0, overflow: 'hidden' }}>
+      <Card padding="none" accessibilityRole={accessibilityRole} accessibilityLabel={accessibilityRole ? title : undefined} style={{ gap: 0 }}>
         {rows.map((row, i) => (
           <Fragment key={row.key ?? i}>
             {i > 0 ? <Divider style={{ marginLeft: Spacing.md }} /> : null}

@@ -54,8 +54,6 @@ export function Card({
       onPress={onPress}
       style={({ pressed }) => [
         ...base,
-        // Content stays inside the rounded corners.
-        { overflow: 'hidden' },
         disabled ? { opacity: Opacity.disabled } : null,
         pressedStyle(pressed),
         style,
