@@ -1,11 +1,12 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Pressable, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Opacity, Radii, Shadows, Sizes, Spacing } from '@/constants/theme';
+import { Radii, Shadows, Sizes, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
 
 import { AppText } from './app-text';
 import type { IconName } from './icon-button';
+import { pressedStyle } from './pressed';
 
 export interface SegmentOption<T extends string> {
   value: T;
@@ -64,7 +65,6 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
             accessibilityLabel={o.label}
             accessibilityState={{ checked: on }}
             onPress={() => onChange(o.value)}
-            android_ripple={{ color: C.ripple }}
             style={({ pressed }) => [
               {
                 flexGrow: 1,
@@ -81,7 +81,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
                 backgroundColor: on ? C.surfaceContainerLowest : 'transparent',
               },
               on ? Shadows.xs : null,
-              pressed && process.env.EXPO_OS === 'ios' ? { opacity: Opacity.pressed } : null,
+              pressedStyle(pressed),
             ]}
           >
             {icon ? (

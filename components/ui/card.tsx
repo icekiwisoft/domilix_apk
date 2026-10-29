@@ -4,6 +4,8 @@ import { Borders, Opacity, Radii, Shadows, Spacing, type ColorToken } from '@/co
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColors } from '@/hooks/use-theme-color';
 
+import { pressedStyle } from './pressed';
+
 export interface CardProps extends Omit<ViewProps, 'style'> {
   /** Surface token; `surfaceContainerLowest` is the white card of the website. */
   surface?: ColorToken;
@@ -14,7 +16,7 @@ export interface CardProps extends Omit<ViewProps, 'style'> {
   outlined?: boolean;
   /** Inner padding; `none` for cards that start with a full-bleed image. */
   padding?: 'none' | 'sm' | 'md';
-  /** Makes the whole card a button (ripple, TalkBack role); give it an accessibilityLabel. */
+  /** Makes the whole card a button (press feedback, TalkBack role); give it an accessibilityLabel. */
   onPress?: (e: GestureResponderEvent) => void;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -50,13 +52,12 @@ export function Card({
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
-      android_ripple={{ color: C.ripple }}
       style={({ pressed }) => [
         ...base,
-        // The ripple stays inside the rounded corners.
+        // Content stays inside the rounded corners.
         { overflow: 'hidden' },
         disabled ? { opacity: Opacity.disabled } : null,
-        pressed && process.env.EXPO_OS === 'ios' ? { opacity: Opacity.pressed } : null,
+        pressedStyle(pressed),
         style,
       ]}
       {...rest}

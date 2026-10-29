@@ -16,6 +16,7 @@ import { AppText } from './app-text';
 import { Card } from './card';
 import { Divider } from './divider';
 import type { IconName } from './icon-button';
+import { pressedStyle } from './pressed';
 
 export interface SwitchProps {
   value: boolean;
@@ -125,7 +126,6 @@ export function ListRow({
       accessibilityState={isSwitch ? { checked: switchValue, disabled: !!disabled } : { disabled: !!disabled }}
       disabled={disabled || !pressable}
       onPress={isSwitch ? () => onSwitchChange?.(!switchValue) : onPress}
-      android_ripple={pressable ? { color: C.ripple } : undefined}
       style={({ pressed }) => [
         {
           minHeight: subtitle ? Sizes.touchTarget + Spacing.sm : Sizes.touchTarget,
@@ -136,7 +136,7 @@ export function ListRow({
           paddingVertical: Spacing.sm,
           opacity: disabled ? Opacity.disabled : 1,
         },
-        pressed && process.env.EXPO_OS === 'ios' ? { opacity: Opacity.pressed } : null,
+        pressedStyle(pressed),
         style,
       ]}
       {...rest}

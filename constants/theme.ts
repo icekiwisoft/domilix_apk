@@ -81,8 +81,6 @@ export const Colors = {
     googleSurface: '#ffffff',
     googleOutline: '#747775',
     onGoogleSurface: '#1f1f1f',
-    // Press feedback of the shared components (android_ripple), UI-06.
-    ripple: 'rgba(34,26,18,0.12)',
     // Selected icon (favourite) on the light bannerChip over a photo: 5.7:1.
     onBannerChipAccent: '#ba1a1a',
     // Backdrop behind dialogs and bottom sheets.
@@ -160,7 +158,6 @@ export const Colors = {
     googleSurface: '#131314',
     googleOutline: '#8e918f',
     onGoogleSurface: '#e3e3e3',
-    ripple: 'rgba(254,238,225,0.16)',
     onBannerChipAccent: '#ba1a1a',
     scrim: 'rgba(0,0,0,0.6)',
   },

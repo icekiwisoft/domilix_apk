@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useNotifications, useMarkAllRead, useMarkAsRead, useDeleteNotification } from '@/hooks/queries/use-notifications';
 import { useAuthStore } from '@/stores/auth.store';
 import { LoginGate } from '@/components/ui/login-gate';
+import { pressedStyle } from '@/components/ui/pressed';
 import type { Notification } from '@/types/notification';
 
 function groupByDate(notifs: Notification[]): { title: string; data: Notification[] }[] {
@@ -86,8 +87,7 @@ export default function NotificationsScreen() {
           <Pressable
             accessibilityRole="button"
             onPress={() => markAllRead.mutate()}
-            android_ripple={{ color: C.onSurface + '1F' }}
-            style={styles.markAll}
+            style={({ pressed }) => [styles.markAll, pressedStyle(pressed)]}
           >
             <MaterialIcons name="done-all" size={18} color={C.link} />
             <Text style={[Typography.labelMd, styles.markAllLabel, { color: C.link }]}>

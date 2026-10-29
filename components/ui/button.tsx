@@ -7,6 +7,7 @@ import { useThemeColors } from '@/hooks/use-theme-color';
 
 import { AppText } from './app-text';
 import type { IconName } from './icon-button';
+import { pressedStyle } from './pressed';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'google';
 export type ButtonSize = 'md' | 'lg';
@@ -67,7 +68,6 @@ export function Button({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
-      android_ripple={{ color: C.ripple }}
       style={({ pressed }) => [
         {
           minHeight: size === 'lg' ? Sizes.control : Sizes.touchTarget,
@@ -86,7 +86,7 @@ export function Button({
           opacity: disabled && !loading ? Opacity.disabled : 1,
         },
         fullWidth ? { alignSelf: 'stretch' } : null,
-        pressed && process.env.EXPO_OS === 'ios' ? { opacity: Opacity.pressed } : null,
+        pressedStyle(pressed),
         style,
       ]}
       {...rest}

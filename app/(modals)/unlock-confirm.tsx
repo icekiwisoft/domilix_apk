@@ -7,6 +7,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe } from '@/hooks/queries/use-auth-queries';
 import { useUnlockAnnounce } from '@/hooks/queries/use-announces';
 import { useToast } from '@/components/ui/toast';
+import { pressedStyle } from '@/components/ui/pressed';
 
 export default function UnlockConfirmScreen() {
   const { fontScale } = useWindowDimensions();
@@ -91,8 +92,11 @@ export default function UnlockConfirmScreen() {
           <Pressable
             accessibilityRole="button"
             onPress={() => router.back()}
-            android_ripple={{ color: C.onSurface + '1F' }}
-            style={[styles.btn, { flexBasis: btnBasis, borderWidth: 1, borderColor: C.outline }]}
+            style={({ pressed }) => [
+              styles.btn,
+              { flexBasis: btnBasis, borderWidth: 1, borderColor: C.outline },
+              pressedStyle(pressed),
+            ]}
           >
             <Text style={[Typography.labelMd, styles.btnLabel, { color: C.link }]}>Annuler</Text>
           </Pressable>
@@ -101,8 +105,11 @@ export default function UnlockConfirmScreen() {
             accessibilityState={{ disabled: confirmDisabled, busy: unlockAnnounce.isPending }}
             disabled={confirmDisabled}
             onPress={handleConfirm}
-            android_ripple={{ color: C.onPrimary + '33' }}
-            style={[styles.btn, { flexBasis: btnBasis, backgroundColor: C.primary, opacity: confirmDisabled ? 0.5 : 1 }]}
+            style={({ pressed }) => [
+              styles.btn,
+              { flexBasis: btnBasis, backgroundColor: C.primary, opacity: confirmDisabled ? 0.5 : 1 },
+              pressedStyle(pressed),
+            ]}
           >
             {unlockAnnounce.isPending ? (
               <ActivityIndicator size="small" color={C.onPrimary} />

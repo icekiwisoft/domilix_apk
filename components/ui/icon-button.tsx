@@ -4,6 +4,8 @@ import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from '
 import { Opacity, Radii, Sizes, type ColorToken } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
 
+import { pressedStyle } from './pressed';
+
 export type IconName = keyof typeof MaterialIcons.glyphMap;
 
 export interface IconButtonProps extends Omit<PressableProps, 'children' | 'style'> {
@@ -57,7 +59,6 @@ export function IconButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled: !!disabled, selected }}
       disabled={disabled}
-      android_ripple={{ color: C.ripple, borderless: !bg }}
       style={({ pressed }) => [
         {
           width: Sizes.touchTarget,
@@ -69,7 +70,7 @@ export function IconButton({
           backgroundColor: bg ? C[bg] : 'transparent',
           opacity: disabled ? Opacity.disabled : 1,
         },
-        pressed && process.env.EXPO_OS === 'ios' ? { opacity: Opacity.pressed } : null,
+        pressedStyle(pressed),
         style,
       ]}
       {...rest}

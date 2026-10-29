@@ -7,6 +7,7 @@ import { useThemeColors } from '@/hooks/use-theme-color';
 
 import { AppText } from './app-text';
 import type { IconName } from './icon-button';
+import { pressedStyle } from './pressed';
 
 export interface RadioProps {
   selected: boolean;
@@ -79,7 +80,6 @@ export function RadioRow({
       accessibilityLabel={accessibilityLabel ?? (subtitle ? `${title}, ${subtitle}` : title)}
       accessibilityState={{ checked: selected, disabled: !!disabled }}
       disabled={disabled}
-      android_ripple={{ color: C.ripple }}
       style={({ pressed }) => [
         {
           minHeight: Sizes.touchTarget,
@@ -102,7 +102,7 @@ export function RadioRow({
               backgroundColor: selected ? C.surfaceContainerLow : C.surfaceContainerLowest,
             }
           : null,
-        pressed && process.env.EXPO_OS === 'ios' ? { opacity: Opacity.pressed } : null,
+        pressedStyle(pressed),
         style,
       ]}
       {...rest}

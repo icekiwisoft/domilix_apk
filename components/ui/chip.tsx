@@ -6,6 +6,7 @@ import { useThemeColors } from '@/hooks/use-theme-color';
 
 import { AppText } from './app-text';
 import type { IconName } from './icon-button';
+import { pressedStyle } from './pressed';
 
 export interface ChipProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
@@ -53,7 +54,6 @@ export function Chip({
       accessibilityState={removable ? { disabled: !!disabled } : { checked: on, disabled: !!disabled }}
       disabled={disabled}
       onPress={removable ? () => onRemove() : onPress}
-      android_ripple={{ color: C.ripple }}
       style={({ pressed }) => [
         {
           minHeight: Sizes.touchTarget,
@@ -71,7 +71,7 @@ export function Chip({
           borderColor: removable ? C.primaryFixed : on ? C.primary : C.outline,
           opacity: disabled ? Opacity.disabled : 1,
         },
-        pressed && process.env.EXPO_OS === 'ios' ? { opacity: Opacity.pressed } : null,
+        pressedStyle(pressed),
         style,
       ]}
       {...rest}
