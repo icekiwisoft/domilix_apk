@@ -135,12 +135,25 @@ export function TabBar({ state, descriptors, navigation, items, centerRoute, cen
               style={{
                 width: Sizes.tabPillWidth,
                 height: Sizes.tabPillHeight,
-                borderRadius: Radii.full,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: focused ? C.primaryFixed : 'transparent',
               }}
             >
+              {/* Mounted only when focused: changing the background of a mounted
+                  rounded View drew a square pill after a tab switch (RN 0.81). */}
+              {focused ? (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    left: 0,
+                    borderRadius: Radii.full,
+                    backgroundColor: C.primaryFixed,
+                  }}
+                />
+              ) : null}
               <MaterialIcons
                 name={focused ? (item.activeIcon ?? item.icon) : item.icon}
                 size={Sizes.iconLg}
