@@ -36,7 +36,7 @@ export function ListingPriceTag({ price, devise, period, size = 'md' }: ListingP
 
   return (
     <View style={styles.row}>
-      <Text style={[...priceStyle, { color: C.primaryFixedDim }]} numberOfLines={1}>
+      <Text style={[...priceStyle, { color: C.link }]}>
         {formatPrice(price)}{' '}{currency}
       </Text>
       {periodLabel && (
@@ -51,8 +51,9 @@ export function ListingPriceTag({ price, devise, period, size = 'md' }: ListingP
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap', // amount and "/mois" wrap as blocks at 200 % (QA-05)
     alignItems: 'baseline',
-    gap: 2,
+    columnGap: 2,
     flexShrink: 1,
   },
   bold: {

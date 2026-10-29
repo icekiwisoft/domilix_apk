@@ -275,7 +275,7 @@ export default function AnnounceDetailScreen() {
                     { backgroundColor: C.primaryFixed, alignItems: 'center', justifyContent: 'center' },
                   ]}
                 >
-                  <MaterialIcons name="person" size={24} color={C.primary} />
+                  <MaterialIcons name="person" size={24} color={C.onPrimaryFixed} />
                 </View>
               )}
             </View>

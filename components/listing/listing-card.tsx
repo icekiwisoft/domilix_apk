@@ -87,11 +87,11 @@ export function ListingCard({ announce, onPress, onLike, imageHeight = IMAGE_HEI
         </View>
         <View style={{ flex: 1 }} />
         <View style={styles.priceRow}>
-          <Text style={[styles.priceMain, { color: C.primary }]}>
-            {formatPrice(announce.price)}{' '}
-            <Text style={[Typography.caption, { color: C.secondary }]}>
-              {currency}{periodSuffix}
-            </Text>
+          <Text style={[styles.priceMain, { color: C.link }]}>
+            {formatPrice(announce.price)}
+          </Text>
+          <Text style={[Typography.caption, { color: C.secondary }]}>
+            {currency}{periodSuffix}
           </Text>
         </View>
       </View>
@@ -154,7 +154,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
     marginBottom: Spacing.sm,
   },
-  priceRow: {},
+  // The amount and its unit are two items that wrap as blocks: at 200 % the unit
+  // drops under the amount instead of splitting "XOF/" from "mois" (QA-05).
+  priceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    columnGap: Spacing.xs,
+  },
   priceMain: {
     fontFamily: Fonts.bold,
     fontSize: 22,
