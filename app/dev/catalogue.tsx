@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
@@ -86,6 +86,7 @@ function Caption({ children }: { children: string }) {
 
 function Catalogue() {
   const C = useThemeColors();
+  const router = useRouter();
   const toast = useToast();
   const preference = useThemeStore((s) => s.preference);
   const setPreference = useThemeStore((s) => s.setPreference);
@@ -112,7 +113,15 @@ function Catalogue() {
   const [step, setStep] = useState(2);
 
   return (
-    <Screen header={<ScreenHeader title="Catalogue des composants" />}>
+    <Screen
+      header={
+        <ScreenHeader
+          title="Catalogue des composants"
+          // Opened by deep link there is nothing to go back to: fall back to home.
+          onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        />
+      }
+    >
       <View style={{ gap: Spacing.lg }}>
         <Group title="Thème">
           <SegmentedControl
