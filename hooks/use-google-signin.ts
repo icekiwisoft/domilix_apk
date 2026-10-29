@@ -26,6 +26,7 @@ function getGoogle(): GoogleModule | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const google = require('@thoughtbot/react-native-social-auth/google') as GoogleModule;
+    // Patched via patch-package (patches/): the library auto-selects an authorised account, so we force the picker to always show.
     google.GoogleSignIn.configure({ webClientId: WEB_CLIENT_ID });
     googleModule = google;
   } catch {
