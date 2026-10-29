@@ -86,16 +86,16 @@ function TabLabel({
 
   return (
     <Animated.Text
-      // 12 sp label capped at 1.3x so the five tab labels stay whole at 200 % system
+      // 12 sp label capped at 1.15x so the five tab labels stay whole at 200 % system
       // font (QA-05); the large-text need is met by the icon + the bold active label.
-      maxFontSizeMultiplier={1.3}
+      maxFontSizeMultiplier={1.15}
       numberOfLines={1}
       style={[
         {
           fontFamily: focused ? Fonts.bold : Fonts.medium,
           fontSize: 12,
           textTransform: 'capitalize',
-          letterSpacing: 0.6,
+          letterSpacing: 0.2,
           color,
           marginTop: 3,
         },
