@@ -158,7 +158,9 @@ export function Field({
           ref={ref}
           style={[
             TextVariants.body,
-            { flex: 1, minWidth: 0, margin: 0, paddingVertical: Spacing.sm, color: C.onSurface },
+            // The EditText itself is the touch target: 48 dp even though the
+            // text line alone is shorter (fits the 52 dp box inside a 2 dp ring).
+            { flex: 1, minWidth: 0, minHeight: Sizes.touchTarget, margin: 0, paddingVertical: Spacing.sm, color: C.onSurface },
             multiline ? { textAlignVertical: 'top', paddingVertical: Spacing.ms } : null,
             style,
           ]}
