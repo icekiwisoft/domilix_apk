@@ -73,6 +73,8 @@ export const Colors = {
     googleSurface: '#ffffff',
     googleOutline: '#747775',
     onGoogleSurface: '#1f1f1f',
+    // Press feedback of the shared components (android_ripple), UI-06.
+    ripple: 'rgba(34,26,18,0.12)',
   },
   dark: {
     // Surfaces
@@ -141,6 +143,7 @@ export const Colors = {
     googleSurface: '#131314',
     googleOutline: '#8e918f',
     onGoogleSurface: '#e3e3e3',
+    ripple: 'rgba(254,238,225,0.16)',
   },
 } as const;
 
@@ -344,6 +347,19 @@ export const Sizes = {
   grabberWidth: 40, // drag handle at the top of a bottom sheet
   grabberHeight: 4,
   stateIcon: 72, // circle behind the icon of an empty / error / offline state
+  skeletonMedia: 120, // image block of a loading card
+} as const;
+
+// Border widths of the shared components (UI-06). `focus` is the focus and
+// error ring of fields.
+export const Borders = {
+  thin: 1,
+  focus: 2,
+} as const;
+
+export const Opacity = {
+  disabled: 0.42,
+  pressed: 0.75,
 } as const;
 
 // Shadow system — amber-tinted ambient shadows
