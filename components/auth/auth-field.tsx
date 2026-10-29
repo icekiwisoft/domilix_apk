@@ -69,7 +69,7 @@ export const AuthField = forwardRef<TextInput, AuthFieldProps>(function AuthFiel
             { color: C.onSurface, paddingLeft: prefix ? Spacing.md : 0 },
             style,
           ]}
-          placeholderTextColor={C.outline}
+          placeholderTextColor={C.placeholder}
           selectionColor={C.primary}
           cursorColor={C.primary}
           accessibilityLabel={labelHint ? `${label} ${labelHint}` : label}

@@ -18,6 +18,9 @@ export const Colors = {
     // Outlines
     outline: '#867462',
     outlineVariant: '#d9c3af',
+    // Placeholder text of fields (UI-06): 5.17:1 on fieldSurface, 4.92:1 on the
+    // cream page (`outline` was 4.48:1, under AA for text).
+    placeholder: '#7c6a58',
     // Primary – Warm Amber/Orange
     // White on #e8921a is only 2.45:1 (fails AA, UI-04): dark brown reaches 6.99:1.
     // `primary` itself stays for fills, icons and accents; amber used as TEXT on
@@ -66,6 +69,11 @@ export const Colors = {
     fieldSurface: '#ffffff',
     fieldPrefix: '#fff1e4',
     success: '#2f6b3a',
+    // Success toast (onSuccess on success 6.39:1) and status pills such as
+    // "En ligne" (onSuccessContainer on successContainer 10:1), UI-06.
+    onSuccess: '#ffffff',
+    successContainer: '#cdebd2',
+    onSuccessContainer: '#0f3a18',
     // Badge over the mascot photo: same light chip in both themes.
     bannerChip: 'rgba(255,255,255,0.94)',
     onBannerChip: '#211a12',
@@ -75,6 +83,10 @@ export const Colors = {
     onGoogleSurface: '#1f1f1f',
     // Press feedback of the shared components (android_ripple), UI-06.
     ripple: 'rgba(34,26,18,0.12)',
+    // Selected icon (favourite) on the light bannerChip over a photo: 5.7:1.
+    onBannerChipAccent: '#ba1a1a',
+    // Backdrop behind dialogs and bottom sheets.
+    scrim: 'rgba(34,26,18,0.5)',
   },
   dark: {
     // Surfaces
@@ -93,6 +105,8 @@ export const Colors = {
     // Outlines
     outline: '#9d8b77',
     outlineVariant: '#534435',
+    // Placeholder text of fields: 5.18:1 on fieldSurface, 5.65:1 on the page.
+    placeholder: '#9d8b77',
     // Primary
     primary: '#ffb869',
     onPrimary: '#2b1700',
@@ -137,6 +151,9 @@ export const Colors = {
     fieldSurface: '#221b14',
     fieldPrefix: '#2c241b',
     success: '#8fd19e',
+    onSuccess: '#0b2e14', // 8.33:1
+    successContainer: '#1f4a29',
+    onSuccessContainer: '#c3ecc9', // 7.81:1
     bannerChip: 'rgba(255,255,255,0.94)',
     onBannerChip: '#211a12',
     // Google sign-in button, Google's official colours (dark theme).
@@ -144,6 +161,8 @@ export const Colors = {
     googleOutline: '#8e918f',
     onGoogleSurface: '#e3e3e3',
     ripple: 'rgba(254,238,225,0.16)',
+    onBannerChipAccent: '#ba1a1a',
+    scrim: 'rgba(0,0,0,0.6)',
   },
 } as const;
 
@@ -348,6 +367,14 @@ export const Sizes = {
   grabberHeight: 4,
   stateIcon: 72, // circle behind the icon of an empty / error / offline state
   skeletonMedia: 120, // image block of a loading card
+  avatarSm: 32,
+  avatarMd: 44,
+  avatarLg: 64,
+  multiline: 120, // minimum height of a multi-line field
+  progress: 4, // track of the step progress bar
+  radio: 20, // outer ring of a radio button
+  radioDot: 10,
+  dialogMaxWidth: 560, // Material 3 dialog
 } as const;
 
 // Border widths of the shared components (UI-06). `focus` is the focus and
