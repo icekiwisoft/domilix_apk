@@ -35,7 +35,7 @@ export function ListingMapPin({ price, devise, selected = false }: ListingMapPin
           style={[
             Typography.caption,
             styles.label,
-            { color: selected ? C.onPrimary : C.primary, fontFamily: Fonts.bold },
+            { color: selected ? C.onPrimary : C.link, fontFamily: Fonts.bold },
           ]}
         >
           {formatShort(price)} {currency}

@@ -19,8 +19,11 @@ export const Colors = {
     outline: '#867462',
     outlineVariant: '#d9c3af',
     // Primary – Warm Amber/Orange
+    // White on #e8921a is only 2.45:1 (fails AA, UI-04): dark brown reaches 6.99:1.
+    // `primary` itself stays for fills, icons and accents; amber used as TEXT on
+    // cream or white must use `link` (#835500, 6.12:1) instead.
     primary: '#e8921a',
-    onPrimary: '#ffffff',
+    onPrimary: '#291800',
     primaryContainer: '#885200',
     onPrimaryContainer: '#ffffff',
     inversePrimary: '#ffb869',
@@ -47,6 +50,8 @@ export const Colors = {
     // Fixed
     primaryFixed: '#ffdcbb',
     primaryFixedDim: '#ffb869',
+    // Text and icons on `primaryFixed` surfaces (same peach in both themes): 12:1.
+    onPrimaryFixed: '#2c1600',
     // Legacy aliases for navigation/tab components
     text: '#221a12',
     tint: '#885200',
@@ -115,6 +120,8 @@ export const Colors = {
     // Fixed
     primaryFixed: '#ffdcbb',
     primaryFixedDim: '#ffb869',
+    // Text and icons on `primaryFixed` surfaces (same peach in both themes): 12:1.
+    onPrimaryFixed: '#2c1600',
     // Legacy aliases
     text: '#feeee1',
     tint: '#ffb869',

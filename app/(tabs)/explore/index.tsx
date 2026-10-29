@@ -124,7 +124,7 @@ export default function ExploreScreen() {
               <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}>
                 Aucune annonce ne correspond à vos critères.
               </Text>
-              <Button mode="text" onPress={clearFilters}>
+              <Button mode="text" textColor={C.link} onPress={clearFilters}>
                 Réinitialiser les filtres
               </Button>
             </View>
@@ -134,6 +134,7 @@ export default function ExploreScreen() {
           hasMore && !isLoading ? (
             <Button
               mode="outlined"
+              textColor={C.link}
               onPress={() => setPage((p) => p + 1)}
               style={styles.loadMore}
             >

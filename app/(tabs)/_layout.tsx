@@ -86,12 +86,16 @@ function TabLabel({
 
   return (
     <Animated.Text
+      // 12 sp label capped at 1.15x so the five tab labels stay whole at 200 % system
+      // font (QA-05); the large-text need is met by the icon + the bold active label.
+      maxFontSizeMultiplier={1.15}
+      numberOfLines={1}
       style={[
         {
           fontFamily: focused ? Fonts.bold : Fonts.medium,
           fontSize: 12,
           textTransform: 'capitalize',
-          letterSpacing: 0.6,
+          letterSpacing: 0.2,
           color,
           marginTop: 3,
         },
@@ -103,7 +107,9 @@ function TabLabel({
   );
 }
 
-function PublishTabButton({ color }: { color: string }) {
+function PublishTabButton({ color, iconColor }: { color: string; iconColor: string }) {
+  // Ring matches the tab bar background (a fixed white ring glared in dark mode).
+  const ringColor = Colors[useColorScheme() ?? 'light'].surfaceContainerLowest;
   const scale = useSharedValue(1);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -124,8 +130,8 @@ function PublishTabButton({ color }: { color: string }) {
       }}
       style={styles.publishSlot}
     >
-      <Animated.View style={[styles.publishButton, { backgroundColor: color }, Shadows.button, animStyle]}>
-        <IconSymbol name="plus" size={34} color="#ffffff" />
+      <Animated.View style={[styles.publishButton, { backgroundColor: color, borderColor: ringColor }, Shadows.button, animStyle]}>
+        <IconSymbol name="plus" size={34} color={iconColor} />
       </Animated.View>
     </Pressable>
   );
@@ -142,8 +148,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: C.primary,
-        tabBarInactiveTintColor: C.tabIconDefault,
+        tabBarActiveTintColor: C.link,
+        tabBarInactiveTintColor: C.onSurfaceVariant,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
@@ -186,7 +192,7 @@ export default function TabLayout() {
         options={{
           title: '',
           tabBarLabel: () => null,
-          tabBarButton: () => <PublishTabButton color={C.primary} />,
+          tabBarButton: () => <PublishTabButton color={C.primary} iconColor={C.onPrimary} />,
           tabBarItemStyle: styles.publishItem,
         }}
       />
@@ -246,6 +252,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 5,
-    borderColor: '#ffffff',
   },
 });

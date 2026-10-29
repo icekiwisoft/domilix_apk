@@ -101,8 +101,8 @@ function ActivePackRow({ sub }: { sub: Subscription }) {
         <View style={[banner.iconCircle, { backgroundColor: C.primary + '22' }]}>
           <MaterialIcons name="toll" size={20} color={C.primary} />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
+        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 150 }}>
+          <Text style={[Typography.labelSm, { color: C.link, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
             {sub.plan_name}
           </Text>
           <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: Fonts.semiBold, marginTop: 1 }]}>
@@ -110,7 +110,7 @@ function ActivePackRow({ sub }: { sub: Subscription }) {
           </Text>
         </View>
         {expiry ? (
-          <View style={{ alignItems: 'flex-end' }}>
+          <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
             <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>Expire le</Text>
             <Text style={[Typography.caption, { color: C.onSurface, fontFamily: Fonts.semiBold, marginTop: 1 }]}>
               {formatExpiry(expiry)}
@@ -130,6 +130,7 @@ const banner = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: Spacing.md,
   },
@@ -204,7 +205,7 @@ function PaymentModal({
 
           {/* Icon */}
           <View style={[styles.modalIconCircle, { backgroundColor: C.primaryFixed }]}>
-            <MaterialIcons name="payment" size={28} color={C.primary} />
+            <MaterialIcons name="payment" size={28} color={C.onPrimaryFixed} />
           </View>
 
           <Text style={[Typography.headlineMd, { color: C.onSurface, textAlign: 'center', fontSize: 20, marginBottom: Spacing.xs }]}>
@@ -237,7 +238,7 @@ function PaymentModal({
                 </TouchableRipple>
               ))}
 
-              <Button mode="text" onPress={handleClose} style={{ marginTop: Spacing.sm }}>
+              <Button mode="text" textColor={C.link} onPress={handleClose} style={{ marginTop: Spacing.sm }}>
                 Annuler
               </Button>
             </View>
@@ -259,7 +260,7 @@ function PaymentModal({
                     <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: Fonts.semiBold, fontSize: 14 }]}>
                       {method.label}
                     </Text>
-                    <Text style={[Typography.caption, { color: C.primary }]}>Changer</Text>
+                    <Text style={[Typography.caption, { color: C.link }]}>Changer</Text>
                   </View>
                 </TouchableRipple>
               )}
@@ -267,6 +268,7 @@ function PaymentModal({
               {/* Phone field */}
               <TextInput
                 mode="outlined"
+                activeOutlineColor={C.link}
                 label="Numéro associé"
                 value={phone}
                 onChangeText={setPhone}
@@ -297,7 +299,7 @@ function PaymentModal({
                 Confirmer le paiement
               </Button>
 
-              <Button mode="text" onPress={handleClose} style={{ marginTop: Spacing.md }}>
+              <Button mode="text" textColor={C.link} onPress={handleClose} style={{ marginTop: Spacing.md }}>
                 Annuler
               </Button>
             </View>

@@ -275,7 +275,7 @@ export default function AnnounceDetailScreen() {
                     { backgroundColor: C.primaryFixed, alignItems: 'center', justifyContent: 'center' },
                   ]}
                 >
-                  <MaterialIcons name="person" size={24} color={C.primary} />
+                  <MaterialIcons name="person" size={24} color={C.onPrimaryFixed} />
                 </View>
               )}
             </View>
@@ -400,8 +400,13 @@ export default function AnnounceDetailScreen() {
       >
         {/* Left — price underlined + period */}
         <View style={styles.bottomLeft}>
-          <Text style={[styles.bottomPrice, { color: C.onSurface }]}>
-            {announce.price.toLocaleString('fr-FR')} {announce.devise}
+          <Text
+            style={[styles.bottomPrice, { color: C.onSurface }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {`${announce.price.toLocaleString('fr-FR')} ${announce.devise}`.replace(/[\s\u202f]/g, '\u00a0')}
           </Text>
           <Text style={[styles.bottomPeriod, { color: C.onSurfaceVariant }]}>
             {announce.ad_type === 'location' ? 'par mois' : 'prix de vente'}
@@ -634,13 +639,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    // At large font scales the CTA drops below the price instead of squeezing it.
+    flexWrap: 'wrap',
     paddingHorizontal: Spacing.marginMobile,
     paddingTop: 14,
     borderTopWidth: 1,
-    gap: 16,
+    gap: 12,
   },
   bottomLeft: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 150,
     gap: 2,
   },
   bottomPrice: {

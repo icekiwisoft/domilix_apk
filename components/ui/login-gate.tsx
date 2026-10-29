@@ -20,7 +20,7 @@ export function LoginGate({ title, subtitle }: LoginGateProps) {
       <View style={styles.iconStack}>
         <View style={[styles.iconOuter, { backgroundColor: C.primaryFixed + '55' }]} />
         <View style={[styles.iconInner, { backgroundColor: C.primaryFixed }]}>
-          <MaterialIcons name="lock-outline" size={36} color={C.primary} />
+          <MaterialIcons name="lock-outline" size={36} color={C.onPrimaryFixed} />
         </View>
       </View>
 

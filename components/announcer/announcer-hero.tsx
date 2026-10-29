@@ -70,10 +70,10 @@ export function AnnouncerHero({
       <View style={styles.actions}>
         <Pressable
           onPress={onContact}
-          style={[styles.btn, styles.btnOutline, { borderColor: C.primary }]}
+          style={[styles.btn, styles.btnOutline, { borderColor: C.link }]}
         >
-          <MaterialIcons name="chat" size={18} color={C.primary} />
-          <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
+          <MaterialIcons name="chat" size={18} color={C.link} />
+          <Text style={[Typography.labelSm, { color: C.link, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
             Contacter
           </Text>
         </Pressable>

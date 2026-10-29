@@ -1,5 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
+import { ActivityIndicator, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,6 +9,8 @@ import { useUnlockAnnounce } from '@/hooks/queries/use-announces';
 import { useToast } from '@/components/ui/toast';
 
 export default function UnlockConfirmScreen() {
+  const { fontScale } = useWindowDimensions();
+  const btnBasis = 140 * Math.max(1, fontScale);
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const { announceId } = useLocalSearchParams<{ announceId: string }>();
@@ -19,6 +20,7 @@ export default function UnlockConfirmScreen() {
 
   const userCredits = me?.credits ?? 0;
   const hasEnoughCredits = userCredits >= 1;
+  const confirmDisabled = unlockAnnounce.isPending || !hasEnoughCredits;
 
   function handleConfirm() {
     if (!announceId || !hasEnoughCredits) return;
@@ -45,7 +47,7 @@ export default function UnlockConfirmScreen() {
 
         {/* Icon */}
         <View style={[styles.iconCircle, { backgroundColor: C.primaryFixed }]}>
-          <MaterialIcons name="lock-open" size={32} color={C.primary} />
+          <MaterialIcons name="lock-open" size={32} color={C.onPrimaryFixed} />
         </View>
 
         <Text style={[Typography.headlineMd, styles.title, { color: C.onSurface }]}>
@@ -53,10 +55,10 @@ export default function UnlockConfirmScreen() {
         </Text>
         <Text style={[Typography.bodyMd, styles.body, { color: C.onSurfaceVariant }]}>
           Déverrouiller cette annonce utilisera{' '}
-          <Text style={{ color: C.primary, fontFamily: Fonts.bold }}>1 crédit</Text>.
+          <Text style={{ color: C.link, fontFamily: Fonts.bold }}>1 crédit</Text>.
           {'\n'}Il vous reste{' '}
           <Text style={{
-            color: hasEnoughCredits ? C.primary : C.error,
+            color: hasEnoughCredits ? C.link : C.error,
             fontFamily: Fonts.bold,
           }}>
             {userCredits} crédit{userCredits > 1 ? 's' : ''}
@@ -83,25 +85,34 @@ export default function UnlockConfirmScreen() {
 
         {/* Buttons */}
         <View style={styles.actions}>
-          <Button
-            mode="outlined"
+          {/* Not Paper Buttons: their label is forced to one line and was cut to
+              "Confirme.." at 200 % font size (QA-05). These wrap, and the two
+              buttons stack when they no longer fit side by side. */}
+          <Pressable
+            accessibilityRole="button"
             onPress={() => router.back()}
-            style={styles.btn}
-            contentStyle={styles.btnContent}
+            android_ripple={{ color: C.onSurface + '1F' }}
+            style={[styles.btn, { flexBasis: btnBasis, borderWidth: 1, borderColor: C.outline }]}
           >
-            Annuler
-          </Button>
-          <Button
-            mode="contained"
+            <Text style={[Typography.labelMd, styles.btnLabel, { color: C.link }]}>Annuler</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: confirmDisabled, busy: unlockAnnounce.isPending }}
+            disabled={confirmDisabled}
             onPress={handleConfirm}
-            disabled={unlockAnnounce.isPending || !hasEnoughCredits}
-            loading={unlockAnnounce.isPending}
-            icon={unlockAnnounce.isPending ? undefined : 'lock-open'}
-            style={styles.btn}
-            contentStyle={styles.btnContent}
+            android_ripple={{ color: C.onPrimary + '33' }}
+            style={[styles.btn, { flexBasis: btnBasis, backgroundColor: C.primary, opacity: confirmDisabled ? 0.5 : 1 }]}
           >
-            Confirmer (1 crédit)
-          </Button>
+            {unlockAnnounce.isPending ? (
+              <ActivityIndicator size="small" color={C.onPrimary} />
+            ) : (
+              <MaterialIcons name="lock-open" size={18} color={C.onPrimary} />
+            )}
+            <Text style={[Typography.labelMd, styles.btnLabel, { color: C.onPrimary }]}>
+              Confirmer (1 crédit)
+            </Text>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
@@ -176,15 +187,26 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.md,
     width: '100%',
     marginTop: Spacing.lg,
   },
   btn: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 140,
+    minHeight: 52,
     borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
-  btnContent: {
-    height: 52,
+  btnLabel: {
+    flexShrink: 1,
+    fontFamily: Fonts.semiBold,
+    textAlign: 'center',
   },
 });

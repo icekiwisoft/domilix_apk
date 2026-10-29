@@ -125,6 +125,7 @@ export default function CreateStep3Screen() {
         {/* GPS button */}
         <Button
           mode="outlined"
+          textColor={C.link}
           icon={locating ? undefined : 'crosshairs-gps'}
           loading={locating}
           onPress={useMyLocation}
@@ -206,6 +207,7 @@ export default function CreateStep3Screen() {
         <View style={[styles.section, { marginTop: Spacing.lg }]}>
           <TextInput
             mode="outlined"
+            activeOutlineColor={C.link}
             label="Région / État — optionnel"
             value={draft.state}
             onChangeText={(t) => setDraft({ state: t })}
@@ -216,6 +218,7 @@ export default function CreateStep3Screen() {
         <View style={[styles.section, { marginTop: Spacing.lg }]}>
           <TextInput
             mode="outlined"
+            activeOutlineColor={C.link}
             label="Description"
             value={draft.description}
             onChangeText={(t) => setDraft({ description: t })}

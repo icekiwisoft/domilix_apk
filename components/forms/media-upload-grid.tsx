@@ -83,7 +83,7 @@ export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
               style={[
                 Typography.caption,
                 {
-                  color: C.primary,
+                  color: C.link,
                   marginTop: 6,
                   textAlign: 'center',
                   includeFontPadding: false,

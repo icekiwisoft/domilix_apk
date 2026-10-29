@@ -59,7 +59,7 @@ export function FilterBar({ filters, onRemove }: FilterBarProps) {
           onClose={() => onRemove(key)}
           closeIconAccessibilityLabel={`Retirer le filtre ${label}`}
           style={{ backgroundColor: C.primaryFixed }}
-          textStyle={{ color: C.primary }}
+          textStyle={{ color: C.onPrimaryFixed }}
         >
           {label}
         </Chip>

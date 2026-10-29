@@ -3,7 +3,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { StyleSheet, View } from 'react-native';
 import { Button, HelperText, TextInput } from 'react-native-paper';
-import { Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const schema = z.object({
   name: z.string().min(2, 'Nom requis (2 caractères min)'),
@@ -24,6 +25,8 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ defaultValues, onSubmit, loading }: ProfileFormProps) {
+  const scheme = useColorScheme();
+  const C = Colors[scheme ?? 'light'];
   const { control, handleSubmit, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -42,6 +45,7 @@ export function ProfileForm({ defaultValues, onSubmit, loading }: ProfileFormPro
           render={({ field: { value, onChange } }) => (
             <TextInput
               mode="outlined"
+              activeOutlineColor={C.link}
               label="Nom complet"
               value={value ?? ''}
               onChangeText={onChange}
@@ -63,6 +67,7 @@ export function ProfileForm({ defaultValues, onSubmit, loading }: ProfileFormPro
           render={({ field: { value, onChange } }) => (
             <TextInput
               mode="outlined"
+              activeOutlineColor={C.link}
               label="Email"
               value={value ?? ''}
               onChangeText={onChange}
@@ -85,6 +90,7 @@ export function ProfileForm({ defaultValues, onSubmit, loading }: ProfileFormPro
           render={({ field: { value, onChange } }) => (
             <TextInput
               mode="outlined"
+              activeOutlineColor={C.link}
               label="Téléphone"
               value={value ?? ''}
               onChangeText={onChange}

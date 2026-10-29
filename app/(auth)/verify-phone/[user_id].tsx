@@ -110,7 +110,7 @@ export default function VerifyPhoneScreen() {
 
       {/* Headline */}
       <View style={styles.header}>
-        <Text style={[Typography.headlineLg, { color: C.primary }]}>Vérifier votre numéro</Text>
+        <Text style={[Typography.headlineLg, { color: C.link }]}>Vérifier votre numéro</Text>
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.sm }]}>
           {'Un code à 6 chiffres a été envoyé au '}
           <Text style={{ color: C.onSurface, fontFamily: Fonts.semiBold }}>
@@ -134,12 +134,12 @@ export default function VerifyPhoneScreen() {
         {seconds > 0 ? (
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
             {'Renvoyer dans '}
-            <Text style={{ color: C.primary, fontFamily: Fonts.semiBold }}>
+            <Text style={{ color: C.link, fontFamily: Fonts.semiBold }}>
               {seconds}s
             </Text>
           </Text>
         ) : (
-          <Button mode="text" onPress={resend} loading={resendCode.isPending} disabled={resendCode.isPending}>
+          <Button mode="text" textColor={C.link} onPress={resend} loading={resendCode.isPending} disabled={resendCode.isPending}>
             Renvoyer le code
           </Button>
         )}

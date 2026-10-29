@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { IconButton, Searchbar } from 'react-native-paper';
 import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -24,13 +24,16 @@ export function SearchBar({
   const scheme = useColorScheme();
   const theme = scheme === 'dark' ? PaperDarkTheme : PaperLightTheme;
   const C = Colors[scheme ?? 'light'];
+  const { fontScale } = useWindowDimensions();
+  // At large font sizes the long hint is clipped: use a short one (as on sign-in).
+  const hint = fontScale > 1.3 ? 'Rechercher…' : placeholder;
 
   return (
     <View style={styles.row}>
       <Searchbar
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        placeholder={hint}
         returnKeyType="search"
         onSubmitEditing={onSubmitEditing}
         autoFocus={autoFocus}

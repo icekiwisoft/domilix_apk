@@ -103,11 +103,11 @@ export default function CreateStep4Screen() {
                   selected={active}
                   showSelectedCheck={false}
                   icon={({ size }) => (
-                    <MaterialIcons name={a.icon} size={size} color={active ? C.primary : C.onSurfaceVariant} />
+                    <MaterialIcons name={a.icon} size={size} color={active ? C.onPrimaryFixed : C.onSurfaceVariant} />
                   )}
                   onPress={() => setDraft({ [a.key]: !active })}
                   style={active ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
-                  textStyle={{ color: active ? C.primary : C.onSurface }}
+                  textStyle={{ color: active ? C.onPrimaryFixed : C.onSurface }}
                 >
                   {a.label}
                 </Chip>

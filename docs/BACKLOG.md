@@ -57,6 +57,14 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   feuille système avec les comptes du téléphone, sans navigateur. Prérequis à vérifier : client
   OAuth Android avec l'empreinte SHA-1 de la clé de signature de production (EAS) et de la clé
   Google Play si l'app y est publiée.
+- **Empreintes à enregistrer dans Google Cloud** (clients OAuth Android, paquet
+  `com.jack0237.domilix`, relevées le 2026-10-29) : clé EAS par défaut du projet
+  `@jack0237/domilix` (créée le 2026-05-13) `77:18:A8:44:57:6A:BF:80:15:28:D4:35:BE:7A:D8:73:4C:15:20:20` ;
+  clé debug `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25` ; clé de signature
+  Google Play (l'app est publiée sur Play, versions signées par Play, 100 % des installations via Play)
+  `CB:A4:27:9F:9C:26:B2:EF:FE:37:0E:51:08:28:32:A4:E5:04:B9:F5`. La clé d'importation Play est la clé
+  EAS (`77:18:A8…`). État au 2026-10-29 : EAS déjà enregistrée dans Firebase, debug ajoutée par
+  l'utilisateur, clé Play ajoutée par l'utilisateur : les 3 empreintes sont enregistrées, B-02 débloqué.
 - **Bibliothèque retenue (2026-10-28, utilisateur)** : `@thoughtbot/react-native-social-auth`
   (MIT, thoughtbot, Turbo Module, Credential Manager via `androidx.credentials` 1.5.0 et `googleid`
   1.1.1, plugin Expo, boutons Google conformes). Version figée (0.4.0 au moment du choix, API en
@@ -228,6 +236,21 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 - **Dépendance backend** : la réponse 403 ne contient pas de `user_id`, nécessaire pour
   `resendVerificationCode`. À demander au backend.
 - Suggestion annexe : toucher le choix « Standing » déjà sélectionné pourrait le désélectionner.
+
+### UI-05 — Écrans d'annonceur à 200 % (P2)
+
+- **Source** : QA du lot 3 (QA-05e), 2026-10-29.
+- `my-listings.tsx` : « Modifier » / « Supprimer » tronqués. `announces/edit/[id].tsx` : le titre
+  chevauche « Enregistrer » (« Enreg »), segments « Im… / Mo… / Loc… / Ve… ». Création : « Immobilier »
+  coupé au milieu du mot, « Utiliser ma position actu… », Standing « Stand… / Confo… / Haut… ».
+- Petits badges à 9–10 px (`mainBadge`, `newBadge`, `photoBadge`) sous la taille lisible : décision de
+  design à prendre. `Typography.labelSm` a une hauteur de ligne égale à la taille (libellés serrés quand
+  ils passent à la ligne). En-tête de section : nom de ville et « VOIR TOUT » se touchent à 200 %.
+
+### B-06 — État « Plan actuel » jamais affiché (P3)
+
+- **Source** : revue du lot 3. `app/profile/subscriptions.tsx:396` ne passe jamais `current` à
+  `PlanCard` : l'état « Plan actuel » est du code mort. Le brancher sur l'abonnement actif ou le retirer.
 
 ## Lots proposés
 

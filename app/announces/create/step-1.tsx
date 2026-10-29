@@ -62,7 +62,7 @@ export default function CreateStep1Screen() {
                   <View style={[styles.typeIconBox, { backgroundColor: active ? C.primary : C.surfaceContainerHighest }]}>
                     <MaterialIcons name={opt.icon} size={28} color={active ? C.onPrimary : C.onSurfaceVariant} />
                   </View>
-                  <Text style={[Typography.bodyMd, { color: active ? C.primary : C.onSurface, fontFamily: Fonts.semiBold, marginTop: Spacing.sm }]}>
+                  <Text style={[Typography.bodyMd, { color: active ? C.link : C.onSurface, fontFamily: Fonts.semiBold, marginTop: Spacing.sm }]}>
                     {opt.label}
                   </Text>
                 </Pressable>

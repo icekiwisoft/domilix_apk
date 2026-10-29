@@ -36,9 +36,10 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: 
   const inverseSurface = useThemeColor({}, 'inverseSurface');
   const inverseOnSurface = useThemeColor({}, 'inverseOnSurface');
   const errorColor = useThemeColor({}, 'error');
+  const onError = useThemeColor({}, 'onError');
 
   const bgColor = toast.type === 'error' ? errorColor : inverseSurface;
-  const textColor = toast.type === 'error' ? '#ffffff' : inverseOnSurface;
+  const textColor = toast.type === 'error' ? onError : inverseOnSurface;
 
   function dismiss() {
     onDismiss(toast.id);

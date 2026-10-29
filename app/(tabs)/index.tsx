@@ -142,7 +142,7 @@ export default function HomeScreen() {
           <IconButton
             icon="bell-outline"
             size={24}
-            iconColor={C.primary}
+            iconColor={C.link}
             accessibilityLabel="Notifications"
             onPress={() => router.push('/(tabs)/notifications')}
           />

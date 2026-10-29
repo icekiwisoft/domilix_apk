@@ -16,6 +16,9 @@ export function ListingActionsBar({ unlocked, loading, onShare, onUnlock }: List
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
 
+  // Dark text on amber (6.99:1 light, 10.05:1 dark); light text on the brown "unlocked" state.
+  const fg = unlocked ? C.onPrimaryContainer : C.onPrimary;
+
   return (
     <View
       style={[
@@ -45,15 +48,15 @@ export function ListingActionsBar({ unlocked, loading, onShare, onUnlock }: List
         ]}
       >
         {loading ? (
-          <ActivityIndicator color={C.onPrimary} />
+          <ActivityIndicator color={fg} />
         ) : (
           <>
             <MaterialIcons
               name={unlocked ? 'lock-open' : 'lock'}
               size={18}
-              color={C.onPrimary}
+              color={fg}
             />
-            <Text style={[Typography.labelSm, { color: C.onPrimary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
+            <Text style={[Typography.labelSm, { color: fg, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
               {unlocked ? "Contacter l'agent" : 'Débloquer le contact'}
             </Text>
           </>

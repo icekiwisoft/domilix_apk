@@ -40,7 +40,7 @@ function StatPill({ value, label }: { value: number; label: string }) {
   const C = Colors[scheme ?? 'light'];
   return (
     <View style={statS.col}>
-      <Text style={[statS.value, { color: C.primary }]}>{value}</Text>
+      <Text style={[statS.value, { color: C.link }]}>{value}</Text>
       <Text style={[statS.label, { color: C.onSurfaceVariant }]}>{label}</Text>
     </View>
   );
@@ -351,7 +351,7 @@ export default function AnnouncerProfileScreen() {
           {activeTab === 'medias' && (
             <>
               <View style={s.sectionHeader}>
-                <Text style={[s.sectionTag, { color: C.primary }]}>GALERIE ANNONCEUR</Text>
+                <Text style={[s.sectionTag, { color: C.link }]}>GALERIE ANNONCEUR</Text>
                 <Text style={[s.sectionTitle, { color: C.onSurface }]}>Médias publiés</Text>
                 <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
                   {allMedias.length} média{allMedias.length !== 1 ? 's' : ''}

@@ -125,6 +125,7 @@ export default function FilterSheetScreen() {
           <View style={styles.budgetRow}>
             <TextInput
               mode="outlined"
+              activeOutlineColor={C.link}
               label="Min"
               value={budgetMin}
               onChangeText={setBudgetMin}
@@ -134,6 +135,7 @@ export default function FilterSheetScreen() {
             <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>—</Text>
             <TextInput
               mode="outlined"
+              activeOutlineColor={C.link}
               label="Max"
               value={budgetMax}
               onChangeText={setBudgetMax}
@@ -179,11 +181,11 @@ export default function FilterSheetScreen() {
                   selected={active}
                   showSelectedCheck={false}
                   icon={({ size }) => (
-                    <MaterialIcons name={a.icon} size={size} color={active ? C.primary : C.onSurfaceVariant} />
+                    <MaterialIcons name={a.icon} size={size} color={active ? C.onPrimaryFixed : C.onSurfaceVariant} />
                   )}
                   onPress={() => toggleAmenity(a.key)}
                   style={active ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
-                  textStyle={{ color: active ? C.primary : C.onSurface }}
+                  textStyle={{ color: active ? C.onPrimaryFixed : C.onSurface }}
                 >
                   {a.label}
                 </Chip>

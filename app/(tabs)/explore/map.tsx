@@ -38,7 +38,7 @@ function MapUnavailableFallback() {
         </Text>
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm, lineHeight: 22 }]}>
           La carte native nécessite un build de développement.{'\n'}
-          Lancez <Text style={{ fontFamily: Fonts.semiBold, color: C.primary }}>expo run:android</Text> pour l'activer.
+          Lancez <Text style={{ fontFamily: Fonts.semiBold, color: C.link }}>expo run:android</Text> pour l'activer.
         </Text>
       </View>
       <View style={styles.fab}>
