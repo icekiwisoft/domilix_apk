@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -9,6 +9,8 @@ import { useUnlockAnnounce } from '@/hooks/queries/use-announces';
 import { useToast } from '@/components/ui/toast';
 
 export default function UnlockConfirmScreen() {
+  const { fontScale } = useWindowDimensions();
+  const btnBasis = 140 * Math.max(1, fontScale);
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
   const { announceId } = useLocalSearchParams<{ announceId: string }>();
@@ -90,7 +92,7 @@ export default function UnlockConfirmScreen() {
             accessibilityRole="button"
             onPress={() => router.back()}
             android_ripple={{ color: C.onSurface + '1F' }}
-            style={[styles.btn, { borderWidth: 1, borderColor: C.outline }]}
+            style={[styles.btn, { flexBasis: btnBasis, borderWidth: 1, borderColor: C.outline }]}
           >
             <Text style={[Typography.labelMd, styles.btnLabel, { color: C.link }]}>Annuler</Text>
           </Pressable>
@@ -100,7 +102,7 @@ export default function UnlockConfirmScreen() {
             disabled={confirmDisabled}
             onPress={handleConfirm}
             android_ripple={{ color: C.onPrimary + '33' }}
-            style={[styles.btn, { backgroundColor: C.primary, opacity: confirmDisabled ? 0.5 : 1 }]}
+            style={[styles.btn, { flexBasis: btnBasis, backgroundColor: C.primary, opacity: confirmDisabled ? 0.5 : 1 }]}
           >
             {unlockAnnounce.isPending ? (
               <ActivityIndicator size="small" color={C.onPrimary} />
