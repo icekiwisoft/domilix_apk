@@ -6,7 +6,7 @@ export { Card, type CardProps } from './card';
 export { Chip, type ChipProps } from './chip';
 export { Field, type FieldProps } from './field';
 export { IconButton, type IconButtonProps, type IconName } from './icon-button';
-export { PriceTag, formatAmount, type PriceTagProps } from './price-tag';
+export { PriceTag, formatAmount, periodLabel, type PriceTagProps, type PriceTagSize } from './price-tag';
 export { KeyboardTarget, Screen, useScreenKeyboard, type ScreenProps } from './screen';
 export { ScreenHeader, type ScreenHeaderProps } from './screen-header';
 export { SheetHeader, type SheetHeaderProps } from './sheet-header';

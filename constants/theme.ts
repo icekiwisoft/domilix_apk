@@ -307,6 +307,21 @@ export const TextVariants = {
     lineHeight: 28,
     fontVariant: ['tabular-nums'],
   },
+  // Smaller price (compact cards, rows) and the large one of the detail page.
+  priceSm: {
+    fontFamily: Fonts.bold,
+    fontSize: 16,
+    fontWeight: fontWeight('700'),
+    lineHeight: 22,
+    fontVariant: ['tabular-nums'],
+  },
+  priceLg: {
+    fontFamily: Fonts.bold,
+    fontSize: 32,
+    fontWeight: fontWeight('700'),
+    lineHeight: 38,
+    fontVariant: ['tabular-nums'],
+  },
 } as const satisfies Record<string, TextStyle>;
 
 export type TextVariant = keyof typeof TextVariants;
