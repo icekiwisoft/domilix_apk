@@ -39,6 +39,13 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 
 ### B-02 — La connexion Google est trop lente (P2, non reproduit)
 
+- **Test de bout en bout (2026-10-29, émulateur, build release clé debug, API de prod, compte Google
+  de l'émulateur avec l'accord de l'utilisateur)** : sélecteur de compte affiché à chaque tap (0,3 à
+  1,1 s ; 4,5 à 4,9 s au premier appel après installation, démarrage de Google Play Services) ;
+  « Continuer » → accueil connecté en 2,9 s ; déconnexion → écran de connexion sans message, puis le
+  sélecteur réapparaît ; aucun crash (`logcat -b crash` vide). Non testé : cas « aucun compte Google »,
+  Play Services absent, et un build signé par Google Play (clé `CB:A4:27…`, enregistrée).
+
 - **Constat (utilisateur)** : « the google connection option takes too much time ».
 - **Piste** : `hooks/use-google-signin.ts` enchaîne trois étapes séquentielles : flux OAuth
   navigateur (`expo-auth-session`, onglet Chrome Custom Tabs), `signInWithCredential` du SDK
