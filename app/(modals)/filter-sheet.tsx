@@ -53,7 +53,7 @@ function parseAmount(text: string): number | undefined {
 export default function FilterSheetScreen() {
   const C = useThemeColors();
   const router = useRouter();
-  const { filters, setFilters, clearFilters } = useFilterStore();
+  const { filters, setFilters } = useFilterStore();
   // Side by side the two budget fields cut "Sans limite" from 150 % font size: stack them.
   const { fontScale } = useWindowDimensions();
   const budgetField = { flexGrow: 1, flexBasis: fontScale >= 1.5 ? ('100%' as const) : 0 };
@@ -67,7 +67,17 @@ export default function FilterSheetScreen() {
   const [standing, setStanding] = useState<Standing | undefined>(filters.standing);
 
   function handleReset() {
-    clearFilters();
+    // Reset only the criteria shown in this sheet: the city (chosen from home) and the
+    // search text are not in the sheet, so they stay.
+    setFilters({
+      type: undefined,
+      ad_type: undefined,
+      budget_min: undefined,
+      budget_max: undefined,
+      bedroom_min: undefined,
+      amenities: undefined,
+      standing: undefined,
+    });
     setType('realestate');
     setAdType('location');
     setBudgetMin('');
