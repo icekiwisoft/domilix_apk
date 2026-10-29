@@ -274,6 +274,7 @@ export const Sizes = {
   control: 52, // text fields and full-width buttons on the sign-in screens
   authBannerTall: 236, // mascot banner, sign-in
   authBannerShort: 148, // mascot banner, sign-up
+  authBannerMin: 100, // smallest sign-in banner, when the "session expirée" notice adds height
 } as const;
 
 // Shadow system — amber-tinted ambient shadows

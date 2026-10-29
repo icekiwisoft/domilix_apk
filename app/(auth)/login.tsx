@@ -39,12 +39,14 @@ export default function LoginScreen() {
   const [viewportHeight, setViewportHeight] = useState(0);
   // QA-07: on a 1080×2400 phone at 100 % the screen was ~45 dp taller than the
   // window, so "Explorer les annonces sans compte" rested under the gesture
-  // bar. The banner gives up that height (down to the sign-up banner size) so
-  // the whole form, footer and bottom inset fit; past that the screen scrolls.
+  // bar. The banner gives up that height so the whole form, footer and bottom
+  // inset fit; past that the screen scrolls. The floor is below the sign-up
+  // banner size because the "session expirée" notice adds ~31 dp, which the
+  // 148 dp floor could not absorb (footer link still on the gesture bar).
   const overflowAtTall = content.height - content.banner + Sizes.authBannerTall - viewportHeight;
   const bannerHeight: number =
     content.height && viewportHeight
-      ? Math.min(Sizes.authBannerTall, Math.max(Sizes.authBannerShort, Sizes.authBannerTall - overflowAtTall))
+      ? Math.min(Sizes.authBannerTall, Math.max(Sizes.authBannerMin, Sizes.authBannerTall - overflowAtTall))
       : Sizes.authBannerTall;
   const { scrollRef, targetRef, onScroll, onLayout, revealOnFocus, pastBanner } = useKeyboardReveal(bannerHeight);
   const scheme = useColorScheme();
