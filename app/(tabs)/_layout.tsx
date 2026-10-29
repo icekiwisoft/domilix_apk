@@ -86,6 +86,10 @@ function TabLabel({
 
   return (
     <Animated.Text
+      // 12 sp label capped at 1.3x so the five tab labels stay whole at 200 % system
+      // font (QA-05); the large-text need is met by the icon + the bold active label.
+      maxFontSizeMultiplier={1.3}
+      numberOfLines={1}
       style={[
         {
           fontFamily: focused ? Fonts.bold : Fonts.medium,
@@ -103,7 +107,7 @@ function TabLabel({
   );
 }
 
-function PublishTabButton({ color }: { color: string }) {
+function PublishTabButton({ color, iconColor }: { color: string; iconColor: string }) {
   const scale = useSharedValue(1);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -125,7 +129,7 @@ function PublishTabButton({ color }: { color: string }) {
       style={styles.publishSlot}
     >
       <Animated.View style={[styles.publishButton, { backgroundColor: color }, Shadows.button, animStyle]}>
-        <IconSymbol name="plus" size={34} color="#ffffff" />
+        <IconSymbol name="plus" size={34} color={iconColor} />
       </Animated.View>
     </Pressable>
   );
@@ -142,8 +146,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: C.primary,
-        tabBarInactiveTintColor: C.tabIconDefault,
+        tabBarActiveTintColor: C.link,
+        tabBarInactiveTintColor: C.onSurfaceVariant,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
@@ -186,7 +190,7 @@ export default function TabLayout() {
         options={{
           title: '',
           tabBarLabel: () => null,
-          tabBarButton: () => <PublishTabButton color={C.primary} />,
+          tabBarButton: () => <PublishTabButton color={C.primary} iconColor={C.onPrimary} />,
           tabBarItemStyle: styles.publishItem,
         }}
       />
