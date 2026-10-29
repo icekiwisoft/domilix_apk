@@ -37,7 +37,13 @@ avant de commencer.** Copie de référence : vault `30_Resources/Leçons - équi
    local sans la variable, deux connexions ratées et une vue d'annonce (`POST /see`) envoyées à la
    prod avant de s'en rendre compte.* Contrôle : chercher l'URL attendue dans
    `index.android.bundle` de l'APK, et l'absence de `api.domilix.com` pour un build local.
-8. **Appareils** : Pixel 9 de l'utilisateur `48150DLAQ003HE` (téléphone personnel : apps et
+8. **Firebase est de la production aussi.** Un build local pointé vers un backend local parle quand
+   même au vrai projet Firebase `domilix`. *Erreur (B-02) : la connexion Google native tente d'abord
+   une connexion silencieuse avec sélection automatique (`GoogleSignInModule.kt:76`) ; le premier tap
+   sur l'émulateur a connecté le compte Google présent sur l'appareil au projet Firebase réel.* Avant
+   de toucher un bouton de connexion sociale, vérifier qu'aucun compte Google n'est présent sur
+   l'appareil de test, ou obtenir l'accord de l'orchestrateur.
+9. **Appareils** : Pixel 9 de l'utilisateur `48150DLAQ003HE` (téléphone personnel : apps et
    notifications privées, vérifier le premier plan avant toute capture) et émulateur
    `emulator-5554`. `adb` est dans `~/Android/Sdk/platform-tools/`. Paquet : `com.jack0237.domilix`.
 
