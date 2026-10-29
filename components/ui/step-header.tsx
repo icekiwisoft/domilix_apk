@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
 import { Radii, Sizes, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
@@ -59,10 +59,29 @@ export interface StepHeaderProps {
  * Header of a multi-step flow (create a listing): 48 dp back / close,
  * title, "Étape n sur N" and a progress bar. Generalises
  * components/forms/create-step-header.tsx; the step is written out, not
- * only "2/5", and the title wraps at 200 %. Pass it as `<Screen header>`.
+ * only "2/5", and from 150 % font size the title moves under the back /
+ * action row so it wraps on whole words. Pass it as `<Screen header>`.
  */
+/** fontScale from which the title leaves the back / action row. */
+const STACK_SCALE = 1.5;
+
 export function StepHeader({ title, step, total, stepLabel, onBack, closeMode = false, action }: StepHeaderProps) {
+  const { fontScale } = useWindowDimensions();
+  // Between the 48 dp back button and an action, a long word ("Informations")
+  // at 200 % is wider than the title column and Android breaks it mid-word.
+  // From 150 % the title gets the full width on its own line instead.
+  const stacked = fontScale >= STACK_SCALE;
   const progressText = `Étape ${step} sur ${total}`;
+  const titleBlock = (
+    <View style={stacked ? { paddingHorizontal: Spacing.ms } : { flex: 1, paddingVertical: Spacing.xs }}>
+      <AppText variant="headline" accessibilityRole="header">
+        {title}
+      </AppText>
+      <AppText variant="caption" color="onSurfaceVariant">
+        {stepLabel ? `${progressText} · ${stepLabel}` : progressText}
+      </AppText>
+    </View>
+  );
   return (
     <View style={{ paddingHorizontal: Spacing.xs, paddingBottom: Spacing.sm, gap: Spacing.xs }}>
       <View style={{ minHeight: Sizes.touchTarget, flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
@@ -71,16 +90,10 @@ export function StepHeader({ title, step, total, stepLabel, onBack, closeMode = 
           label={closeMode ? 'Fermer' : 'Retour'}
           onPress={onBack}
         />
-        <View style={{ flex: 1, paddingVertical: Spacing.xs }}>
-          <AppText variant="headline" accessibilityRole="header">
-            {title}
-          </AppText>
-          <AppText variant="caption" color="onSurfaceVariant">
-            {stepLabel ? `${progressText} · ${stepLabel}` : progressText}
-          </AppText>
-        </View>
+        {stacked ? <View style={{ flex: 1 }} /> : titleBlock}
         {action}
       </View>
+      {stacked ? titleBlock : null}
       <View style={{ paddingHorizontal: Spacing.ms }}>
         <ProgressBar value={step / total} />
       </View>
