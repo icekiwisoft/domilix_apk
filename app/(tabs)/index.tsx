@@ -68,7 +68,19 @@ function RegionRow({ city, onLike }: { city: string; onLike: (id: string) => voi
   if (!isLoading && items.length === 0) return null;
 
   function handleSeeAll() {
-    useFilterStore.getState().setFilters({ city, type: undefined });
+    // Only the row's own criteria (this city, Immobilier): drop every other narrowing
+    // filter left by an earlier filter sheet so the list matches the row that was tapped.
+    useFilterStore.getState().setFilters({
+      city,
+      type: undefined,
+      ad_type: undefined,
+      budget_min: undefined,
+      budget_max: undefined,
+      bedroom_min: undefined,
+      amenities: undefined,
+      standing: undefined,
+      search: undefined,
+    });
     router.push('/(tabs)/explore');
   }
 
