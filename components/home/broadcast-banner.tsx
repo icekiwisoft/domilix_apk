@@ -28,8 +28,8 @@ export function BroadcastBanner({ broadcast, onPress }: BroadcastBannerProps) {
       {/* Content */}
       <View style={styles.content}>
         {broadcast.badge && (
-          <View style={[styles.badgePill, { backgroundColor: C.inversePrimary }]}>
-            <Text style={[Typography.labelSm, { color: C.primaryFixed, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
+          <View style={[styles.badgePill, { backgroundColor: C.onPrimary }]}>
+            <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
               {broadcast.badge}
             </Text>
           </View>
@@ -46,7 +46,7 @@ export function BroadcastBanner({ broadcast, onPress }: BroadcastBannerProps) {
 
       {/* CTA */}
       {broadcast.cta && (
-        <View style={[styles.cta, { backgroundColor: C.inversePrimary }]}>
+        <View style={[styles.cta, { backgroundColor: C.onPrimary }]}>
           <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 1.12 }]}>
             {broadcast.cta}
           </Text>
@@ -97,7 +97,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: Fonts.bold,
-    color: '#ffffff',
   },
   cta: {
     alignSelf: 'flex-start',

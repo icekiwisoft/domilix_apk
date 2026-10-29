@@ -19,10 +19,10 @@ export function SectionHeader({ title, onSeeAll }: SectionHeaderProps) {
       </Text>
       {onSeeAll && (
         <Pressable onPress={onSeeAll} style={styles.seeAll} hitSlop={8}>
-          <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
+          <Text style={[Typography.labelSm, { color: C.link, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
             Voir tout
           </Text>
-          <MaterialIcons name="chevron-right" size={16} color={C.primary} />
+          <MaterialIcons name="chevron-right" size={16} color={C.link} />
         </Pressable>
       )}
     </View>
