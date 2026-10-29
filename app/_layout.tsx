@@ -76,6 +76,7 @@ export default function RootLayout() {
                   <Stack.Screen name="announces/create" options={{ headerShown: false }} />
                   <Stack.Screen name="announces/edit" options={{ headerShown: false }} />
                   <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
+                  <Stack.Screen name="dev/catalogue" options={{ headerShown: false }} />
                   <Stack.Screen name="profile/settings" options={{ headerShown: false }} />
                   <Stack.Screen name="profile/my-listings" options={{ headerShown: false }} />
                   <Stack.Screen name="profile/subscriptions" options={{ headerShown: false }} />
