@@ -1,5 +1,4 @@
-import { RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
+import { Pressable, RefreshControl, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NotifItem } from '@/components/notifications/notif-item';
@@ -69,7 +68,7 @@ export default function NotificationsScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: C.outlineVariant + '66' }]}>
-        <View>
+        <View style={styles.headerText}>
           <Text style={[Typography.headlineMd, styles.title, { color: C.onSurface }]}>
             Notifications
           </Text>
@@ -82,15 +81,19 @@ export default function NotificationsScreen() {
           )}
         </View>
         {unreadCount > 0 && (
-          <Button
-            mode="text"
-            textColor={C.link}
-            icon="check-all"
-            compact
+          // Not a Paper Button: its label is forced to one line and was cut at
+          // 200 % (QA-05). This one wraps, and the header drops it below the title.
+          <Pressable
+            accessibilityRole="button"
             onPress={() => markAllRead.mutate()}
+            android_ripple={{ color: C.onSurface + '1F' }}
+            style={styles.markAll}
           >
-            Tout marquer lu
-          </Button>
+            <MaterialIcons name="done-all" size={18} color={C.link} />
+            <Text style={[Typography.labelMd, styles.markAllLabel, { color: C.link }]}>
+              Tout marquer lu
+            </Text>
+          </Pressable>
         )}
       </View>
 
@@ -143,14 +146,26 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: Spacing.sm,
     paddingHorizontal: Spacing.marginMobile,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
   },
+  headerText: { flexShrink: 1 },
   title: { fontSize: 24, fontFamily: Fonts.bold },
+  markAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    minHeight: 48,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radius.md,
+  },
+  markAllLabel: { flexShrink: 1, fontFamily: Fonts.semiBold },
   unreadPill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,

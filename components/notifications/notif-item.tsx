@@ -134,7 +134,7 @@ export function NotifItem({ notification, onPress, onDelete }: NotifItemProps) {
               <View style={styles.titleRow}>
                 <Text
                   style={[Typography.labelSm, styles.title, { color: C.onSurface }]}
-                  numberOfLines={1}
+                  numberOfLines={2}
                 >
                   {notification.title}
                 </Text>
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: Spacing.sm,
   },
   title: {
