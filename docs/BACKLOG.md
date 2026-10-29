@@ -298,6 +298,30 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   de React Native Paper dans ces écrans ; comportement inchangé (requêtes, filtres, navigation,
   pagination, favoris, partage) ; AA clair et sombre, 48 dp, 200 %, TalkBack ; build release vérifié.
 
+### F-02 — Carte des annonces (P1)
+
+- **Constat (2026-10-29, lot UI-07)** : `app.json` n'a jamais eu de clé Google Maps
+  (`android.config.googleMaps.apiKey`) : l'onglet Carte plantait l'app sur Android, probablement aussi en
+  production. Depuis UI-07, la carte est masquée tant que la clé manque (`lib/map-availability.ts`).
+- **Décision (utilisateur)** : carte désactivée pour l'instant ; lot dédié quand la clé existera.
+- **À faire** : clé « Maps SDK for Android » (Google Cloud, projet domilix, restreinte au paquet
+  `com.jack0237.domilix` et aux 3 empreintes SHA-1), passée par secret CI et non commitée ; vraies
+  coordonnées des annonces (le backend les a : `maps.service`, `RealEstate.lat/lng` ; les marqueurs
+  actuels sont placés au hasard autour du centre-ville) ; « Ma position » (permission en contexte) et
+  « Rechercher dans cette zone » ; vérification sur appareil.
+
+### B-07 — « Charger plus » remplace la liste au lieu de l'allonger (P2)
+
+- **Constat** : Explorer affiche seulement la page N ; impossible de revenir aux annonces précédentes.
+- **Attendu** : défilement infini (`useInfiniteQuery`), pied de liste en chargement, fin de liste annoncée.
+
+### B-08 — Contenus à corriger (P3)
+
+- Bandeau d'accueil (diffusion serveur) en anglais : « Coming soon / The Domilix app is coming /
+  Discover the app » ; à traduire dans l'administration ou par l'équipe backend.
+- Annonces sans photo : image aléatoire (picsum) en repli ; remplacer par une illustration Domilix neutre.
+- `handleCategory` sur l'accueil garde d'anciens filtres et la recherche.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
