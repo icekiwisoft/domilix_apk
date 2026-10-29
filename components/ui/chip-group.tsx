@@ -19,6 +19,8 @@ interface ChipGroupBase<T extends string | number> {
   /** wrap: chips flow onto several lines; scroll: one horizontal line. */
   layout?: 'wrap' | 'scroll';
   style?: StyleProp<ViewStyle>;
+  /** scroll only: overrides the content inset (default: aligned on the page gutter). */
+  contentContainerStyle?: StyleProp<ViewStyle>;
 }
 
 export type ChipGroupProps<T extends string | number> = ChipGroupBase<T> &
@@ -30,10 +32,11 @@ export type ChipGroupProps<T extends string | number> = ChipGroupBase<T> &
 /**
  * A set of Chips. Single selection is a radio group (TalkBack: "1 sur 4");
  * `multiple` toggles values in and out of the array. With `layout="scroll"`
- * the row scrolls horizontally, inset on Spacing.marginMobile.
+ * the row bleeds to the screen edges (it sits inside the Spacing.marginMobile
+ * gutter of a Screen) and its first chip lines up with the page content.
  */
 export function ChipGroup<T extends string | number>(props: ChipGroupProps<T>) {
-  const { options, label, layout = 'wrap', style } = props;
+  const { options, label, layout = 'wrap', style, contentContainerStyle } = props;
   const isOn = (v: T) => (props.multiple ? props.value.includes(v) : props.value === v);
   const toggle = (v: T) => {
     if (props.multiple) {
@@ -63,8 +66,10 @@ export function ChipGroup<T extends string | number>(props: ChipGroupProps<T>) {
         horizontal
         showsHorizontalScrollIndicator={false}
         {...groupA11y}
-        style={style}
-        contentContainerStyle={{ gap: Spacing.sm, paddingHorizontal: Spacing.marginMobile }}
+        // Out of the Screen gutter, then the same inset back: chips start on the
+        // gutter like the rest of the page and scroll under the screen edge.
+        style={[{ marginHorizontal: -Spacing.marginMobile }, style]}
+        contentContainerStyle={[{ gap: Spacing.sm, paddingHorizontal: Spacing.marginMobile }, contentContainerStyle]}
       >
         {chips}
       </ScrollView>
