@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import { createContext, useContext, type ReactNode, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode, type RefObject } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   RefreshControl,
   ScrollView,
@@ -30,6 +31,21 @@ export function useScreenKeyboard() {
   return useContext(ScreenKeyboardContext);
 }
 
+/** True while the software keyboard is open. */
+function useKeyboardShown(enabled: boolean) {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (!enabled) return;
+    const show = Keyboard.addListener('keyboardDidShow', () => setShown(true));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setShown(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, [enabled]);
+  return enabled && shown;
+}
+
 /** Wrap the main button of a form screen so the keyboard never covers it. */
 export function KeyboardTarget({ children }: { children: ReactNode }) {
   const keyboard = useScreenKeyboard();
@@ -40,13 +56,24 @@ export function KeyboardTarget({ children }: { children: ReactNode }) {
   );
 }
 
-export interface ScreenProps extends Omit<ScrollViewProps, 'children' | 'style' | 'contentContainerStyle'> {
+/**
+ * The ScrollView props (onScroll, refresh, etc.) apply only with `scroll`
+ * (the default): with `scroll={false}` the content is a plain View, and
+ * `onRefresh` / pull-to-refresh and the other ScrollView props are ignored.
+ */
+export interface ScreenProps
+  extends Omit<ScrollViewProps, 'children' | 'style' | 'contentContainerStyle' | 'refreshControl'> {
   children: ReactNode;
   /** Fixed above the content, under the status bar (ScreenHeader). */
   header?: ReactNode;
   /** Fixed under the content, above the gesture bar (action bar). */
   footer?: ReactNode;
-  /** false: plain View filling the screen (lists, maps) instead of a ScrollView. */
+  /**
+   * Bottom safe-area padding (gesture bar). Tab screens pass false: the tab
+   * bar already sits above the gesture bar.
+   */
+  bottomInset?: boolean;
+  /** false: plain View filling the screen (lists, maps) instead of a ScrollView; see above. */
   scroll?: boolean;
   /**
    * Form screen: the content moves above the keyboard and the KeyboardTarget
@@ -76,6 +103,7 @@ export function Screen({
   header,
   footer,
   scroll = true,
+  bottomInset = true,
   keyboard = false,
   heroHeight,
   heroStatusBar = 'light',
@@ -91,6 +119,9 @@ export function Screen({
   const scheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const bg = C[background];
+  // With the keyboard open the footer sits on the keyboard, not on the gesture bar.
+  const keyboardShown = useKeyboardShown(keyboard && !!footer);
+  const bottom = bottomInset ? insets.bottom : 0;
   const hero = heroHeight != null && !header;
   const { scrollRef, targetRef, onScroll: trackScroll, onLayout: revealOnLayout, revealOnFocus, pastBanner } =
     useKeyboardReveal(hero ? heroHeight : 0);
@@ -102,7 +133,7 @@ export function Screen({
   const padded: ViewStyle = {
     paddingHorizontal: hero ? 0 : Spacing.marginMobile,
     paddingTop: header ? Spacing.md : hero ? 0 : insets.top + Spacing.md,
-    paddingBottom: footer ? Spacing.md : insets.bottom + Spacing.md,
+    paddingBottom: footer ? Spacing.md : bottom + Spacing.md,
     gap: Spacing.md,
   };
 
@@ -120,6 +151,7 @@ export function Screen({
         onLayout?.(e);
       }}
       contentContainerStyle={[padded, { flexGrow: 1 }, contentStyle]}
+      {...rest}
       refreshControl={
         onRefresh ? (
           <RefreshControl
@@ -131,7 +163,6 @@ export function Screen({
           />
         ) : undefined
       }
-      {...rest}
     >
       {children}
     </ScrollView>
@@ -149,7 +180,9 @@ export function Screen({
       >
         {header ? <View style={{ paddingTop: insets.top, backgroundColor: bg }}>{header}</View> : null}
         {body}
-        {footer ? <View style={{ paddingBottom: insets.bottom, backgroundColor: bg }}>{footer}</View> : null}
+        {footer ? (
+          <View style={{ paddingBottom: keyboardShown ? 0 : bottom, backgroundColor: bg }}>{footer}</View>
+        ) : null}
         {showBand ? (
           <View
             pointerEvents="none"
