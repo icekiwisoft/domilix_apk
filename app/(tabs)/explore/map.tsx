@@ -3,6 +3,7 @@ import { Component, Suspense, lazy, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { EmptyState, LoadingState, Screen } from '@/components/ui';
+import { isMapAvailable } from '@/lib/map-availability';
 
 // Lazy import keeps react-native-maps out of the module evaluation path.
 // Expo Router discovers this route without touching the native module.
@@ -43,6 +44,8 @@ function MapLoadingFallback() {
 }
 
 export default function MapScreen() {
+  // A deep link can still reach this route: never mount MapView without a key.
+  if (!isMapAvailable()) return <MapUnavailableFallback />;
   return (
     <View style={{ flex: 1 }}>
       <MapErrorBoundary>

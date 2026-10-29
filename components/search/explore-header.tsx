@@ -4,6 +4,7 @@ import { ScrollView, View } from 'react-native';
 import { Chip, SearchBar, SegmentedControl } from '@/components/ui';
 import { Borders, Shadows, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
+import { isMapAvailable } from '@/lib/map-availability';
 
 import type { ActiveFilter } from './active-filters';
 
@@ -46,7 +47,11 @@ export function ExploreHeader({
   return (
     <View
       style={[
-        { gap: Spacing.ms, paddingHorizontal: Spacing.marginMobile, paddingTop: Spacing.sm },
+        {
+          gap: Spacing.ms,
+          paddingHorizontal: Spacing.marginMobile,
+          paddingTop: Spacing.sm,
+        },
         overMap
           ? null
           : {
@@ -66,22 +71,28 @@ export function ExploreHeader({
         filterCount={chips.length}
         floating={overMap}
       />
-      <SegmentedControl
-        label="Affichage"
-        options={MODES}
-        value={mode}
-        onChange={(m) => {
-          if (m !== mode) onModeChange(m);
-        }}
-        style={overMap ? Shadows.md : undefined}
-      />
+      {/* Without a Maps API key the map would crash the app: list only. */}
+      {isMapAvailable() || overMap ? (
+        <SegmentedControl
+          label="Affichage"
+          options={MODES}
+          value={mode}
+          onChange={(m) => {
+            if (m !== mode) onModeChange(m);
+          }}
+          style={overMap ? Shadows.md : undefined}
+        />
+      ) : null}
       {chips.length > 0 && !overMap ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           accessibilityLabel="Filtres actifs"
           style={{ marginHorizontal: -Spacing.marginMobile }}
-          contentContainerStyle={{ gap: Spacing.sm, paddingHorizontal: Spacing.marginMobile }}
+          contentContainerStyle={{
+            gap: Spacing.sm,
+            paddingHorizontal: Spacing.marginMobile,
+          }}
         >
           {chips.map((c) => (
             <Chip key={c.key} label={c.label} onRemove={() => onRemoveChip(c)} />
