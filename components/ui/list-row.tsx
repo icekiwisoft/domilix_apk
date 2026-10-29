@@ -21,27 +21,52 @@ export interface SwitchProps {
   value: boolean;
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
-  /** Read by TalkBack; leave empty when the Switch sits in a ListRow (the row speaks). */
+  /** Read by TalkBack. In a row, use ListRow switchValue instead (the row speaks). */
   accessibilityLabel?: string;
 }
 
 /**
- * Themed switch. Off: `outline` track (4.3:1 on the page, 3:1 needed) and a
- * white thumb; on: primaryContainer track. The thumb position also tells
- * the state, so it does not rely on colour alone.
+ * The native switch alone, hidden from accessibility and touch: the
+ * element around it (Switch below or a ListRow) is the single TalkBack stop
+ * and the touch target. Off: `outline` track (4.3:1 on the page, 3:1
+ * needed) and a light thumb; on: primaryContainer track. The thumb position
+ * also tells the state, so it does not rely on colour alone.
  */
-export function Switch({ value, onValueChange, disabled, accessibilityLabel }: SwitchProps) {
+function SwitchTrack({ value, disabled }: { value: boolean; disabled?: boolean }) {
   const C = useThemeColors();
   return (
-    <RNSwitch
-      value={value}
-      onValueChange={onValueChange}
-      disabled={disabled}
+    <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden pointerEvents="none">
+      <RNSwitch
+        value={value}
+        disabled={disabled}
+        accessible={false}
+        importantForAccessibility="no"
+        focusable={false}
+        trackColor={{ false: C.outline, true: C.primaryContainer }}
+        thumbColor={value ? C.onPrimaryContainer : C.surfaceContainerLowest}
+        ios_backgroundColor={C.outline}
+      />
+    </View>
+  );
+}
+
+/**
+ * Standalone themed switch: the native switch is 46 x 27 dp, so it sits in a
+ * 48 x 48 dp pressable that carries the role, state and label (same look,
+ * full touch target).
+ */
+export function Switch({ value, onValueChange, disabled, accessibilityLabel }: SwitchProps) {
+  return (
+    <Pressable
+      accessibilityRole="switch"
       accessibilityLabel={accessibilityLabel}
-      trackColor={{ false: C.outline, true: C.primaryContainer }}
-      thumbColor={value ? C.onPrimaryContainer : C.surfaceContainerLowest}
-      ios_backgroundColor={C.outline}
-    />
+      accessibilityState={{ checked: value, disabled: !!disabled }}
+      disabled={disabled}
+      onPress={() => onValueChange(!value)}
+      style={{ minWidth: Sizes.touchTarget, minHeight: Sizes.touchTarget, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <SwitchTrack value={value} disabled={disabled} />
+    </Pressable>
   );
 }
 
@@ -66,7 +91,8 @@ export interface ListRowProps extends Omit<PressableProps, 'children' | 'style'>
 /**
  * Settings / profile row, 56 dp with a subtitle, 48 dp minimum: leading icon,
  * title and subtitle that wrap at 200 %, value, chevron or switch on the
- * right. TalkBack reads it as one item (title, subtitle, value).
+ * right. TalkBack reads it as one item (title, subtitle, value); a switch
+ * row is one switch stop labelled by its title, the inner switch hidden.
  */
 export function ListRow({
   title,
@@ -89,11 +115,13 @@ export function ListRow({
   const pressable = isSwitch ? !!onSwitchChange : !!onPress;
   const showChevron = !isSwitch && (chevron ?? !!onPress);
   const titleColor: ColorToken = destructive ? 'error' : 'onSurface';
-  const spoken = accessibilityLabel ?? [title, subtitle, value].filter(Boolean).join(', ');
+  // A switch row is read "title, switch, on/off", the subtitle as a hint.
+  const spoken = accessibilityLabel ?? (isSwitch ? title : [title, subtitle, value].filter(Boolean).join(', '));
   return (
     <Pressable
       accessibilityRole={isSwitch ? 'switch' : pressable ? 'button' : undefined}
       accessibilityLabel={spoken}
+      accessibilityHint={isSwitch && !accessibilityLabel ? subtitle : undefined}
       accessibilityState={isSwitch ? { checked: switchValue, disabled: !!disabled } : { disabled: !!disabled }}
       disabled={disabled || !pressable}
       onPress={isSwitch ? () => onSwitchChange?.(!switchValue) : onPress}
@@ -130,11 +158,7 @@ export function ListRow({
         </AppText>
       ) : null}
       {trailing}
-      {isSwitch ? (
-        <View importantForAccessibility="no-hide-descendants" pointerEvents="none">
-          <Switch value={!!switchValue} onValueChange={(v) => onSwitchChange?.(v)} disabled={!!disabled} />
-        </View>
-      ) : null}
+      {isSwitch ? <SwitchTrack value={!!switchValue} disabled={!!disabled} /> : null}
       {showChevron ? <MaterialIcons name="chevron-right" size={Sizes.iconLg} color={C.onSurfaceVariant} /> : null}
     </Pressable>
   );
