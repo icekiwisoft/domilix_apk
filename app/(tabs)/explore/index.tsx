@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 
 import { ExploreHeader } from '@/components/search/explore-header';
@@ -25,15 +25,11 @@ function ResultsCount({ count, query, city }: { count: number; query?: string; c
 export default function ExploreScreen() {
   const C = useThemeColors();
   const router = useRouter();
-  const params = useLocalSearchParams<{ q?: string }>();
-
-  const [search, setSearch] = useState(params.q ?? '');
-  // The tab stays mounted: a new search sent from the home screen replaces the current one.
-  useEffect(() => {
-    if (params.q != null) setSearch(params.q);
-  }, [params.q]);
 
   const { filters, setFilters, clearFilters } = useFilterStore();
+  // The search text lives in the filter store so the list and the map share it.
+  const search = filters.search ?? '';
+  const setSearch = (text: string) => setFilters({ search: text || undefined });
   const toggleLike = useToggleLike();
   const query = {
     ...filters,
@@ -63,7 +59,6 @@ export default function ExploreScreen() {
 
   function resetAll() {
     clearFilters();
-    setSearch('');
   }
 
   let empty = null;
@@ -100,7 +95,7 @@ export default function ExploreScreen() {
           onSearchChange={setSearch}
           chips={chips}
           onRemoveChip={(c) => setFilters(c.remove(filters))}
-          onModeChange={() => router.push({ pathname: '/(tabs)/explore/map', params: { q: search } })}
+          onModeChange={() => router.push('/(tabs)/explore/map')}
         />
       }
       contentStyle={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}

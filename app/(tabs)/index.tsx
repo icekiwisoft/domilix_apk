@@ -198,7 +198,9 @@ export default function HomeScreen() {
 
   function handleSearch() {
     if (search.trim()) {
-      router.push({ pathname: '/(tabs)/explore', params: { q: search.trim() } });
+      // The explore tab stays mounted: the store replaces its search even for an identical text.
+      useFilterStore.getState().setFilters({ search: search.trim() });
+      router.push('/(tabs)/explore');
     }
   }
 

@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -24,12 +24,11 @@ const INITIAL_REGION = {
 export default function MapScreenContent() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ q?: string }>();
-  const [search, setSearch] = useState(params.q ?? '');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Same filters as the list, so switching Liste / Carte shows the same listings.
   const { filters, setFilters } = useFilterStore();
+  const search = filters.search ?? '';
   const { data, isError, refetch } = useAnnounces({
     ...filters,
     type: filters.type ?? 'realestate',
@@ -74,7 +73,7 @@ export default function MapScreenContent() {
         <ExploreHeader
           mode="map"
           search={search}
-          onSearchChange={setSearch}
+          onSearchChange={(text) => setFilters({ search: text || undefined })}
           chips={activeFilters(filters)}
           onRemoveChip={(c) => setFilters(c.remove(filters))}
           onModeChange={() => router.back()}
