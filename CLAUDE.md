@@ -16,6 +16,7 @@ npm start              # Expo dev server
 npm run android        # Run on a connected device / emulator
 npm run lint           # expo lint
 npx tsc --noEmit       # Type check
+EXPO_PUBLIC_SHOW_CATALOGUE=1 npm start   # QA only: exposes the hidden component catalogue (Settings row, domilix://dev/catalogue); unset, the route redirects home
 ```
 
 No test framework is configured yet. CI: `.github/workflows/build-apk.yml` (EAS local build, `preview` profile → APK).

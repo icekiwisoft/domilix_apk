@@ -1,57 +1,70 @@
-import { Image, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { Fonts, Typography, fontWeight } from '@/constants/theme';
+import { Image } from 'expo-image';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 
-type AvatarSize = 'sm' | 'md' | 'lg';
+import { Radii, Sizes, Typography, type TextVariant } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
-interface AvatarProps {
+import { AppText } from './app-text';
+
+export type AvatarSize = 'sm' | 'md' | 'lg';
+
+export interface AvatarProps {
   name?: string;
   uri?: string;
   size?: AvatarSize;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
-const sizeMap: Record<AvatarSize, number> = { sm: 32, md: 44, lg: 64 };
+const DIMENSION: Record<AvatarSize, number> = { sm: Sizes.avatarSm, md: Sizes.avatarMd, lg: Sizes.avatarLg };
+const INITIALS: Record<AvatarSize, TextVariant> = { sm: 'caption', md: 'bodyStrong', lg: 'headline' };
 
-const initialsTypography: Record<AvatarSize, object> = {
-  sm: Typography.caption,
-  md: { ...Typography.bodyMd, fontFamily: Fonts.semiBold, fontWeight: fontWeight('600') },
-  lg: { ...Typography.headlineMd, fontSize: 24, lineHeight: 28 },
-};
-
+/**
+ * Round photo, or the initials on primaryContainer (white 6.45:1 light,
+ * peach 4.98:1 dark). Read by TalkBack as the name when one is given.
+ */
 export function Avatar({ name, uri, size = 'md', style }: AvatarProps) {
-  const bgColor = useThemeColor({}, 'primaryContainer');
-  const textColor = useThemeColor({}, 'onPrimaryContainer');
-  const dimension = sizeMap[size];
-
+  const C = useThemeColors();
+  const dimension = DIMENSION[size];
   const initials = name
-    ? name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
+    ? name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() ?? '')
+        .join('')
     : '?';
-
   return (
     <View
+      accessible={!!name}
+      accessibilityRole={name ? 'image' : undefined}
+      accessibilityLabel={name}
+      importantForAccessibility={name ? 'yes' : 'no-hide-descendants'}
       style={[
-        styles.container,
-        { width: dimension, height: dimension, borderRadius: dimension / 2, backgroundColor: bgColor },
+        {
+          width: dimension,
+          height: dimension,
+          borderRadius: Radii.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          backgroundColor: C.primaryContainer,
+        },
         style,
       ]}
     >
       {uri ? (
-        <Image
-          source={{ uri }}
-          style={{ width: dimension, height: dimension, borderRadius: dimension / 2 }}
-        />
+        <Image source={{ uri }} style={{ width: dimension, height: dimension }} contentFit="cover" />
       ) : (
-        <Text style={[initialsTypography[size], { color: textColor }]}>{initials}</Text>
+        <AppText
+          variant={INITIALS[size]}
+          color="onPrimaryContainer"
+          // The initials must fit the circle: cap their growth at 200 %.
+          maxFontSizeMultiplier={2}
+          style={size === 'lg' ? Typography.headlineSm : undefined}
+        >
+          {initials}
+        </AppText>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-});

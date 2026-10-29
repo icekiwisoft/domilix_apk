@@ -3,6 +3,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+import { pressedStyle } from './pressed';
+
 interface PlanCardProps {
   title: string;
   tagline?: string;
@@ -119,12 +121,12 @@ export function PlanCard({
         accessibilityState={{ disabled: !!current }}
         disabled={current}
         onPress={onPress}
-        android_ripple={{ color: C.onSurface + '1F' }}
-        style={[
+        style={({ pressed }) => [
           styles.cta,
           filled
             ? { backgroundColor: C.primary }
             : { borderWidth: 1, borderColor: current ? C.primary : C.outline },
+          pressedStyle(pressed),
         ]}
       >
         {current && <MaterialIcons name="check-circle" size={18} color={C.link} />}

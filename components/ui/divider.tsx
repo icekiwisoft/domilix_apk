@@ -1,17 +1,25 @@
-import { View, type ViewStyle } from 'react-native';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 
-interface DividerProps {
+import { Borders } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
+
+export interface DividerProps {
   orientation?: 'horizontal' | 'vertical';
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
+/** Hairline separator (outlineVariant), hidden from TalkBack. */
 export function Divider({ orientation = 'horizontal', style }: DividerProps) {
-  const color = useThemeColor({}, 'outlineVariant');
-
-  if (orientation === 'vertical') {
-    return <View style={[{ width: 1, backgroundColor: color, alignSelf: 'stretch' }, style]} />;
-  }
-
-  return <View style={[{ height: 1, backgroundColor: color, width: '100%' }, style]} />;
+  const C = useThemeColors();
+  const line: ViewStyle =
+    orientation === 'vertical'
+      ? { width: Borders.thin, alignSelf: 'stretch' }
+      : { height: Borders.thin, alignSelf: 'stretch' };
+  return (
+    <View
+      importantForAccessibility="no"
+      accessibilityElementsHidden
+      style={[line, { backgroundColor: C.outlineVariant }, style]}
+    />
+  );
 }

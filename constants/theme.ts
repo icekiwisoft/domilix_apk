@@ -18,6 +18,9 @@ export const Colors = {
     // Outlines
     outline: '#867462',
     outlineVariant: '#d9c3af',
+    // Placeholder text of fields (UI-06): 5.17:1 on fieldSurface, 4.92:1 on the
+    // cream page (`outline` was 4.48:1, under AA for text).
+    placeholder: '#7c6a58',
     // Primary – Warm Amber/Orange
     // White on #e8921a is only 2.45:1 (fails AA, UI-04): dark brown reaches 6.99:1.
     // `primary` itself stays for fills, icons and accents; amber used as TEXT on
@@ -66,6 +69,11 @@ export const Colors = {
     fieldSurface: '#ffffff',
     fieldPrefix: '#fff1e4',
     success: '#2f6b3a',
+    // Success toast (onSuccess on success 6.39:1) and status pills such as
+    // "En ligne" (onSuccessContainer on successContainer 10:1), UI-06.
+    onSuccess: '#ffffff',
+    successContainer: '#cdebd2',
+    onSuccessContainer: '#0f3a18',
     // Badge over the mascot photo: same light chip in both themes.
     bannerChip: 'rgba(255,255,255,0.94)',
     onBannerChip: '#211a12',
@@ -73,6 +81,10 @@ export const Colors = {
     googleSurface: '#ffffff',
     googleOutline: '#747775',
     onGoogleSurface: '#1f1f1f',
+    // Selected icon (favourite) on the light bannerChip over a photo: 5.7:1.
+    onBannerChipAccent: '#ba1a1a',
+    // Backdrop behind dialogs and bottom sheets.
+    scrim: 'rgba(34,26,18,0.5)',
   },
   dark: {
     // Surfaces
@@ -91,6 +103,8 @@ export const Colors = {
     // Outlines
     outline: '#9d8b77',
     outlineVariant: '#534435',
+    // Placeholder text of fields: 5.18:1 on fieldSurface, 5.65:1 on the page.
+    placeholder: '#9d8b77',
     // Primary
     primary: '#ffb869',
     onPrimary: '#2b1700',
@@ -135,14 +149,22 @@ export const Colors = {
     fieldSurface: '#221b14',
     fieldPrefix: '#2c241b',
     success: '#8fd19e',
+    onSuccess: '#0b2e14', // 8.33:1
+    successContainer: '#1f4a29',
+    onSuccessContainer: '#c3ecc9', // 7.81:1
     bannerChip: 'rgba(255,255,255,0.94)',
     onBannerChip: '#211a12',
     // Google sign-in button, Google's official colours (dark theme).
     googleSurface: '#131314',
     googleOutline: '#8e918f',
     onGoogleSurface: '#e3e3e3',
+    onBannerChipAccent: '#ba1a1a',
+    scrim: 'rgba(0,0,0,0.6)',
   },
 } as const;
+
+/** Name of a colour token, the same in both themes (AppText `color`, etc.). */
+export type ColorToken = keyof typeof Colors.light;
 
 // Mona Sans, the website's typeface (domilix.com tailwind.config.mjs fontFamily.sans).
 // These are the family names registered by useFonts in app/_layout.tsx: on Android a
@@ -250,9 +272,64 @@ export const Typography = {
   },
 } as const;
 
+/**
+ * Named text variants for new code (UI-06), built on Typography. AppText
+ * (components/ui/app-text.tsx) applies them; pick one instead of setting
+ * fontSize or fontFamily in a screen.
+ */
+export const TextVariants = {
+  // Screen title (sign-in and sign-up screens, top of a page)
+  title: Typography.titleLg,
+  // Section, card and sheet titles
+  headline: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 18,
+    fontWeight: fontWeight('600'),
+    lineHeight: 24,
+  },
+  body: Typography.bodyMd,
+  bodyStrong: {
+    ...Typography.bodyMd,
+    fontFamily: Fonts.semiBold,
+    fontWeight: fontWeight('600'),
+  },
+  // Field labels, buttons, chips
+  label: Typography.labelMd,
+  caption: Typography.caption,
+  // Listing price amount (the unit uses `label`, see PriceTag)
+  price: {
+    fontFamily: Fonts.bold,
+    fontSize: 22,
+    fontWeight: fontWeight('700'),
+    lineHeight: 28,
+    fontVariant: ['tabular-nums'],
+  },
+  // Smaller price (compact cards, rows) and the large one of the detail page.
+  priceSm: {
+    fontFamily: Fonts.bold,
+    fontSize: 16,
+    fontWeight: fontWeight('700'),
+    lineHeight: 22,
+    fontVariant: ['tabular-nums'],
+  },
+  priceLg: {
+    fontFamily: Fonts.bold,
+    fontSize: 32,
+    fontWeight: fontWeight('700'),
+    lineHeight: 38,
+    fontVariant: ['tabular-nums'],
+  },
+} as const satisfies Record<string, TextStyle>;
+
+export type TextVariant = keyof typeof TextVariants;
+
+// Spacing scale for padding, margin and gap. New code picks from xxs..xxl
+// (UI-06); the layout names below are kept for the existing screens.
 export const Spacing = {
+  xxs: 2,
   xs: 4,
   sm: 8,
+  ms: 12,
   md: 16,
   lg: 24,
   xl: 32,
@@ -265,7 +342,20 @@ export const Spacing = {
   base: 8,
 } as const;
 
-// Border radius values in px (DESIGN.md uses rem; 1rem = 16px)
+/**
+ * Closed corner-radius scale (UI-06), aligned on the website's Tailwind
+ * borderRadius (domilix.com tailwind.config.mjs). New code uses only these.
+ */
+export const Radii = {
+  badge: 4, // rounded (DEFAULT / sm): badges, tags, skeleton lines
+  tile: 8, // rounded-lg: thumbnails and blocks nested in a card
+  control: 12, // rounded-xl: fields, banners, toasts
+  card: 16, // rounded-2xl: cards, sheets, dialogs (ProductCard)
+  full: 9999, // rounded-full: buttons, chips, avatars, round icon buttons
+} as const;
+
+// Legacy radius names used by the existing screens (kept until they are
+// migrated to Radii, UI-06 step 4). xl and banner are outside the scale.
 export const Radius = {
   sm: 4,    // 0.25rem
   md: 12,   // 0.75rem – buttons & inputs
@@ -282,6 +372,33 @@ export const Sizes = {
   authBannerTall: 236, // mascot banner, sign-in
   authBannerShort: 148, // mascot banner, sign-up
   authBannerMin: 100, // smallest sign-in banner, when the "session expirée" notice adds height
+  iconSm: 16,
+  icon: 20,
+  iconLg: 24,
+  grabberWidth: 40, // drag handle at the top of a bottom sheet
+  grabberHeight: 4,
+  stateIcon: 72, // circle behind the icon of an empty / error / offline state
+  skeletonMedia: 120, // image block of a loading card
+  avatarSm: 32,
+  avatarMd: 44,
+  avatarLg: 64,
+  multiline: 120, // minimum height of a multi-line field
+  progress: 4, // track of the step progress bar
+  radio: 20, // outer ring of a radio button
+  radioDot: 10,
+  dialogMaxWidth: 560, // Material 3 dialog
+} as const;
+
+// Border widths of the shared components (UI-06). `focus` is the focus and
+// error ring of fields.
+export const Borders = {
+  thin: 1,
+  focus: 2,
+} as const;
+
+export const Opacity = {
+  disabled: 0.42,
+  pressed: 0.75,
 } as const;
 
 // Shadow system — amber-tinted ambient shadows

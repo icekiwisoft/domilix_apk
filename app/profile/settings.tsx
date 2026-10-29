@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, IconButton, SegmentedButtons } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useChangePassword } from '@/hooks/queries/use-auth-queries';
 import { changePasswordSchema, type ChangePasswordFormValues } from '@/lib/validators/auth.schema';
+import { ListRow, Section } from '@/components/ui/list-row';
 import { useThemeStore, type ThemePreference } from '@/stores/theme.store';
 
 function SectionLabel({ children }: { children: string }) {
@@ -193,6 +194,18 @@ export default function SettingsScreen() {
               </Button>
             </View>
           </View>
+
+          {/* Developer entry, only in builds with EXPO_PUBLIC_SHOW_CATALOGUE=1 */}
+          {process.env.EXPO_PUBLIC_SHOW_CATALOGUE === '1' ? (
+            <Section title="Développement">
+              <ListRow
+                title="Catalogue des composants"
+                icon="widgets"
+                chevron
+                onPress={() => router.push('/dev/catalogue' as Href)}
+              />
+            </Section>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
