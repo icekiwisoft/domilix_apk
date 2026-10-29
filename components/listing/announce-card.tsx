@@ -13,7 +13,8 @@ export interface AnnounceCardProps {
 
 /** First sentence of the description: the API has no separate title. */
 export function announceTitle(a: Announce) {
-  return a.description.split('.')[0];
+  // Line breaks of the description would leave an empty second line on the card.
+  return a.description.split('.')[0].replace(/\s+/g, ' ').trim();
 }
 
 /** "Quartier, Ville" without repeating the city when the API has no district. */

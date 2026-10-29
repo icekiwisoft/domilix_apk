@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 
 import { AMENITY_OPTIONS, STANDING_OPTIONS } from '@/components/search/active-filters';
 import {
@@ -54,6 +54,9 @@ export default function FilterSheetScreen() {
   const C = useThemeColors();
   const router = useRouter();
   const { filters, setFilters, clearFilters } = useFilterStore();
+  // Side by side the two budget fields cut "Sans limite" from 150 % font size: stack them.
+  const { fontScale } = useWindowDimensions();
+  const budgetField = { flexGrow: 1, flexBasis: fontScale >= 1.5 ? ('100%' as const) : 0 };
 
   const [type, setType] = useState<AnnounceType>(filters.type ?? 'realestate');
   const [adType, setAdType] = useState<AdType>(filters.ad_type ?? 'location');
@@ -136,7 +139,7 @@ export default function FilterSheetScreen() {
             placeholder="0"
             keyboardType="number-pad"
             suffix="FCFA"
-            containerStyle={{ flexGrow: 1, flexBasis: 0, minWidth: '40%' }}
+            containerStyle={budgetField}
           />
           <Field
             label="Maximum"
@@ -145,7 +148,7 @@ export default function FilterSheetScreen() {
             placeholder="Sans limite"
             keyboardType="number-pad"
             suffix="FCFA"
-            containerStyle={{ flexGrow: 1, flexBasis: 0, minWidth: '40%' }}
+            containerStyle={budgetField}
           />
         </View>
       </Section>
