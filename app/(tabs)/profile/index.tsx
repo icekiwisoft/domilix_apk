@@ -4,7 +4,7 @@ import { Button, Dialog, Portal, TouchableRipple } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMe, useLogout } from '@/hooks/queries/use-auth-queries';
 import { useAnnouncer } from '@/hooks/queries/use-announcers';
@@ -38,7 +38,7 @@ function MenuRow({ icon, label, subtitle, onPress, destructive }: MenuRowProps) 
           <MaterialIcons name={icon} size={19} color={iconColor} />
         </View>
         <View style={styles.menuText}>
-          <Text style={[Typography.bodyMd, { color: destructive ? C.error : C.onSurface, fontFamily: 'PlusJakartaSans_500Medium' }]}>
+          <Text style={[Typography.bodyMd, { color: destructive ? C.error : C.onSurface, fontFamily: Fonts.medium }]}>
             {label}
           </Text>
           {subtitle && (
@@ -135,7 +135,7 @@ export default function ProfileScreen() {
             </View>
           </Pressable>
 
-          <Text style={[Typography.headlineMd, { color: C.onSurface, marginTop: Spacing.md, fontSize: 22, fontFamily: 'PlusJakartaSans_700Bold', textAlign: 'center' }]}>
+          <Text style={[Typography.headlineMd, { color: C.onSurface, marginTop: Spacing.md, fontSize: 22, fontFamily: Fonts.bold, textAlign: 'center' }]}>
             {user?.name ?? '—'}
           </Text>
           <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: 2, textAlign: 'center' }]}>
@@ -145,7 +145,7 @@ export default function ProfileScreen() {
           {activePlanLabel && (
             <View style={[styles.announcerBadge, { backgroundColor: C.primaryFixed + 'AA', borderColor: C.primary + '30' }]}>
               <MaterialIcons name="workspace-premium" size={14} color={C.primary} />
-              <Text style={[Typography.caption, { color: C.primary, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
+              <Text style={[Typography.caption, { color: C.primary, fontFamily: Fonts.semiBold }]}>
                 {activePlanLabel}
               </Text>
             </View>
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
           {isAnnouncer && (
             <View style={[styles.announcerBadge, { backgroundColor: C.primary + '15', borderColor: C.primary + '30' }]}>
               <MaterialIcons name="verified" size={14} color={C.primary} />
-              <Text style={[Typography.caption, { color: C.primary, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
+              <Text style={[Typography.caption, { color: C.primary, fontFamily: Fonts.semiBold }]}>
                 Annonceur certifié
               </Text>
             </View>
@@ -162,7 +162,7 @@ export default function ProfileScreen() {
           {/* Credits */}
           <View style={[styles.creditsRow, { backgroundColor: C.surface, borderColor: C.outlineVariant }]}>
             <MaterialIcons name="toll" size={18} color={C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
+            <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: Fonts.semiBold }]}>
               {user?.credits ?? 0} crédits
             </Text>
             <Button

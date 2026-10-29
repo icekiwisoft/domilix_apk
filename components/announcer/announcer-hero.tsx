@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AnnouncerStats } from './announcer-stats';
 import type { Announcer } from '@/types/announcer';
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   name: {
     textAlign: 'center',
     marginBottom: Spacing.sm,
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
   },
   bio: {
     textAlign: 'center',

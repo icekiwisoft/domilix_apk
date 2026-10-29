@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MapListToggle } from '@/components/search/map-list-toggle';
 
@@ -38,7 +38,7 @@ function MapUnavailableFallback() {
         </Text>
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm, lineHeight: 22 }]}>
           La carte native nécessite un build de développement.{'\n'}
-          Lancez <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', color: C.primary }}>expo run:android</Text> pour l'activer.
+          Lancez <Text style={{ fontFamily: Fonts.semiBold, color: C.primary }}>expo run:android</Text> pour l'activer.
         </Text>
       </View>
       <View style={styles.fab}>

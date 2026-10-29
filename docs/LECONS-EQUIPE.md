@@ -32,7 +32,12 @@ avant de commencer.** Copie de référence : vault `30_Resources/Leçons - équi
    réécriture d'historique ni de modification de `main`/`master` par un sous-agent.
 6. **Données personnelles** : le repo est public. Ne jamais commiter de numéro, e-mail, nom de
    testeur ou capture contenant des données d'utilisateurs réels.
-7. **Appareils** : Pixel 9 de l'utilisateur `48150DLAQ003HE` (téléphone personnel : apps et
+7. **Vérifier l'URL d'API du bundle AVANT tout scénario de test.** Un build release sans
+   `EXPO_PUBLIC_API_URL` retombe sur `https://api.domilix.com`. *Erreur (QA lot 2) : premier build
+   local sans la variable, deux connexions ratées et une vue d'annonce (`POST /see`) envoyées à la
+   prod avant de s'en rendre compte.* Contrôle : chercher l'URL attendue dans
+   `index.android.bundle` de l'APK, et l'absence de `api.domilix.com` pour un build local.
+8. **Appareils** : Pixel 9 de l'utilisateur `48150DLAQ003HE` (téléphone personnel : apps et
    notifications privées, vérifier le premier plan avant toute capture) et émulateur
    `emulator-5554`. `adb` est dans `~/Android/Sdk/platform-tools/`. Paquet : `com.jack0237.domilix`.
 

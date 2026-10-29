@@ -1,4 +1,4 @@
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Announce } from '@/types/announce';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   adChipText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 11,
     lineHeight: 16,
   },
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 14,
     lineHeight: 20,
     letterSpacing: 0.1,
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   },
   priceRow: {},
   priceMain: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 22,
     lineHeight: 28,
   },

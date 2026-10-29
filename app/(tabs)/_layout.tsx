@@ -10,7 +10,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors, Radius, Shadows } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadows } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const ICON_SPRING = { damping: 14, stiffness: 200 };
@@ -88,7 +88,7 @@ function TabLabel({
     <Animated.Text
       style={[
         {
-          fontFamily: focused ? 'PlusJakartaSans_700Bold' : 'PlusJakartaSans_500Medium',
+          fontFamily: focused ? Fonts.bold : Fonts.medium,
           fontSize: 12,
           textTransform: 'capitalize',
           letterSpacing: 0.6,

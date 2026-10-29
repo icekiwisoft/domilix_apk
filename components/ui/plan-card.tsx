@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface PlanCardProps {
@@ -45,7 +45,7 @@ export function PlanCard({
     <View style={[styles.card, { backgroundColor: bg, borderColor, borderWidth: current || recommended ? 2 : 1 }]}>
       {recommended && !current && (
         <View style={[styles.badge, { backgroundColor: C.primary }]}>
-          <Text style={[Typography.caption, { color: C.onPrimary, fontFamily: 'PlusJakartaSans_700Bold', letterSpacing: 0.8, textTransform: 'uppercase' }]}>
+          <Text style={[Typography.caption, { color: C.onPrimary, fontFamily: Fonts.bold, letterSpacing: 0.8, textTransform: 'uppercase' }]}>
             Recommandé
           </Text>
         </View>
@@ -66,7 +66,7 @@ export function PlanCard({
           {credits != null && (
             <View style={styles.metaRow}>
               <MaterialIcons name="toll" size={18} color={C.primary} />
-              <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_700Bold' }]}>
+              <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: Fonts.bold }]}>
                 {credits} Domicoins
               </Text>
             </View>
@@ -84,12 +84,12 @@ export function PlanCard({
 
       <View style={styles.priceRow}>
         {price === null ? (
-          <Text style={[Typography.headlineLg, { color: C.primary, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 28 }]}>
+          <Text style={[Typography.headlineLg, { color: C.primary, fontFamily: Fonts.bold, fontSize: 28 }]}>
             Gratuit
           </Text>
         ) : (
           <>
-            <Text style={[Typography.headlineLg, { color: C.primary, fontFamily: 'PlusJakartaSans_700Bold', fontSize: 28 }]}>
+            <Text style={[Typography.headlineLg, { color: C.primary, fontFamily: Fonts.bold, fontSize: 28 }]}>
               {price.toLocaleString('fr-FR')}
             </Text>
             <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>

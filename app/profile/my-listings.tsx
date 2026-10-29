@@ -5,7 +5,7 @@ import { ActivityIndicator, Button, Card, Dialog, IconButton, Portal } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMe } from '@/hooks/queries/use-auth-queries';
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   headerTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 18,
     lineHeight: 24,
   },
@@ -418,13 +418,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   summaryValue: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 20,
     lineHeight: 26,
     fontVariant: ['tabular-nums'],
   },
   summaryLabel: {
-    fontFamily: 'PlusJakartaSans_500Medium',
+    fontFamily: Fonts.medium,
     fontSize: 11,
     lineHeight: 15,
   },
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   },
   photoBadgeText: {
     color: '#fff',
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 10,
     lineHeight: 12,
   },
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   statusBadgeText: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 10,
     lineHeight: 13,
     textTransform: 'uppercase',
@@ -501,12 +501,12 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   typeBadgeText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 10,
     lineHeight: 13,
   },
   cardTitle: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 14,
     lineHeight: 19,
   },
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   locationText: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 12,
     lineHeight: 16,
     flex: 1,
@@ -527,12 +527,12 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   price: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 18,
     lineHeight: 23,
   },
   currency: {
-    fontFamily: 'PlusJakartaSans_500Medium',
+    fontFamily: Fonts.medium,
     fontSize: 11,
     lineHeight: 15,
   },
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   metaText: {
-    fontFamily: 'PlusJakartaSans_500Medium',
+    fontFamily: Fonts.medium,
     fontSize: 10,
     lineHeight: 13,
     fontVariant: ['tabular-nums'],
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionLabel: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 11,
     lineHeight: 15,
   },

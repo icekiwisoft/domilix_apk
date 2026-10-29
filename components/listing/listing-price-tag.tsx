@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Colors, Typography } from '@/constants/theme';
+import { Colors, Fonts, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const PERIOD_LABELS: Record<string, string> = {
@@ -56,6 +56,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   bold: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
   },
 });

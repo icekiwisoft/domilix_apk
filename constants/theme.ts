@@ -1,3 +1,5 @@
+import { Platform, type TextStyle } from 'react-native';
+
 export const Colors = {
   light: {
     // Surfaces
@@ -51,6 +53,21 @@ export const Colors = {
     icon: '#534435',
     tabIconDefault: '#867462',
     tabIconSelected: '#885200',
+    // Sign-in and sign-up screens (UI-01, UI-02). The main button uses dark text
+    // on a lighter amber: white on #e8921a only reaches ~2.5:1 (fails AA).
+    cta: '#f5a623',
+    onCta: '#291800',
+    link: '#835500',
+    fieldSurface: '#ffffff',
+    fieldPrefix: '#fff1e4',
+    success: '#2f6b3a',
+    // Badge over the mascot photo: same light chip in both themes.
+    bannerChip: 'rgba(255,255,255,0.94)',
+    onBannerChip: '#211a12',
+    // Google sign-in button, Google's official colours (light theme).
+    googleSurface: '#ffffff',
+    googleOutline: '#747775',
+    onGoogleSurface: '#1f1f1f',
   },
   dark: {
     // Surfaces
@@ -104,60 +121,124 @@ export const Colors = {
     icon: '#d9c3af',
     tabIconDefault: '#867462',
     tabIconSelected: '#ffb869',
+    // Sign-in and sign-up screens (UI-01, UI-02)
+    cta: '#ffb955',
+    onCta: '#291800',
+    link: '#ffb955',
+    fieldSurface: '#221b14',
+    fieldPrefix: '#2c241b',
+    success: '#8fd19e',
+    bannerChip: 'rgba(255,255,255,0.94)',
+    onBannerChip: '#211a12',
+    // Google sign-in button, Google's official colours (dark theme).
+    googleSurface: '#131314',
+    googleOutline: '#8e918f',
+    onGoogleSurface: '#e3e3e3',
   },
 } as const;
 
-// Typography scale – Plus Jakarta Sans
+// Mona Sans, the website's typeface (domilix.com tailwind.config.mjs fontFamily.sans).
+// These are the family names registered by useFonts in app/_layout.tsx: on Android a
+// custom font needs one family per weight, so always pick the family that matches the
+// weight instead of relying on fontWeight alone.
+export const Fonts = {
+  regular: 'MonaSans_400Regular',
+  medium: 'MonaSans_500Medium',
+  semiBold: 'MonaSans_600SemiBold',
+  bold: 'MonaSans_700Bold',
+} as const;
+
+/**
+ * fontWeight to pair with a Mona Sans family: none on Android, where the family
+ * already encodes the weight. expo-font registers each family in React
+ * Native's ReactFontManager under the NORMAL style only; a fontWeight of 700 or
+ * more (or 'bold') makes it look up the BOLD style of that family, finds none
+ * and falls back to Typeface.create(family, BOLD), i.e. Roboto Bold (UI-03).
+ * Weights below 700 used the NORMAL entry, which is why only bold broke.
+ */
+export function fontWeight<W extends TextStyle['fontWeight']>(weight: W): W | undefined {
+  return Platform.OS === 'android' ? undefined : weight;
+}
+
+// Typography scale – Mona Sans
 // lineHeight and letterSpacing are in px (RN numeric values)
 export const Typography = {
   displayLg: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 60,
-    fontWeight: '700' as const,
+    fontWeight: fontWeight('700'),
     lineHeight: 66,
     letterSpacing: -1.2,
   },
   headlineLg: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 40,
-    fontWeight: '700' as const,
+    fontWeight: fontWeight('700'),
     lineHeight: 48,
   },
   headlineMd: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 32,
-    fontWeight: '700' as const,
+    fontWeight: fontWeight('700'),
     lineHeight: 38,
   },
   headlineSm: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 24,
-    fontWeight: '600' as const,
+    fontWeight: fontWeight('600'),
     lineHeight: 32,
   },
   bodyLg: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 18,
-    fontWeight: '400' as const,
+    fontWeight: fontWeight('400'),
     lineHeight: 29,
   },
   bodyMd: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     fontSize: 16,
-    fontWeight: '400' as const,
+    fontWeight: fontWeight('400'),
     lineHeight: 26,
   },
   labelSm: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 14,
-    fontWeight: '600' as const,
+    fontWeight: fontWeight('600'),
     lineHeight: 14,
     letterSpacing: 1.12,
   },
+  // Screen title of the sign-in and sign-up screens
+  titleLg: {
+    fontFamily: Fonts.bold,
+    fontSize: 26,
+    fontWeight: fontWeight('700'),
+    lineHeight: 32,
+    letterSpacing: -0.26,
+  },
+  // Field labels and small links
+  labelMd: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 14,
+    fontWeight: fontWeight('600'),
+    lineHeight: 20,
+  },
+  bodySm: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    fontWeight: fontWeight('400'),
+    lineHeight: 20,
+  },
+  // Helper text under a field
+  helper: {
+    fontFamily: Fonts.regular,
+    fontSize: 13,
+    fontWeight: fontWeight('400'),
+    lineHeight: 18,
+  },
   caption: {
-    fontFamily: 'PlusJakartaSans_500Medium',
+    fontFamily: Fonts.medium,
     fontSize: 12,
-    fontWeight: '500' as const,
+    fontWeight: fontWeight('500'),
     lineHeight: 17,
   },
 } as const;
@@ -183,7 +264,17 @@ export const Radius = {
   md: 12,   // 0.75rem – buttons & inputs
   lg: 16,   // 1rem    – cards
   xl: 24,   // 1.5rem
+  banner: 28, // bottom corners of the sign-in mascot banner
   full: 9999,
+} as const;
+
+// Fixed component sizes (dp)
+export const Sizes = {
+  touchTarget: 48, // minimum touch target (Material 3, WCAG)
+  control: 52, // text fields and full-width buttons on the sign-in screens
+  authBannerTall: 236, // mascot banner, sign-in
+  authBannerShort: 148, // mascot banner, sign-up
+  authBannerMin: 100, // smallest sign-in banner, when the "session expirée" notice adds height
 } as const;
 
 // Shadow system — amber-tinted ambient shadows

@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Button, Chip, SegmentedButtons } from 'react-native-paper';
 import { CreateStepHeader } from '@/components/forms/create-step-header';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCreateListingStore } from '@/stores/create-listing.store';
 import type { Standing } from '@/types/announce';
@@ -49,7 +49,7 @@ export default function CreateStep4Screen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_700Bold' }]}>
+        <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: Fonts.bold }]}>
           Équipements
         </Text>
         <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs, marginBottom: Spacing.xl }]}>

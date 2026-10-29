@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Announcer } from '@/types/announcer';
 
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 18,
     lineHeight: 22,
   },

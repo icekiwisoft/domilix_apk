@@ -5,22 +5,18 @@ export const loginSchema = z.object({
   password: z.string().min(6, 'Mot de passe trop court'),
 });
 
-export const registerSchema = z
-  .object({
-    name: z.string().min(2, 'Nom trop court').max(80, 'Nom trop long'),
-    email: z.string().email('Email invalide').optional().or(z.literal('')),
-    phone: z
-      .string()
-      .min(9, 'Numéro invalide')
-      .regex(/^[0-9]+$/, 'Numéro invalide'),
-    password: z.string().min(8, 'Au moins 8 caractères'),
-    confirmPassword: z.string(),
-    terms: z.literal(true, { errorMap: () => ({ message: "Acceptez les conditions d'utilisation" }) }),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    message: 'Les mots de passe ne correspondent pas',
-    path: ['confirmPassword'],
-  });
+// No password confirmation (UI-02): the backend RegisterDto takes name, email?,
+// phone_number? and password only, and the field shows a "show password" toggle.
+export const registerSchema = z.object({
+  name: z.string().trim().min(2, 'Nom trop court').max(80, 'Nom trop long'),
+  email: z.string().trim().email('Email invalide').optional().or(z.literal('')),
+  phone: z
+    .string()
+    .min(9, 'Numéro invalide')
+    .regex(/^[0-9]+$/, 'Numéro invalide'),
+  password: z.string().min(8, 'Au moins 8 caractères'),
+  terms: z.literal(true, { errorMap: () => ({ message: "Acceptez les conditions d'utilisation" }) }),
+});
 
 export const forgotPasswordSchema = z.object({
   email: z.string().email('Email invalide'),

@@ -1,6 +1,6 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ListingPriceTag } from './listing-price-tag';
 import type { Announce } from '@/types/announce';
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   adChipText: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 9,
     letterSpacing: 0.4,
   },
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+    fontFamily: Fonts.semiBold,
     fontSize: 13,
     lineHeight: 18,
   },

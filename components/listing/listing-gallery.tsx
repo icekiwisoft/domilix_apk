@@ -6,7 +6,7 @@ import Animated, {
   useSharedValue,
   runOnJS,
 } from 'react-native-reanimated';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ImageViewerModal } from './image-viewer-modal';
 import type { Media } from '@/types/announce';
@@ -103,16 +103,16 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   counterText: {
-    fontFamily: 'PlusJakartaSans_500Medium',
+    fontFamily: Fonts.medium,
     fontSize: 13,
     lineHeight: 18,
   },
   counterCurrent: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
     fontSize: 13,
   },
   counterSep: {
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: Fonts.regular,
     opacity: 0.7,
   },
 });

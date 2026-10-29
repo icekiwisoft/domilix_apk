@@ -195,12 +195,25 @@ export default function FilterSheetScreen() {
         {/* Standing */}
         <View style={styles.section}>
           <SectionTitle>Standing</SectionTitle>
-          <SegmentedButtons
-            value={standing ?? ''}
-            onValueChange={(v) => setStanding(v ? (v as Standing) : undefined)}
-            theme={segmentedTheme}
-            buttons={STANDING_OPTIONS}
-          />
+          {/* Chips that wrap rather than a segmented control: "Haut standing" was
+              cut at 100 % font size in Mona Sans, and all three labels at 200 %. */}
+          <View style={styles.amenityGrid}>
+            {STANDING_OPTIONS.map((o) => {
+              const active = standing === o.value;
+              return (
+                <Chip
+                  key={o.value}
+                  selected={active}
+                  showSelectedCheck={false}
+                  onPress={() => setStanding(o.value)}
+                  style={active ? { backgroundColor: C.primary } : { backgroundColor: C.surfaceContainer }}
+                  textStyle={{ color: active ? C.onPrimary : C.onSurface }}
+                >
+                  {o.label}
+                </Chip>
+              );
+            })}
+          </View>
         </View>
       </ScrollView>
 

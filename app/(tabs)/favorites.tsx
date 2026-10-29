@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ListingCard } from '@/components/listing/listing-card';
 import { ListingSkeleton } from '@/components/listing/listing-skeleton';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useInfiniteAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 import { useAuthStore } from '@/stores/auth.store';
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
   },
-  title: { fontSize: 24, fontFamily: 'PlusJakartaSans_700Bold' },
+  title: { fontSize: 24, fontFamily: Fonts.bold },
   empty: {
     flex: 1,
     alignItems: 'center',

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface AnnouncerStatsProps {
@@ -75,6 +75,6 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   value: {
-    fontFamily: 'PlusJakartaSans_700Bold',
+    fontFamily: Fonts.bold,
   },
 });

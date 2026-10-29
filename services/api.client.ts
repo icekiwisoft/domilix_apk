@@ -124,7 +124,8 @@ client.interceptors.response.use(
       }
       if (refused) {
         refreshServerErrors = 0;
-        useAuthStore.getState().clearAuth();
+        // Shows the login screen with "session expired" (B-05) when there was a session.
+        useAuthStore.getState().expireSession();
       }
       return Promise.reject(err);
     } finally {

@@ -146,7 +146,9 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 5. Site : `public/logo.png` contient un faux damier de transparence (pixels gris/blancs dans
    l'image, mode RGB sans canal alpha).
 6. Site : boutons blanc sur `#E8921A` à ~2,5:1 de contraste (minimum AA 4,5:1).
-7. Ouverture des liens d'annonce dans l'app (Android App Links) : `/.well-known/assetlinks.json`
+7. Connexion d'un numéro non vérifié : le 403 ne renvoie pas de `user_id`, l'app ne peut pas
+   relancer le code SMS (F-01).
+8. Ouverture des liens d'annonce dans l'app (Android App Links) : `/.well-known/assetlinks.json`
    sur `domilix.com` (B-03, hors lot).
 
 ## Améliorations demandées par l'utilisateur
@@ -202,8 +204,34 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   débordant sur les écrans principaux (Mona Sans est plus large) à 100 % et 200 % de police ; build
   release vérifié sur l'appareil.
 
+### UI-04 — Contraste et lisibilité dans le reste de l'app (P1)
+
+- **Source** : revue et QA du lot 2 (2026-10-28).
+- **Contraste** : texte blanc sur `#E8921A` (~2,5:1) encore utilisé par les boutons Paper « contained »
+  et les fonds `C.primary` de : forgot-password, reset-password, verify-phone, announces/[id],
+  création étapes 1 à 5, edit/[id], favorites, profil, profile/settings, subscriptions,
+  announcer-profile, notifications, announcers/[id], unlock-confirm, filter-sheet ; composants
+  login-gate, empty-state, plan-card, search-bar, map-list-toggle, filter-bar, broadcast-banner,
+  profile-form, announcer-form, media-upload-grid, create-step-header, notif-item, listing-card-h,
+  announcer-contact, announcer-hero. Bandeau « DISCOVER THE APP » peu lisible en sombre.
+- **Police à 200 %** (QA-05) : libellés de la barre d'onglets tronqués (« Accu », « Explo »),
+  placeholder de recherche de l'accueil coupé, lignes de prix qui passent à la ligne, bouton des
+  cartes d'abonnement tronqué.
+- **Attendu** : tokens `cta` / `onCta` du lot 2 partout, AA en clair et en sombre, rien de tronqué à
+  200 %.
+
+### F-01 — Connexion par téléphone non vérifié (P2)
+
+- **Source** : développeur lot 2.
+- **Constat** : un numéro jamais vérifié reçoit 403 à la connexion, l'app affiche « Identifiant ou
+  mot de passe incorrect » et ne propose pas de finir la vérification.
+- **Dépendance backend** : la réponse 403 ne contient pas de `user_id`, nécessaire pour
+  `resendVerificationCode`. À demander au backend.
+- Suggestion annexe : toucher le choix « Standing » déjà sélectionné pourrait le désélectionner.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
 2. **Lot 2 — connexion, inscription et police** : UI-03 d'abord (base des deux écrans), puis UI-01,
    UI-02, B-02 (connexion Google native) et B-05.
+3. **Lot 3 — contraste et 200 %** : UI-04. Puis F-01 quand le backend renverra le `user_id`.
