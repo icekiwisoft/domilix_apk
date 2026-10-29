@@ -22,6 +22,7 @@ import { DomilixThemeProvider } from '@/providers/theme.provider';
 import { QueryProvider } from '@/providers/query.provider';
 import { AuthProvider } from '@/providers/auth.provider';
 import { useAuthStore } from '@/stores/auth.store';
+import { useThemeStore } from '@/stores/theme.store';
 import { ToastProvider } from '@/components/ui/toast';
 
 SplashScreen.preventAutoHideAsync();
@@ -43,16 +44,19 @@ export default function RootLayout() {
   // Keep the splash until the stored session has been read (AuthProvider), so
   // a signed-in user never sees the login screen flash at startup.
   const authHydrated = useAuthStore((s) => s.hydrated);
+  // Same for the stored theme: mounting in the system scheme then switching
+  // to the user's forced one flashes and repaints every surface.
+  const themeHydrated = useThemeStore((s) => s.hydrated);
 
   // A font load error counts as ready: the app falls back to the system font
   // instead of leaving the splash screen up forever (UI-03).
   const fontsReady = fontsLoaded || !!fontError;
 
   useEffect(() => {
-    if (fontsReady && authHydrated) SplashScreen.hideAsync();
-  }, [fontsReady, authHydrated]);
+    if (fontsReady && authHydrated && themeHydrated) SplashScreen.hideAsync();
+  }, [fontsReady, authHydrated, themeHydrated]);
 
-  if (!fontsReady) return null;
+  if (!fontsReady || !themeHydrated) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -82,7 +86,8 @@ export default function RootLayout() {
                   <Stack.Screen name="profile/subscriptions" options={{ headerShown: false }} />
                   <Stack.Screen name="profile/announcer-profile" options={{ headerShown: false }} />
                 </Stack>
-                <StatusBar style="auto" />
+                {/* Resolved scheme, not "auto" (which follows the system): light icons on dark. */}
+                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
               </ToastProvider>
             </AuthProvider>
           </PaperProvider>
