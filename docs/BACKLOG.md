@@ -57,6 +57,11 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   feuille système avec les comptes du téléphone, sans navigateur. Prérequis à vérifier : client
   OAuth Android avec l'empreinte SHA-1 de la clé de signature de production (EAS) et de la clé
   Google Play si l'app y est publiée.
+- **Empreintes à enregistrer dans Google Cloud** (clients OAuth Android, paquet
+  `com.jack0237.domilix`, relevées le 2026-10-29) : clé EAS par défaut du projet
+  `@jack0237/domilix` (créée le 2026-05-13) `77:18:A8:44:57:6A:BF:80:15:28:D4:35:BE:7A:D8:73:4C:15:20:20` ;
+  clé debug `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`. Clé Google Play à ajouter si
+  l'app y est publiée. En attente : enregistrement par l'utilisateur.
 - **Bibliothèque retenue (2026-10-28, utilisateur)** : `@thoughtbot/react-native-social-auth`
   (MIT, thoughtbot, Turbo Module, Credential Manager via `androidx.credentials` 1.5.0 et `googleid`
   1.1.1, plugin Expo, boutons Google conformes). Version figée (0.4.0 au moment du choix, API en
