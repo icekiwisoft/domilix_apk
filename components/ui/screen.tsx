@@ -31,8 +31,8 @@ export function useScreenKeyboard() {
   return useContext(ScreenKeyboardContext);
 }
 
-/** True while the software keyboard is open. */
-function useKeyboardShown(enabled: boolean) {
+/** True while the software keyboard is open (only listens when enabled). */
+export function useKeyboardShown(enabled: boolean) {
   const [shown, setShown] = useState(false);
   useEffect(() => {
     if (!enabled) return;

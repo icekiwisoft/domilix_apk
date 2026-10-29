@@ -47,7 +47,6 @@ const designGuard = [
 // Primitives written before UI-06, still on raw values until step 4 rewrites
 // or retires them. Every other file in components/ui must pass the guard.
 const LEGACY_UI = [
-  'components/ui/bottom-sheet.tsx',
   'components/ui/collapsible.tsx',
   'components/ui/icon-symbol.tsx',
   'components/ui/icon-symbol.ios.tsx',
