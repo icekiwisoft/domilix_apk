@@ -1,198 +1,158 @@
-import { ListingCard } from '@/components/listing/listing-card';
-import { ListingSkeleton } from '@/components/listing/listing-skeleton';
-import { FilterBar } from '@/components/search/filter-bar';
-import { ResultsCount } from '@/components/search/results-count';
-import { SearchBar } from '@/components/search/search-bar';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { FlatList, RefreshControl, View } from 'react-native';
+
+import { ExploreHeader } from '@/components/search/explore-header';
+import { AnnounceCard } from '@/components/listing/announce-card';
+import { activeFilters } from '@/components/search/active-filters';
+import { AppText, Button, EmptyState, ErrorState, ListingCardSkeleton, Screen } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import { useFilterStore } from '@/stores/filter.store';
-import type { AdType, AnnounceType } from '@/types/announce';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import {
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { ActivityIndicator, Button, SegmentedButtons } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
+function ResultsCount({ count, query, city }: { count: number; query?: string; city?: string }) {
+  const noun = `${count} ${query ? 'résultat' : 'annonce'}${count !== 1 ? 's' : ''}`;
+  const rest = query ? ` pour « ${query} »` : city ? ` à ${city}` : '';
+  return (
+    <AppText color="onSurfaceVariant" accessibilityLiveRegion="polite">
+      <AppText variant="bodyStrong">{noun}</AppText>
+      {rest}
+    </AppText>
+  );
+}
 
 export default function ExploreScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const params = useLocalSearchParams<{ q?: string; type?: string }>();
+  const C = useThemeColors();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ q?: string }>();
 
   const [search, setSearch] = useState(params.q ?? '');
-  const [announceType, setAnnounceType] = useState<AnnounceType>(
-    (params.type as AnnounceType) ?? 'realestate'
-  );
-  const [adType, setAdType] = useState<AdType>('location');
-  const [page, setPage] = useState(1);
+  // The tab stays mounted: a new search sent from the home screen replaces the current one.
+  useEffect(() => {
+    if (params.q != null) setSearch(params.q);
+  }, [params.q]);
 
-  const { filters, setFilter, clearFilters } = useFilterStore();
+  const { filters, setFilters, clearFilters } = useFilterStore();
   const toggleLike = useToggleLike();
-
-  const { data, isLoading, isFetching, refetch } = useAnnounces({
+  const query = {
     ...filters,
-    type: announceType,
-    ad_type: adType,
+    type: filters.type ?? 'realestate',
+    ad_type: filters.ad_type ?? 'location',
     search: search.trim() || undefined,
-    page,
-  });
+  };
+
+  // Back to page 1 whenever the search or a filter changes.
+  const queryKey = JSON.stringify(query);
+  const [pageState, setPageState] = useState({ key: queryKey, page: 1 });
+  const page = pageState.key === queryKey ? pageState.page : 1;
+
+  const { data, isLoading, isError, refetch } = useAnnounces({ ...query, page });
+  const [refreshing, setRefreshing] = useState(false);
 
   const announces = data?.data ?? [];
   const total = data?.meta.total ?? 0;
   const hasMore = data ? data.meta.current_page < data.meta.last_page : false;
+  const chips = activeFilters(filters);
 
-  function handleFilterPress() {
-    router.push('/(modals)/filter-sheet');
+  async function onRefresh() {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }
+
+  function resetAll() {
+    clearFilters();
+    setSearch('');
+  }
+
+  let empty = null;
+  if (isLoading) {
+    empty = (
+      <View accessible accessibilityLabel="Chargement des annonces…" accessibilityState={{ busy: true }} style={{ gap: Spacing.ms }}>
+        {[1, 2, 3, 4].map((k) => (
+          <ListingCardSkeleton key={k} variant="compact" />
+        ))}
+      </View>
+    );
+  } else if (isError) {
+    empty = <ErrorState title="Impossible de charger les annonces" onRetry={() => refetch()} />;
+  } else {
+    empty = (
+      <EmptyState
+        icon="search-off"
+        title="Aucune annonce ne correspond à vos critères"
+        description={chips.length || search.trim() ? 'Retirez un filtre ou modifiez votre recherche.' : undefined}
+        actionLabel={chips.length || search.trim() ? 'Réinitialiser les filtres' : undefined}
+        onAction={resetAll}
+      />
+    );
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      {/* Header controls */}
-      <View style={[styles.controls, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant }]}>
-        <SearchBar
-          value={search}
-          onChangeText={setSearch}
-          onFilterPress={handleFilterPress}
-          placeholder="Où souhaitez-vous habiter ?"
+    <Screen
+      scroll={false}
+      bottomInset={false}
+      header={
+        <ExploreHeader
+          mode="list"
+          search={search}
+          onSearchChange={setSearch}
+          chips={chips}
+          onRemoveChip={(c) => setFilters(c.remove(filters))}
+          onModeChange={() => router.push({ pathname: '/(tabs)/explore/map', params: { q: search } })}
         />
-
-        <View style={styles.toggleRow}>
-          <SegmentedButtons
-            style={styles.segmented}
-            value={announceType}
-            onValueChange={(v) => { setAnnounceType(v as AnnounceType); setPage(1); }}
-            theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
-            buttons={[
-              { value: 'realestate', label: 'Immobilier' },
-              { value: 'furniture', label: 'Mobilier' },
-            ]}
-          />
-          {announceType === 'realestate' && (
-            <SegmentedButtons
-              style={styles.segmented}
-              value={adType}
-              onValueChange={(v) => { setAdType(v as AdType); setPage(1); }}
-              theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
-              buttons={[
-                { value: 'location', label: 'Location' },
-                { value: 'sale', label: 'Vente' },
-              ]}
-            />
-          )}
-        </View>
-
-        <FilterBar
-          filters={filters}
-          onRemove={(key) => setFilter(key, undefined)}
-        />
-      </View>
-
+      }
+      contentStyle={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}
+    >
       <FlatList
-        data={isLoading ? [] : announces}
-        keyExtractor={(a) => a.id}
-        numColumns={1}
+        data={isLoading || isError ? [] : announces}
+        keyExtractor={(a) => String(a.id)}
         renderItem={({ item }) => (
-          <ListingCard
+          <AnnounceCard
+            variant="compact"
             announce={item}
             onPress={() => router.push(`/announces/${item.id}`)}
-            onLike={(id) => toggleLike.mutate(id)}
-            imageHeight={200}
+            onToggleFavorite={(id) => toggleLike.mutate(id)}
           />
         )}
         ListHeaderComponent={
-          <View style={styles.listHeader}>
-            {isLoading ? (
-              <ActivityIndicator />
-            ) : (
-              <ResultsCount count={total} query={search.trim() || undefined} />
-            )}
-          </View>
-        }
-        ListEmptyComponent={
-          isLoading ? (
-            <View style={styles.skeletons}>
-              {[1, 2, 3].map((k) => <ListingSkeleton key={k} />)}
+          !isLoading && !isError && announces.length > 0 ? (
+            <View style={{ paddingBottom: Spacing.xs }}>
+              <ResultsCount count={total} query={search.trim() || undefined} city={filters.city} />
             </View>
-          ) : (
-            <View style={styles.empty}>
-              <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}>
-                Aucune annonce ne correspond à vos critères.
-              </Text>
-              <Button mode="text" textColor={C.link} onPress={clearFilters}>
-                Réinitialiser les filtres
-              </Button>
-            </View>
-          )
+          ) : null
         }
+        ListEmptyComponent={empty}
         ListFooterComponent={
           hasMore && !isLoading ? (
             <Button
-              mode="outlined"
-              textColor={C.link}
-              onPress={() => setPage((p) => p + 1)}
-              style={styles.loadMore}
-            >
-              Charger plus
-            </Button>
+              label="Charger plus"
+              variant="secondary"
+              onPress={() => setPageState({ key: queryKey, page: page + 1 })}
+              style={{ marginTop: Spacing.md, alignSelf: 'center' }}
+            />
           ) : null
         }
-        ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
-        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={() => <View style={{ height: Spacing.ms }} />}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: Spacing.marginMobile,
+          paddingTop: Spacing.ms,
+          paddingBottom: Spacing.xl,
+        }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
-            refreshing={isFetching && !isLoading}
-            onRefresh={refetch}
-            tintColor={C.primary}
-            colors={[C.primary]}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[C.primaryContainer]}
+            progressBackgroundColor={C.surfaceContainerLowest}
+            tintColor={C.primaryContainer}
           />
         }
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  controls: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
-    borderBottomWidth: 1,
-    gap: Spacing.sm,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  segmented: {
-    alignSelf: 'flex-start',
-  },
-  listHeader: {
-    paddingBottom: Spacing.sm,
-  },
-  list: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xxl,
-  },
-  skeletons: {
-    gap: Spacing.md,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingTop: Spacing.xxl,
-    gap: Spacing.md,
-  },
-  loadMore: {
-    marginTop: Spacing.lg,
-  },
-});
