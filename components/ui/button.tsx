@@ -32,6 +32,7 @@ export function Button({
 }: ButtonProps) {
   const primary = useThemeColor({}, 'primary');
   const onPrimary = useThemeColor({}, 'onPrimary');
+  const onPrimaryContainer = useThemeColor({}, 'onPrimaryContainer');
   const primaryContainer = useThemeColor({}, 'primaryContainer');
   const outlineVariant = useThemeColor({}, 'outlineVariant');
   const onSurface = useThemeColor({}, 'onSurface');
@@ -60,6 +61,7 @@ export function Button({
 
   const textColor =
     variant === 'ghost' || variant === 'outline' ? onSurface :
+    variant === 'cta' ? onPrimaryContainer :
     onPrimary;
 
   const borderColor =
