@@ -101,7 +101,7 @@ function ActivePackRow({ sub }: { sub: Subscription }) {
         <View style={[banner.iconCircle, { backgroundColor: C.primary + '22' }]}>
           <MaterialIcons name="toll" size={20} color={C.primary} />
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 150 }}>
           <Text style={[Typography.labelSm, { color: C.link, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
             {sub.plan_name}
           </Text>
@@ -110,7 +110,7 @@ function ActivePackRow({ sub }: { sub: Subscription }) {
           </Text>
         </View>
         {expiry ? (
-          <View style={{ alignItems: 'flex-end' }}>
+          <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
             <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>Expire le</Text>
             <Text style={[Typography.caption, { color: C.onSurface, fontFamily: Fonts.semiBold, marginTop: 1 }]}>
               {formatExpiry(expiry)}
@@ -130,6 +130,7 @@ const banner = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: Spacing.md,
   },
