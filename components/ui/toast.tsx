@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -8,8 +8,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Radii, Shadows, Sizes, Spacing, type ColorToken } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
+
+import { AppText } from './app-text';
 
 export type ToastType = 'info' | 'success' | 'error';
 
@@ -33,13 +35,10 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: 
   const translateY = useSharedValue(80);
   const opacity = useSharedValue(0);
 
-  const inverseSurface = useThemeColor({}, 'inverseSurface');
-  const inverseOnSurface = useThemeColor({}, 'inverseOnSurface');
-  const errorColor = useThemeColor({}, 'error');
-  const onError = useThemeColor({}, 'onError');
-
-  const bgColor = toast.type === 'error' ? errorColor : inverseSurface;
-  const textColor = toast.type === 'error' ? onError : inverseOnSurface;
+  const C = useThemeColors();
+  // inverseOnSurface on inverseSurface 11.6:1 / 10.2:1, onError on error 6.5:1 / 7.7:1.
+  const bgColor = toast.type === 'error' ? C.error : C.inverseSurface;
+  const textColor: ColorToken = toast.type === 'error' ? 'onError' : 'inverseOnSurface';
 
   function dismiss() {
     onDismiss(toast.id);
@@ -65,9 +64,19 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: 
   }));
 
   return (
-    <Animated.View style={[styles.toast, { backgroundColor: bgColor }, animStyle]}>
-      <Pressable onPress={dismiss} style={styles.toastInner}>
-        <Text style={[Typography.bodyMd, { color: textColor }]}>{toast.message}</Text>
+    <Animated.View
+      style={[styles.toast, { backgroundColor: bgColor }, animStyle]}
+      accessibilityLiveRegion="polite"
+      accessibilityRole="alert"
+    >
+      <Pressable
+        onPress={dismiss}
+        style={styles.toastInner}
+        accessibilityRole="button"
+        accessibilityLabel={toast.message}
+        accessibilityHint="Touchez pour fermer"
+      >
+        <AppText color={textColor}>{toast.message}</AppText>
       </Pressable>
     </Animated.View>
   );
@@ -111,11 +120,13 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   toast: {
-    borderRadius: Radius.lg,
+    borderRadius: Radii.card,
     ...Shadows.card,
   },
   toastInner: {
+    minHeight: Sizes.touchTarget,
+    justifyContent: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: Spacing.ms,
   },
 });
