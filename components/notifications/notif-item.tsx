@@ -43,7 +43,8 @@ function formatWhen(iso: string): string {
   yesterday.setHours(0, 0, 0, 0);
   yesterday.setDate(yesterday.getDate() - 1);
   if (date >= yesterday) return date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
-  return date.toLocaleDateString('fr', { day: 'numeric', month: 'short' });
+  const otherYear = date.getFullYear() !== new Date().getFullYear();
+  return date.toLocaleDateString('fr', { day: 'numeric', month: 'short', year: otherYear ? 'numeric' : undefined });
 }
 
 interface NotifItemProps {
@@ -124,7 +125,8 @@ export function NotifItem({ notification, onPress, onDelete }: NotifItemProps) {
         >
           <Pressable
             onPress={onPress}
-            accessibilityRole="button"
+            // A read row has nothing to press: plain text for TalkBack, not a button.
+            accessibilityRole={onPress ? 'button' : 'text'}
             accessibilityLabel={`${isUnread ? 'Non lue. ' : ''}${notification.title}. ${notification.body}. ${formatWhen(notification.created_at)}`}
             accessibilityHint={isUnread ? 'Marque la notification comme lue' : undefined}
             accessibilityActions={onDelete ? [{ name: 'delete', label: 'Supprimer' }] : undefined}
