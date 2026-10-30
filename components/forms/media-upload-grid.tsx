@@ -1,20 +1,115 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
-import { IconButton } from 'react-native-paper';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import type { ReactNode } from 'react';
+import { Pressable, View } from 'react-native';
+
+import { AppText, Badge, IconButton, pressedStyle } from '@/components/ui';
+import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
 export const MAX_PHOTOS = 10;
+
+/** Two square tiles per row, the Spacing.sm gap between them included. */
+const TILE: { width: `${number}%`; aspectRatio: number } = { width: '48%', aspectRatio: 1 };
+
+export interface PhotoTileProps {
+  uri: string;
+  /** Position read by TalkBack, e.g. "Photo 2". */
+  label: string;
+  /** "Principale", "Nouvelle". */
+  badge?: string;
+  onRemove: () => void;
+}
+
+/** One picked or existing photo, with a 48 dp remove button over its corner. */
+export function PhotoTile({ uri, label, badge, onRemove }: PhotoTileProps) {
+  const C = useThemeColors();
+  return (
+    <View
+      style={[
+        TILE,
+        {
+          borderRadius: Radii.control,
+          overflow: 'hidden',
+          borderWidth: Borders.thin,
+          borderColor: C.outlineVariant,
+          backgroundColor: C.surfaceContainer,
+        },
+      ]}
+    >
+      <Image
+        source={{ uri }}
+        style={{ width: '100%', height: '100%' }}
+        contentFit="cover"
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={badge ? `${label}, ${badge.toLowerCase()}` : label}
+      />
+      <IconButton
+        icon="close"
+        label={`Supprimer ${label.toLowerCase()}`}
+        overlay
+        onPress={onRemove}
+        style={{ position: 'absolute', top: Spacing.xs, right: Spacing.xs }}
+      />
+      {badge ? (
+        <Badge
+          label={badge}
+          variant="primary"
+          status
+          style={{ position: 'absolute', bottom: Spacing.sm, left: Spacing.sm }}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+/** Dashed "Ajouter des photos" tile that opens the system photo picker. */
+export function AddPhotoTile({ label, onPress }: { label: string; onPress: () => void }) {
+  const C = useThemeColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Ajouter des photos"
+      style={({ pressed }) => [
+        TILE,
+        {
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: Spacing.xs,
+          padding: Spacing.sm,
+          borderRadius: Radii.control,
+          borderWidth: Borders.focus,
+          borderStyle: 'dashed',
+          borderColor: C.outline,
+          backgroundColor: C.surfaceContainerLow,
+        },
+        pressedStyle(pressed),
+      ]}
+    >
+      <MaterialIcons name="add-photo-alternate" size={Sizes.iconLg} color={C.link} />
+      <AppText variant="label" color="link" style={{ textAlign: 'center' }}>
+        {label}
+      </AppText>
+    </Pressable>
+  );
+}
+
+/** Wrapping two-column grid of PhotoTile / AddPhotoTile. */
+export function PhotoGrid({ children }: { children: ReactNode }) {
+  return <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>{children}</View>;
+}
 
 interface MediaUploadGridProps {
   uris: string[];
   onChange: (uris: string[]) => void;
 }
 
+/** Photos of a new listing (create step 5), up to MAX_PHOTOS, the first one the main photo. */
 export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
   const atMax = uris.length >= MAX_PHOTOS;
 
   async function handlePick() {
@@ -36,116 +131,31 @@ export function MediaUploadGrid({ uris, onChange }: MediaUploadGridProps) {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Grid: photos + add button */}
-      <View style={styles.grid}>
+    <View style={{ gap: Spacing.sm }}>
+      <PhotoGrid>
         {uris.map((uri, i) => (
-          <View
+          <PhotoTile
             key={`${uri}-${i}`}
-            style={[styles.slot, { borderColor: C.outlineVariant, backgroundColor: C.surfaceContainer }]}
-          >
-            <Image source={{ uri }} style={styles.img} resizeMode="cover" />
-
-            <IconButton
-              icon="close"
-              accessibilityLabel="Supprimer cette photo"
-              onPress={() => handleRemove(i)}
-              iconColor={C.onError}
-              containerColor={C.error}
-              size={13}
-              style={styles.removeBtn}
-            />
-
-            {i === 0 && (
-              <View style={[styles.mainBadge, { backgroundColor: C.primary }]}>
-                <Text style={[Typography.caption, { color: C.onPrimary, fontSize: 9 }]}>
-                  Principale
-                </Text>
-              </View>
-            )}
-          </View>
+            uri={uri}
+            label={`Photo ${i + 1}`}
+            badge={i === 0 ? 'Principale' : undefined}
+            onRemove={() => handleRemove(i)}
+          />
         ))}
+        {/* Hidden once the max is reached */}
+        {!atMax ? <AddPhotoTile label={uris.length === 0 ? 'Ajouter des photos' : 'Ajouter'} onPress={handlePick} /> : null}
+      </PhotoGrid>
 
-        {/* Add button — hidden once the max is reached */}
-        {!atMax && (
-          <Pressable
-            onPress={handlePick}
-            accessibilityRole="button"
-            accessibilityLabel="Ajouter des photos"
-            style={[
-              styles.slot,
-              styles.addSlot,
-              { borderColor: C.primary + '88', backgroundColor: C.surfaceContainerLow },
-            ]}
-          >
-            <MaterialIcons name="add-photo-alternate" size={30} color={C.primary} />
-            <Text
-              style={[
-                Typography.caption,
-                {
-                  color: C.link,
-                  marginTop: 6,
-                  textAlign: 'center',
-                  includeFontPadding: false,
-                },
-              ]}
-            >
-              {uris.length === 0 ? 'Ajouter des\nphotos' : 'Ajouter'}
-            </Text>
-          </Pressable>
-        )}
-      </View>
-
-      {/* Counter */}
-      <View style={styles.counterRow}>
-        <MaterialIcons name="photo-library" size={14} color={C.onSurfaceVariant} />
-        <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-          {uris.length}/{MAX_PHOTOS} photos
-        </Text>
+      <View
+        accessible
+        accessibilityLiveRegion="polite"
+        style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}
+      >
+        <MaterialIcons name="photo-library" size={Sizes.iconSm} color={C.onSurfaceVariant} />
+        <AppText variant="caption" color="onSurfaceVariant">
+          {`${uris.length}/${MAX_PHOTOS} photos`}
+        </AppText>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.sm,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  slot: {
-    width: '48%',
-    aspectRatio: 1,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
-    overflow: 'hidden',
-  },
-  addSlot: {
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  img: { width: '100%', height: '100%' },
-  removeBtn: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    margin: 0,
-  },
-  mainBadge: {
-    position: 'absolute',
-    bottom: 6,
-    left: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Radius.full,
-  },
-  counterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-});

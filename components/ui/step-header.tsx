@@ -58,7 +58,7 @@ export interface StepHeaderProps {
 /**
  * Header of a multi-step flow (create a listing): 48 dp back / close,
  * title, "Étape n sur N" and a progress bar. Generalises
- * components/forms/create-step-header.tsx; the step is written out, not
+ * the create flow's former header (removed in UI-12); the step is written out, not
  * only "2/5", and from 150 % font size the title moves under the back /
  * action row so it wraps on whole words. Pass it as `<Screen header>`.
  */

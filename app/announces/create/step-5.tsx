@@ -1,21 +1,20 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Button } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
-import { MediaUploadGrid, MAX_PHOTOS } from '@/components/forms/media-upload-grid';
-import { CreateStepHeader } from '@/components/forms/create-step-header';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCreateListingStore } from '@/stores/create-listing.store';
+import { useRouter } from 'expo-router';
+
+import { ListingRecap } from '@/components/forms/listing-recap';
+import { MAX_PHOTOS, MediaUploadGrid } from '@/components/forms/media-upload-grid';
+import { CREATE_TITLE, createStepTotal, StepFooter, StepIntro } from '@/components/forms/step-layout';
+import { Banner, Screen, StepHeader, useToast } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useCreateAnnounce } from '@/hooks/queries/use-announces';
+import { isNetworkError } from '@/lib/network-error';
+import { useCreateListingStore } from '@/stores/create-listing.store';
 
 export default function CreateStep5Screen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const router = useRouter();
+  const toast = useToast();
   const { draft, setDraft, resetDraft } = useCreateListingStore();
   const createAnnounce = useCreateAnnounce();
-  const total = draft.type === 'furniture' ? 4 : 5;
+  const total = createStepTotal(draft.type);
 
   const canPublish = draft.medias.length > 0;
 
@@ -61,129 +60,52 @@ export default function CreateStep5Screen() {
         resetDraft();
         router.replace('/profile/my-listings');
       },
+      // The draft is kept: the user can publish again once the cause is fixed.
+      onError: (error) => {
+        toast.show(
+          isNetworkError(error)
+            ? "Pas de connexion internet. Votre annonce n'a pas été publiée, réessayez."
+            : "L'annonce n'a pas pu être publiée. Réessayez dans un instant.",
+          'error',
+        );
+      },
     });
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      <CreateStepHeader step={total} total={total} onBack={() => router.back()} />
-
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: Fonts.bold }]}>
-          Photos
-        </Text>
-        <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs, marginBottom: Spacing.lg }]}>
-          Ajoutez des photos de votre bien.
-        </Text>
-
-        {/* Tip — encouraging, not a requirement */}
-        <View style={[styles.tip, { backgroundColor: C.primaryContainer + '1A', borderColor: C.primaryContainer + '33' }]}>
-          <MaterialIcons name="lightbulb-outline" size={18} color={C.primary} />
-          <Text style={[Typography.caption, { color: C.onSurface, flex: 1, lineHeight: 18 }]}>
-            Plus vous ajoutez de photos, plus votre annonce inspire confiance et attire de contacts. Vous pouvez en ajouter jusqu'à {MAX_PHOTOS}.
-          </Text>
-        </View>
-
-        <MediaUploadGrid
-          uris={draft.medias}
-          onChange={(uris) => setDraft({ medias: uris })}
-        />
-
-        {/* Recap */}
-        <View style={[styles.recap, { backgroundColor: C.primaryContainer + '1A', borderColor: C.primaryContainer + '33' }]}>
-          <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: Spacing.sm }]}>
-            Récapitulatif
-          </Text>
-          <View style={styles.recapRow}>
-            <MaterialIcons name={draft.type === 'realestate' ? 'home-work' : 'chair'} size={16} color={C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-              {draft.type === 'realestate' ? 'Immobilier' : 'Mobilier'} · {draft.ad_type === 'location' ? 'Location' : 'Vente'}
-            </Text>
-          </View>
-          <View style={styles.recapRow}>
-            <MaterialIcons name="photo-library" size={16} color={C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-              {draft.medias.length} photo{draft.medias.length > 1 ? 's' : ''}
-            </Text>
-          </View>
-          {draft.price && (
-            <View style={styles.recapRow}>
-              <MaterialIcons name="payments" size={16} color={C.primary} />
-              <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-                {Number(draft.price).toLocaleString('fr-FR')} {draft.devise}
-              </Text>
-            </View>
-          )}
-          {draft.city && (
-            <View style={styles.recapRow}>
-              <MaterialIcons name="place" size={16} color={C.primary} />
-              <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-                {draft.address || '—'}, {draft.city}
-              </Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={[styles.footer, { borderTopColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Button
-          mode="contained"
-          onPress={handlePublish}
-          disabled={!canPublish || createAnnounce.isPending}
+    <Screen
+      header={<StepHeader title={CREATE_TITLE} step={total} total={total} onBack={() => router.back()} />}
+      footer={
+        <StepFooter
+          onPrevious={() => router.back()}
+          label="Publier l'annonce"
+          icon="publish"
+          onNext={handlePublish}
+          disabled={!canPublish}
           loading={createAnnounce.isPending}
-          icon={createAnnounce.isPending ? undefined : 'publish'}
-          contentStyle={styles.publishBtnContent}
-          style={styles.publishBtn}
-        >
-          Publier l'annonce
-        </Button>
-      </View>
-    </SafeAreaView>
+          hint="Ajoutez au moins une photo pour publier."
+        />
+      }
+      contentStyle={{ gap: Spacing.lg }}
+    >
+      <StepIntro title="Photos" description="Ajoutez des photos de votre bien." />
+
+      {/* Tip: encouraging, not a requirement */}
+      <Banner icon="lightbulb-outline">
+        {`Plus vous ajoutez de photos, plus votre annonce inspire confiance et attire de contacts. Vous pouvez en ajouter jusqu'à ${MAX_PHOTOS}.`}
+      </Banner>
+
+      <MediaUploadGrid uris={draft.medias} onChange={(uris) => setDraft({ medias: uris })} />
+
+      <ListingRecap
+        type={draft.type}
+        adType={draft.ad_type}
+        photos={`${draft.medias.length} photo${draft.medias.length > 1 ? 's' : ''}`}
+        price={draft.price}
+        devise={draft.devise}
+        address={draft.address}
+        city={draft.city}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  scroll: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.lg,
-  },
-  tip: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    marginBottom: Spacing.lg,
-  },
-  recap: {
-    padding: Spacing.lg,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    gap: Spacing.xs,
-  },
-  recapRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  footer: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderTopWidth: 1,
-  },
-  publishBtn: {
-    borderRadius: Radius.md,
-  },
-  publishBtnContent: {
-    height: 52,
-    flexDirection: 'row-reverse',
-  },
-});
