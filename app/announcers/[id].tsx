@@ -12,6 +12,7 @@ import {
   Card,
   Divider,
   EmptyState,
+  ErrorState,
   ListingCardSkeleton,
   ListRow,
   Screen,
@@ -57,10 +58,13 @@ export default function AnnouncerProfileScreen() {
   const [activeTab, setActiveTab] = useState<TabName>('annonces');
   const [search, setSearch] = useState('');
 
-  const { data: announcer, isLoading, isFetching, refetch } = useAnnouncer(id ?? '');
+  const { data: announcer, isLoading, isError, error, isFetching, refetch } = useAnnouncer(id ?? '');
+  // A 404 is a missing profile; any other failure (offline, 5xx) can be retried.
+  const notFound = (error as { response?: { status?: number } } | null)?.response?.status === 404;
   const {
     data: listingsPages,
     isLoading: listingsLoading,
+    isError: listingsError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -79,13 +83,18 @@ export default function AnnouncerProfileScreen() {
   if (!announcer) {
     return (
       <Screen header={<ScreenHeader title="Annonceur" />}>
-        <EmptyState
-          icon="person-off"
-          title="Profil introuvable"
-          description="Ce profil n'existe pas ou n'est plus disponible."
-          actionLabel="Retour"
-          onAction={() => router.back()}
-        />
+        {isError && !notFound ? (
+          // Offline or a server error: the profile may well exist.
+          <ErrorState title="Impossible de charger ce profil" onRetry={() => refetch()} />
+        ) : (
+          <EmptyState
+            icon="person-off"
+            title="Profil introuvable"
+            description="Ce profil n'existe pas ou n'est plus disponible."
+            actionLabel="Retour"
+            onAction={() => router.back()}
+          />
+        )}
       </Screen>
     );
   }
@@ -148,6 +157,8 @@ export default function AnnouncerProfileScreen() {
           ))}
         </View>
       );
+    } else if (listingsError && listings.length === 0) {
+      list = <ErrorState title="Impossible de charger les annonces" onRetry={() => refetchListings()} />;
     } else if (filteredListings.length === 0) {
       list = (
         <EmptyState
@@ -200,6 +211,8 @@ export default function AnnouncerProfileScreen() {
           ))}
         </View>
       );
+    } else if (listingsError && listings.length === 0) {
+      grid = <ErrorState title="Impossible de charger les médias" onRetry={() => refetchListings()} />;
     } else if (allMedias.length === 0) {
       grid = (
         <EmptyState
