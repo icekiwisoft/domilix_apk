@@ -1,3 +1,4 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 
@@ -5,6 +6,7 @@ import { Radii, Sizes, Typography, type TextVariant } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
 
 import { AppText } from './app-text';
+import type { IconName } from './icon-button';
 
 export type AvatarSize = 'sm' | 'md' | 'lg';
 
@@ -12,6 +14,8 @@ export interface AvatarProps {
   name?: string;
   uri?: string;
   size?: AvatarSize;
+  /** Shown when there is neither a photo nor a name (instead of "?"). */
+  fallbackIcon?: IconName;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -24,17 +28,15 @@ const INITIALS: Record<AvatarSize, TextVariant> = { sm: 'caption', md: 'bodyStro
  * Round photo, or the initials on primaryContainer (white 6.45:1 light,
  * peach 4.98:1 dark). Read by TalkBack as the name when one is given.
  */
-export function Avatar({ name, uri, size = 'md', style }: AvatarProps) {
+export function Avatar({ name, uri, size = 'md', fallbackIcon = 'person', style }: AvatarProps) {
   const C = useThemeColors();
   const dimension = DIMENSION[size];
-  const initials = name
-    ? name
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase() ?? '')
-        .join('')
-    : '?';
+  const initials = (name ?? '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
   return (
     <View
       accessible={!!name}
@@ -56,6 +58,8 @@ export function Avatar({ name, uri, size = 'md', style }: AvatarProps) {
     >
       {uri ? (
         <Image source={{ uri }} style={{ width: dimension, height: dimension }} contentFit="cover" />
+      ) : !initials ? (
+        <MaterialIcons name={fallbackIcon} size={dimension / 2} color={C.onPrimaryContainer} />
       ) : (
         <AppText
           variant={INITIALS[size]}

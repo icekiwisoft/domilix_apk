@@ -109,7 +109,7 @@ export default function AnnouncerProfileEditScreen() {
           accessibilityLabel="Changer le logo ou la photo de profil"
           style={({ pressed }) => [{ padding: Spacing.xs, borderRadius: Radii.full }, pressedStyle(pressed)]}
         >
-          <Avatar size="lg" name={announcer?.name} uri={avatar} />
+          <Avatar size="lg" name={announcer?.name} uri={avatar} fallbackIcon="storefront" />
           <View
             style={{
               position: 'absolute',
