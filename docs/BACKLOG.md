@@ -457,6 +457,21 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   `usesCleartextTraffic` temporaire) : a trouvé QA-17 (la modification effaçait chambres et catégorie)
   et le bug de devise (`FCFA` non reconnu, enregistré en XOF).
 
+### UI-13 — Écrans de connexion sur le kit et retrait de React Native Paper (P2)
+
+- **Décision (2026-10-30)** : fin de la migration (« fusionne la PR et commence la migration ») ; les
+  écrans de connexion et d'inscription gardent le design validé en UI-01/UI-02, seule leur
+  construction passe sur le kit.
+- **Périmètre** : `app/(auth)/{login,register,forgot-password,reset-password,verify-phone/[user_id]}.tsx`,
+  `components/auth/google-signin-button.tsx` et leurs composants ; puis retrait du paquet
+  `react-native-paper`, du `PaperProvider` de `app/_layout.tsx` et de `constants/paper-theme.ts`.
+- **Critères d'acceptation** : rendu identique ou meilleur que l'actuel (UI-01/UI-02) ; comportement
+  inchangé (connexion e-mail, Google natif avec sélecteur de compte toujours affiché, inscription et
+  vérification par SMS, mot de passe oublié, `redirect` après connexion, B-04/B-05) ; plus aucun import
+  de Paper ; kit et jetons uniquement ; AA clair et sombre, 48 dp, 200 %, TalkBack ; build release
+  vérifié. QA : aucun tap Google ni SMS sans accord ; parcours d'écriture contre le backend local
+  (règle 11).
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
@@ -464,4 +479,4 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    UI-02, B-02 (connexion Google native) et B-05.
 3. **Lot 3 — contraste et 200 %** : UI-04 (fusionné). Puis F-01 quand le backend renverra le `user_id`.
 4. **Lot 4 — système de design** : UI-06 fusionné (PR #7, 2026-10-29).
-5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend ; PR #9 fusionnée 2026-10-30), UI-10 Compte (PR #10 fusionnée 2026-10-30), UI-11 Accueil par catégories (PR #11 fusionnée 2026-10-30), UI-12 Publier.
+5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend ; PR #9 fusionnée 2026-10-30), UI-10 Compte (PR #10 fusionnée 2026-10-30), UI-11 Accueil par catégories (PR #11 fusionnée 2026-10-30), UI-12 Publier (PR #12 fusionnée 2026-10-30), UI-13 connexion et retrait de Paper.
