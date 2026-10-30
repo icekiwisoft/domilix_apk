@@ -322,6 +322,21 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 - Annonces sans photo : image aléatoire (picsum) en repli ; remplacer par une illustration Domilix neutre.
 - `handleCategory` sur l'accueil garde d'anciens filtres et la recherche.
 
+### UI-08 — Migration Annonce vers le kit (P1)
+
+- **Décision (2026-10-30)** : suite de la migration par zone validée par l'utilisateur
+  (« fusionne la PR et commence la migration »), maquettes du canvas, rangée « Annonce »
+  (`Detail`, `Deblocage`, `Annonceur`, copies dans le vault `10_Projects/Domilix/Maquettes/`).
+- **Périmètre** : `app/announces/[id].tsx` (détail immobilier et mobilier),
+  `app/(modals)/unlock-confirm.tsx` (déblocage), `app/announcers/[id].tsx` (profil annonceur, qui passe
+  sur le nouveau `ListingCard`), et les composants qu'ils utilisent (`components/listing`, galerie,
+  contact, partage).
+- **Critères d'acceptation** : écrans conformes aux maquettes ; uniquement le kit et les jetons
+  (0 avertissement de la règle de lint dans les fichiers migrés) ; plus de React Native Paper dans ces
+  écrans ; comportement inchangé (requêtes, favoris, partage avec lien B-03, déblocage, garde
+  d'authentification, retour Android) ; aucun déblocage réel sur l'API de production en QA (arrêt avant
+  la confirmation) ; AA clair et sombre, 48 dp, 200 %, TalkBack ; build release vérifié.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
@@ -329,4 +344,4 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    UI-02, B-02 (connexion Google native) et B-05.
 3. **Lot 3 — contraste et 200 %** : UI-04 (fusionné). Puis F-01 quand le backend renverra le `user_id`.
 4. **Lot 4 — système de design** : UI-06 fusionné (PR #7, 2026-10-29).
-5. **Lot 5 — migration** : UI-07 Accueil et Explorer, puis Annonce, Compte, Publier.
+5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce, puis Compte, Publier.
