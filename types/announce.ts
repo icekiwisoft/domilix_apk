@@ -53,14 +53,16 @@ export interface Announce {
   description: string;
   address: string;
   city: string;
-  neighborhood?: string;
+  /** Spelled the backend way (serializer `neighbourhood`). */
+  neighbourhood?: string;
   state?: string;
   country: string;
   postal_code?: string;
   contact_phone?: string;
   contact_email?: string;
   size?: number;
-  bedrooms?: number;
+  /** Number of bedrooms (GET /announces/:id `bedroom`). */
+  bedroom?: number;
   standing?: Standing;
   // Amenities (boolean flags — present on detail endpoint)
   wifi?: boolean;
@@ -71,8 +73,8 @@ export interface Announce {
   gate?: boolean;
   pool?: boolean;
   // Relations
-  category_id?: string;
-  category?: Category;
+  /** The id is under `category` (GET has no category_id); null when unset. */
+  category?: Category | null;
   announcer_id?: string;
   announcer: Announcer;
   medias: Media[];

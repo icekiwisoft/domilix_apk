@@ -53,8 +53,9 @@ export function CategoryPicker({ type, value, onChange }: CategoryPickerProps) {
     body = (
       <ChipGroup
         label="Catégorie"
-        options={categories.map((c) => ({ value: c.id, label: categoryLabel(c.name) }))}
-        value={value || null}
+        // The API sends numeric ids: compare them as strings.
+        options={categories.map((c) => ({ value: String(c.id), label: categoryLabel(c.name) }))}
+        value={value ? String(value) : null}
         onChange={onChange}
       />
     );

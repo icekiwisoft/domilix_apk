@@ -61,8 +61,8 @@ type Fact = { icon: IconName; value: string; label: string };
 
 function facts(a: Announce): Fact[] {
   const list: (Fact | null)[] = [
-    a.bedrooms != null
-      ? { icon: 'bed', value: String(a.bedrooms), label: a.bedrooms > 1 ? 'Chambres' : 'Chambre' }
+    a.bedroom != null
+      ? { icon: 'bed', value: String(a.bedroom), label: a.bedroom > 1 ? 'Chambres' : 'Chambre' }
       : null,
     a.size != null ? { icon: 'square-foot', value: `${a.size} m²`, label: 'Superficie' } : null,
     a.standing ? { icon: 'star-outline', value: STANDING_LABELS[a.standing] ?? a.standing, label: 'Standing' } : null,

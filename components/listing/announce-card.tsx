@@ -22,7 +22,7 @@ export function announceTitle(a: Announce) {
 
 /** "Quartier, Ville" without repeating the city when the API has no district. */
 export function announcePlace(a: Announce) {
-  const local = a.neighborhood ?? a.address ?? a.city;
+  const local = a.neighbourhood ?? a.address ?? a.city;
   return local && local !== a.city ? `${local}, ${a.city}` : a.city;
 }
 

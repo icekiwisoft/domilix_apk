@@ -111,13 +111,13 @@ export default function EditAnnounceScreen() {
     initialized.current = true;
     const initial: EditableValues = {
       adType: announce.ad_type,
-      categoryId: announce.category_id ?? '',
+      categoryId: announce.category?.id != null ? String(announce.category.id) : '',
       price: String(announce.price ?? ''),
       devise: announce.devise ?? 'XAF',
       description: announce.description ?? '',
       address: announce.address ?? '',
       city: announce.city ?? 'Douala',
-      bedrooms: announce.bedrooms ?? 0,
+      bedrooms: announce.bedroom ?? 0,
       size: announce.size != null ? String(announce.size) : '',
       standing: announce.standing,
       amenities: {
@@ -364,7 +364,7 @@ export default function EditAnnounceScreen() {
             onChange={setBedrooms}
             min={0}
             // A listing created on the website may have more than the 5 offered here.
-            max={Math.max(MAX_BEDROOMS, announce.bedrooms ?? 0)}
+            max={Math.max(MAX_BEDROOMS, announce.bedroom ?? 0)}
           />
           <Field
             label="Surface"
