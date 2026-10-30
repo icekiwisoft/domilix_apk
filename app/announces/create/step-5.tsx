@@ -36,7 +36,9 @@ export default function CreateStep5Screen() {
   function handlePublish() {
     if (!canPublish) return;
     // Field names as read by the backend (AdsService.create) and sent by the
-    // website: bedroom, neighbourhood, zip; devise is an ISO code (XAF).
+    // website: bedroom, neighbourhood; devise is an ISO code (XAF). No zip: the
+    // website's form has no postal code field (the backend fills it from the
+    // coordinates when the location is automatic).
     const formData = new FormData();
     formData.append('type', draft.type);
     formData.append('ad_type', draft.ad_type);
@@ -48,7 +50,6 @@ export default function CreateStep5Screen() {
     formData.append('city', draft.city);
     if (draft.state) formData.append('state', draft.state);
     if (draft.country) formData.append('country', draft.country);
-    if (draft.postal_code) formData.append('zip', draft.postal_code);
     if (draft.neighborhood) formData.append('neighbourhood', draft.neighborhood);
     formData.append('location_source', draft.location_source);
     formData.append('hide_on_map', draft.hide_on_map ? '1' : '0');
