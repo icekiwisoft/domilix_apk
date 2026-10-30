@@ -32,6 +32,7 @@ import {
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useAnnounce, useUpdateAnnounce } from '@/hooks/queries/use-announces';
+import { digitsOnly } from '@/lib/digits';
 import { isNetworkError } from '@/lib/network-error';
 import type { AdType, AnnounceType, Media, Standing } from '@/types/announce';
 
@@ -281,8 +282,8 @@ export default function EditAnnounceScreen() {
         <Field
           label="Prix"
           value={price}
-          onChangeText={setPrice}
-          keyboardType="numeric"
+          onChangeText={(t) => setPrice(digitsOnly(t))}
+          keyboardType="number-pad"
           suffix={devise}
           returnKeyType="next"
           submitBehavior="submit"
@@ -324,8 +325,8 @@ export default function EditAnnounceScreen() {
             labelHint="(facultatif)"
             placeholder="Ex. 120"
             value={size}
-            onChangeText={setSize}
-            keyboardType="numeric"
+            onChangeText={(t) => setSize(digitsOnly(t))}
+            keyboardType="number-pad"
             suffix="m²"
             returnKeyType="done"
           />

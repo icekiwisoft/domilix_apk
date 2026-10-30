@@ -7,6 +7,7 @@ import { DEVISE_OPTIONS } from '@/components/forms/listing-options';
 import { CREATE_TITLE, createStepTotal, StepFooter, StepIntro } from '@/components/forms/step-layout';
 import { Field, Screen, SegmentedControl, StepHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { digitsOnly } from '@/lib/digits';
 import { useCreateListingStore } from '@/stores/create-listing.store';
 
 export default function CreateStep2Screen() {
@@ -45,8 +46,8 @@ export default function CreateStep2Screen() {
           label="Prix"
           labelHint={draft.ad_type === 'location' ? '(par mois)' : undefined}
           value={draft.price}
-          onChangeText={(t) => setDraft({ price: t })}
-          keyboardType="numeric"
+          onChangeText={(t) => setDraft({ price: digitsOnly(t) })}
+          keyboardType="number-pad"
           suffix={draft.devise}
           returnKeyType={isRealestate ? 'next' : 'done'}
           submitBehavior={isRealestate ? 'submit' : 'blurAndSubmit'}
@@ -67,8 +68,8 @@ export default function CreateStep2Screen() {
           labelHint="(facultatif)"
           placeholder="Ex. 120"
           value={draft.size}
-          onChangeText={(t) => setDraft({ size: t })}
-          keyboardType="numeric"
+          onChangeText={(t) => setDraft({ size: digitsOnly(t) })}
+          keyboardType="number-pad"
           suffix="m²"
           returnKeyType="done"
         />
