@@ -397,7 +397,7 @@ export default function AnnounceDetailScreen() {
                 )}
                 {!!announce.land_use && (
                   <View style={styles.amenityRow}>
-                    <MaterialIcons name="landscape" size={22} color={C.onSurface} />
+                    <MaterialIcons name="square-foot" size={22} color={C.onSurface} />
                     <Text style={[styles.amenityLabel, { color: C.onSurface }]}>
                       Usage : {LAND_USE_LABELS[announce.land_use]}
                     </Text>

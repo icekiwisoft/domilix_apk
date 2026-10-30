@@ -21,6 +21,7 @@ import { DomilixThemeProvider } from '@/providers/theme.provider';
 import { QueryProvider } from '@/providers/query.provider';
 import { AuthProvider } from '@/providers/auth.provider';
 import { ToastProvider } from '@/components/ui/toast';
+import { PaymentObserver } from '@/providers/payment-observer';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -54,6 +55,7 @@ export default function RootLayout() {
           >
             <AuthProvider>
               <ToastProvider>
+                <PaymentObserver />
                 <Stack>
                   <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

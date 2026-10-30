@@ -2,6 +2,8 @@ import { client } from './api.client';
 import type { Subscription, SubscriptionPlan } from '@/types/notification';
 
 export const SubscriptionsService = {
+  paymentStatus: (id: string) =>
+    client.get<{ id: string; status: 'pending' | 'completed' | 'failed' }>(`/subscriptions/payments/${id}`).then((r) => r.data),
   plans: () =>
     client.get<SubscriptionPlan[]>('/subscriptions/plans').then((r) => r.data),
 

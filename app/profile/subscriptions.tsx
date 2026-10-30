@@ -348,7 +348,7 @@ export default function SubscriptionsScreen() {
       {
         onSuccess: () => {
           setModalVisible(false);
-          toast.show('Demande envoyée. Confirmez sur votre téléphone.', 'success');
+          toast.show('Paiement en attente. Confirmez sur votre téléphone.', 'info');
         },
         onError: () => {
           toast.show('Échec du paiement. Réessayez.', 'error');

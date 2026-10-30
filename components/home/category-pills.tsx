@@ -10,7 +10,7 @@ const CATEGORY_ICONS: Record<string, React.ComponentProps<typeof MaterialIcons>[
   Studio: 'single-bed',
   Duplex: 'domain',
   Bureau: 'business',
-  Terrain: 'landscape',
+  Terrain: 'square-foot',
   Immeuble: 'location-city',
   'Salon & Canapés': 'chair',
   Chambre: 'bedroom-parent',

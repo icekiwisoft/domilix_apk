@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SubscriptionsService } from '@/services/subscriptions.service';
 import { useAuthStore } from '@/stores/auth.store';
+import { usePaymentStore } from '@/stores/payment.store';
 
 export function usePlans() {
   return useQuery({
@@ -24,7 +25,9 @@ export function useCreateSubscription() {
   return useMutation({
     mutationFn: (dto: { plan_name: string; method: string; payment_info: { phone_number: string } }) =>
       SubscriptionsService.create(dto),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const userId = useAuthStore.getState().user?.id;
+      if (userId && data.payment_id) usePaymentStore.getState().track(data.payment_id, String(userId));
       qc.invalidateQueries({ queryKey: ['subscriptions'] });
       qc.invalidateQueries({ queryKey: ['me'] });
     },

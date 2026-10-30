@@ -14,7 +14,7 @@ import type { AdType } from '@/types/announce';
 
 const TYPE_OPTIONS = [
   { value: 'realestate', label: 'Immobilier', icon: 'home-work' },
-  { value: 'land', label: 'Terrain', icon: 'landscape' },
+  { value: 'land', label: 'Terrain', icon: 'square-foot' },
   { value: 'furniture', label: 'Mobilier', icon: 'chair' },
 ] as const;
 

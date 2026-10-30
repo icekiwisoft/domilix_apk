@@ -15,7 +15,7 @@ import { getApiErrorMessage } from '@/lib/api-error';
 import { useCreateListingStore } from '@/stores/create-listing.store';
 
 const TYPE_LABEL = { realestate: 'Immobilier', land: 'Terrain', furniture: 'Mobilier' } as const;
-const TYPE_ICON = { realestate: 'home-work', land: 'landscape', furniture: 'chair' } as const;
+const TYPE_ICON = { realestate: 'home-work', land: 'square-foot', furniture: 'chair' } as const;
 
 export default function CreateStep4Screen() {
   const scheme = useColorScheme();
