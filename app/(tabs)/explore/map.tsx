@@ -1,20 +1,15 @@
-import { Component, Suspense, lazy } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Fonts, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { MapListToggle } from '@/components/search/map-list-toggle';
+import { useRouter } from 'expo-router';
+import { Component, Suspense, lazy, type ReactNode } from 'react';
+import { View } from 'react-native';
+
+import { EmptyState, LoadingState, Screen } from '@/components/ui';
+import { isMapAvailable } from '@/lib/map-availability';
 
 // Lazy import keeps react-native-maps out of the module evaluation path.
 // Expo Router discovers this route without touching the native module.
 const MapScreenContent = lazy(() => import('@/components/maps/map-screen-content'));
 
-class MapErrorBoundary extends Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
+class MapErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
   static getDerivedStateFromError() {
     return { hasError: true };
@@ -26,71 +21,38 @@ class MapErrorBoundary extends Component<
 }
 
 function MapUnavailableFallback() {
-  const C = Colors['light'];
+  const router = useRouter();
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      <View style={styles.center}>
-        <View style={[styles.iconCircle, { backgroundColor: C.surfaceContainer }]}>
-          <MaterialIcons name="map" size={40} color={C.onSurfaceVariant} />
-        </View>
-        <Text style={[Typography.headlineMd, { color: C.onSurface, textAlign: 'center', marginTop: Spacing.lg }]}>
-          Vue carte indisponible
-        </Text>
-        <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm, lineHeight: 22 }]}>
-          La carte native nécessite un build de développement.{'\n'}
-          Lancez <Text style={{ fontFamily: Fonts.semiBold, color: C.link }}>expo run:android</Text> pour l'activer.
-        </Text>
-      </View>
-      <View style={styles.fab}>
-        <MapListToggle mode="map" onToggle={() => router.back()} />
-      </View>
-    </SafeAreaView>
+    <Screen bottomInset={false}>
+      <EmptyState
+        icon="map"
+        title="Vue carte indisponible"
+        description="La carte ne peut pas s’afficher sur cet appareil. Les annonces restent disponibles en liste."
+        actionLabel="Afficher la liste"
+        onAction={() => router.back()}
+      />
+    </Screen>
   );
 }
 
 function MapLoadingFallback() {
-  const C = Colors['light'];
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={C.primary} />
-      </View>
-    </SafeAreaView>
+    <Screen scroll={false} bottomInset={false}>
+      <LoadingState label="Chargement de la carte…" count={2} media={false} />
+    </Screen>
   );
 }
 
 export default function MapScreen() {
+  // A deep link can still reach this route: never mount MapView without a key.
+  if (!isMapAvailable()) return <MapUnavailableFallback />;
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={{ flex: 1 }}>
       <MapErrorBoundary>
         <Suspense fallback={<MapLoadingFallback />}>
           <MapScreenContent />
         </Suspense>
       </MapErrorBoundary>
-    </SafeAreaView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.marginMobile,
-  },
-  iconCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: Spacing.xxl,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-});

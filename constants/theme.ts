@@ -85,6 +85,11 @@ export const Colors = {
     onBannerChipAccent: '#ba1a1a',
     // Backdrop behind dialogs and bottom sheets.
     scrim: 'rgba(34,26,18,0.5)',
+    // Promotional banner of the home screen (broadcasts, UI-07): same dark brown
+    // card in both themes. onPromo 15.6:1, onPromoVariant 12.6:1, cta 8.4:1 on it.
+    promoSurface: '#2c1600',
+    onPromo: '#feeee1',
+    onPromoVariant: '#ffdcbb',
   },
   dark: {
     // Surfaces
@@ -160,6 +165,9 @@ export const Colors = {
     onGoogleSurface: '#e3e3e3',
     onBannerChipAccent: '#ba1a1a',
     scrim: 'rgba(0,0,0,0.6)',
+    promoSurface: '#2c1600',
+    onPromo: '#feeee1',
+    onPromoVariant: '#ffdcbb',
   },
 } as const;
 
@@ -387,6 +395,14 @@ export const Sizes = {
   radio: 20, // outer ring of a radio button
   radioDot: 10,
   dialogMaxWidth: 560, // Material 3 dialog
+  // UI-07: listing cards, tab bar, search bar
+  listingThumb: 112, // photo of a compact listing card (explore list, map preview)
+  listingCardWidth: 264, // vertical card in a horizontal row (home)
+  tabPillWidth: 56, // active-tab indicator behind the icon (Material 3 navigation bar)
+  tabPillHeight: 32,
+  publishButton: 60, // raised round "Publier" button of the tab bar
+  countBadge: 22, // number badge on the filter button
+  dot: 10, // unread dot on the notification bell
 } as const;
 
 // Border widths of the shared components (UI-06). `focus` is the focus and
@@ -394,6 +410,8 @@ export const Sizes = {
 export const Borders = {
   thin: 1,
   focus: 2,
+  // White ring around the raised Publier button and the map price markers.
+  ring: 4,
 } as const;
 
 export const Opacity = {

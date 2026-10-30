@@ -1,111 +1,196 @@
-import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import {
-  Linking,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
-import { Badge, IconButton } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { useState, type ReactNode } from 'react';
+import { Linking, ScrollView, View } from 'react-native';
 
 import { BroadcastBanner } from '@/components/home/broadcast-banner';
 import { SectionHeader } from '@/components/home/section-header';
-import { ListingCard } from '@/components/listing/listing-card';
-import { ListingSkeleton } from '@/components/listing/listing-skeleton';
-import { SearchBar } from '@/components/search/search-bar';
-import { Colors, Fonts, Shadows, Spacing, Typography, fontWeight } from '@/constants/theme';
+import { AnnounceCard } from '@/components/listing/announce-card';
+import { activeFilters } from '@/components/search/active-filters';
+import {
+  AppText,
+  ChipGroup,
+  EmptyState,
+  ErrorState,
+  IconButton,
+  ListingCardSkeleton,
+  Screen,
+  SearchBar,
+} from '@/components/ui';
+import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
 import { useAnnounces, useCities, useToggleLike } from '@/hooks/queries/use-announces';
 import { useBroadcasts } from '@/hooks/queries/use-broadcasts';
 import { useUnreadCount } from '@/hooks/queries/use-notifications';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColors } from '@/hooks/use-theme-color';
+import { useAuthStore } from '@/stores/auth.store';
 import { useFilterStore } from '@/stores/filter.store';
+import type { AnnounceType } from '@/types/announce';
 
 const CATEGORIES = [
-  { id: 'realestate', label: 'Immobilier', icon: 'home-work' as const, active: true },
-  { id: 'furniture', label: 'Mobilier', icon: 'chair' as const, active: false },
+  { value: 'realestate' as const, label: 'Immobilier', icon: 'home-work' as const },
+  { value: 'furniture' as const, label: 'Mobilier', icon: 'chair' as const },
 ];
 
 const CITIES_LIMIT = '6';
 const LISTINGS_PER_CITY = 8;
 
+/** Horizontal row that bleeds to the screen edges and starts on the page gutter. */
+function CardRow({ children }: { children: ReactNode }) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginHorizontal: -Spacing.marginMobile }}
+      contentContainerStyle={{ gap: Spacing.ms, paddingHorizontal: Spacing.marginMobile, paddingBottom: Spacing.sm }}
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <CardRow>
+      {[1, 2].map((k) => (
+        <ListingCardSkeleton key={k} style={{ width: Sizes.listingCardWidth }} />
+      ))}
+    </CardRow>
+  );
+}
+
 // ─── Region row (one horizontal scroll of listings per city) ──────────────────
 
-function RegionRow({
-  city,
-  onCardPress,
-  onLike,
-}: {
-  city: string;
-  onCardPress: (id: string) => void;
-  onLike: (id: string) => void;
-}) {
+function RegionRow({ city, onLike }: { city: string; onLike: (id: string) => void }) {
+  const router = useRouter();
   const { data, isLoading } = useAnnounces({ type: 'realestate', city, page: 1 });
   const items = data?.data.slice(0, LISTINGS_PER_CITY) ?? [];
 
   if (!isLoading && items.length === 0) return null;
 
   function handleSeeAll() {
-    useFilterStore.getState().setFilter('city', city);
-    router.push({ pathname: '/(tabs)/explore', params: { type: 'realestate' } });
+    // Only the row's own criteria (this city, Immobilier): drop every other narrowing
+    // filter left by an earlier filter sheet so the list matches the row that was tapped.
+    useFilterStore.getState().setFilters({
+      city,
+      type: undefined,
+      ad_type: undefined,
+      budget_min: undefined,
+      budget_max: undefined,
+      bedroom_min: undefined,
+      amenities: undefined,
+      standing: undefined,
+      search: undefined,
+    });
+    router.push('/(tabs)/explore');
   }
 
   return (
-    <>
-      <View style={styles.section}>
-        <SectionHeader title={city} onSeeAll={handleSeeAll} />
+    <View style={{ gap: Spacing.xs }}>
+      <SectionHeader title={city} onSeeAll={handleSeeAll} seeAllLabel={`Tout voir à ${city}`} />
+      {isLoading ? (
+        <SkeletonRow />
+      ) : (
+        <CardRow>
+          {items.map((item) => (
+            <AnnounceCard
+              key={item.id}
+              announce={item}
+              onPress={() => router.push(`/announces/${item.id}`)}
+              onToggleFavorite={onLike}
+              style={{ width: Sizes.listingCardWidth }}
+            />
+          ))}
+        </CardRow>
+      )}
+    </View>
+  );
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+
+function HomeHeader() {
+  const C = useThemeColors();
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const { data: unread } = useUnreadCount();
+  const count = unread?.count ?? 0;
+  const firstName = user?.name?.trim().split(/\s+/)[0];
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: Spacing.md,
+        paddingHorizontal: Spacing.marginMobile,
+        paddingTop: Spacing.sm,
+      }}
+    >
+      <View style={{ flexShrink: 1 }}>
+        {firstName ? (
+          <AppText color="onSurfaceVariant" numberOfLines={1}>
+            {`Bonjour ${firstName}`}
+          </AppText>
+        ) : null}
+        <AppText variant="title" color="link" accessibilityRole="header" accessibilityLabel="Domilix">
+          DOMILIX
+        </AppText>
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.regionRow}
-        style={styles.regionScroll}
-      >
-        {isLoading
-          ? [1, 2, 3].map((k) => (
-              <View key={k} style={styles.regionCard}>
-                <ListingSkeleton />
-              </View>
-            ))
-          : items.map((item) => (
-              <View key={item.id} style={styles.regionCard}>
-                <ListingCard
-                  announce={item}
-                  onPress={() => onCardPress(item.id)}
-                  onLike={onLike}
-                />
-              </View>
-            ))}
-      </ScrollView>
-    </>
+      <View>
+        <IconButton
+          icon="notifications-none"
+          label={count > 0 ? `Notifications, ${count} non lue${count > 1 ? 's' : ''}` : 'Notifications'}
+          color="link"
+          background="surfaceContainerLowest"
+          onPress={() => router.push('/(tabs)/notifications')}
+          style={{ borderWidth: Borders.thin, borderColor: C.outlineVariant }}
+        />
+        {count > 0 ? (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: Spacing.sm,
+              right: Spacing.sm,
+              width: Sizes.dot + Borders.focus * 2,
+              height: Sizes.dot + Borders.focus * 2,
+              borderRadius: Radii.full,
+              backgroundColor: C.error,
+              borderWidth: Borders.focus,
+              borderColor: C.surfaceContainerLowest,
+            }}
+          />
+        ) : null}
+      </View>
+    </View>
   );
 }
 
 // ─── Screen ─────────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const router = useRouter();
+  const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const filterCount = useFilterStore((s) => activeFilters(s.filters).length);
 
-  const { data: unreadCount } = useUnreadCount();
   const { data: broadcastsData, refetch: refetchBroadcasts } = useBroadcasts();
-  const { data: cities, isLoading: citiesLoading, refetch: refetchCities } = useCities({
-    type: 'realestate',
-    order_by: 'count',
-    order: 'desc',
-    limit: CITIES_LIMIT,
-  });
+  const {
+    data: cities,
+    isLoading: citiesLoading,
+    isError: citiesError,
+    refetch: refetchCities,
+  } = useCities({ type: 'realestate', order_by: 'count', order: 'desc', limit: CITIES_LIMIT });
   const toggleLike = useToggleLike();
 
   async function onRefresh() {
     setRefreshing(true);
-    await Promise.all([refetchBroadcasts(), refetchCities()]);
+    await Promise.all([
+      refetchBroadcasts(),
+      refetchCities(),
+      qc.invalidateQueries({ queryKey: ['announces'] }),
+    ]);
     setRefreshing(false);
   }
 
@@ -113,12 +198,15 @@ export default function HomeScreen() {
 
   function handleSearch() {
     if (search.trim()) {
-      router.push({ pathname: '/(tabs)/explore', params: { q: search.trim() } });
+      // The explore tab stays mounted: the store replaces its search even for an identical text.
+      useFilterStore.getState().setFilters({ search: search.trim() });
+      router.push('/(tabs)/explore');
     }
   }
 
-  function handleCardPress(id: string) {
-    router.push(`/announces/${id}`);
+  function handleCategory(type: AnnounceType) {
+    useFilterStore.getState().setFilter('type', type === 'realestate' ? undefined : type);
+    router.push('/(tabs)/explore');
   }
 
   function handleBroadcastPress(url?: string) {
@@ -133,169 +221,61 @@ export default function HomeScreen() {
     }
   }
 
+  let regions: ReactNode;
+  if (citiesLoading) {
+    regions = (
+      <View accessible accessibilityLabel="Chargement des annonces…" accessibilityState={{ busy: true }}>
+        <SkeletonRow />
+      </View>
+    );
+  } else if (citiesError && !cities) {
+    regions = <ErrorState title="Impossible de charger les annonces" onRetry={() => refetchCities()} />;
+  } else if (!cities?.length) {
+    regions = (
+      <EmptyState
+        icon="home-work"
+        title="Aucune annonce pour le moment"
+        description="Revenez bientôt ou lancez une recherche."
+        actionLabel="Explorer"
+        onAction={() => router.push('/(tabs)/explore')}
+      />
+    );
+  } else {
+    regions = cities.map((city) => <RegionRow key={city} city={city} onLike={(id) => toggleLike.mutate(id)} />);
+  }
+
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant + '55' }]}>
-        <Text style={[styles.logo, { color: C.primary }]}>DOMILIX</Text>
-        <View style={styles.cartBtn}>
-          <IconButton
-            icon="bell-outline"
-            size={24}
-            iconColor={C.link}
-            accessibilityLabel="Notifications"
-            onPress={() => router.push('/(tabs)/notifications')}
-          />
-          <Badge visible={!!unreadCount?.count} size={10} style={[styles.notifDot, { backgroundColor: C.error }]} />
-        </View>
+    <Screen
+      header={<HomeHeader />}
+      bottomInset={false}
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+      showsVerticalScrollIndicator={false}
+      contentStyle={{ gap: Spacing.lg }}
+    >
+      <View style={{ gap: Spacing.md }}>
+        <SearchBar
+          value={search}
+          onChangeText={setSearch}
+          onSubmitEditing={handleSearch}
+          onFilterPress={() => router.push('/(modals)/filter-sheet')}
+          filterCount={filterCount}
+        />
+        <ChipGroup
+          label="Catégorie"
+          layout="scroll"
+          options={CATEGORIES}
+          // The home screen lists real estate: Immobilier shows as the current one.
+          value="realestate"
+          onChange={handleCategory}
+        />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />
-        }
-      >
-        {/* Search */}
-        <View style={styles.section}>
-          <SearchBar
-            value={search}
-            onChangeText={setSearch}
-            onFilterPress={() => router.push('/(modals)/filter-sheet')}
-            onSubmitEditing={handleSearch}
-          />
-        </View>
+      {broadcast ? (
+        <BroadcastBanner broadcast={broadcast} onPress={() => handleBroadcastPress(broadcast.action_url)} />
+      ) : null}
 
-        {/* Broadcast */}
-        {broadcast && (
-          <View style={styles.section}>
-            <BroadcastBanner broadcast={broadcast} onPress={() => handleBroadcastPress(broadcast.action_url)} />
-          </View>
-        )}
-
-        {/* Categories */}
-        <View style={[styles.section, { paddingHorizontal: 0, paddingLeft: Spacing.marginMobile }]}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catRow}>
-            {CATEGORIES.map((cat) => (
-              <Pressable
-                key={cat.id}
-                accessibilityRole="button"
-                accessibilityLabel={cat.label}
-                accessibilityState={{ selected: cat.active }}
-                style={({ pressed }) => [styles.catItem, pressed && { opacity: 0.75 }]}
-                onPress={() => router.push({ pathname: '/(tabs)/explore', params: { type: cat.id } })}
-              >
-                <View style={[
-                  styles.catCircle,
-                  { backgroundColor: cat.active ? C.primaryContainer : C.secondaryContainer },
-                ]}>
-                  <MaterialIcons
-                    name={cat.icon}
-                    size={26}
-                    color={cat.active ? C.onPrimaryContainer : C.onSecondaryContainer}
-                  />
-                </View>
-                <Text style={[Typography.caption, { color: cat.active ? C.onSurface : C.onSurfaceVariant, marginTop: 4 }]}>
-                  {cat.label}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Régions — un scroll horizontal de logements par ville */}
-        {citiesLoading ? (
-          <>
-            <View style={styles.section}>
-              <SectionHeader title="Chargement…" />
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.regionRow}
-              style={styles.regionScroll}
-            >
-              {[1, 2, 3].map((k) => (
-                <View key={k} style={styles.regionCard}>
-                  <ListingSkeleton />
-                </View>
-              ))}
-            </ScrollView>
-          </>
-        ) : (
-          (cities ?? []).map((city) => (
-            <RegionRow
-              key={city}
-              city={city}
-              onCardPress={handleCardPress}
-              onLike={(id) => toggleLike.mutate(id)}
-            />
-          ))
-        )}
-
-        <View style={{ height: Spacing.xxl }} />
-      </ScrollView>
-    </SafeAreaView>
+      {regions}
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  logo: {
-    fontFamily: Fonts.bold,
-    fontSize: 24,
-    fontWeight: fontWeight('700'),
-    lineHeight: 32,
-  },
-  cartBtn: {
-    position: 'relative',
-  },
-  notifDot: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-  },
-  scroll: { paddingTop: Spacing.md },
-  section: {
-    paddingHorizontal: Spacing.marginMobile,
-    marginBottom: Spacing.md,
-  },
-  // Categories
-  catRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    paddingRight: Spacing.marginMobile,
-  },
-  catItem: {
-    alignItems: 'center',
-    minWidth: 72,
-  },
-  catCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.xs,
-  },
-  // Regions (horizontal scroll of listings per city)
-  regionScroll: {
-    marginBottom: Spacing.lg,
-  },
-  regionRow: {
-    paddingHorizontal: Spacing.marginMobile,
-    gap: Spacing.sm,
-  },
-  regionCard: {
-    width: 180,
-  },
-});

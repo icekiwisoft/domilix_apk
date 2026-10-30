@@ -76,6 +76,11 @@ avant de commencer.** Copie de référence : vault `30_Resources/Leçons - équi
 6. **Rapports courts** (≤ 40 lignes) et preuves plutôt que captures quand une requête SQL, un
    `dumpsys` ou un log suffit.
 
+7. **Ne jamais supprimer un fichier ou dossier temporaire qu'on n'a pas créé soi-même.** Le
+   scratchpad est partagé avec l'orchestrateur et les autres agents. *Erreur (QA UI-06) : un nettoyage
+   a effacé les sources des maquettes dont le développeur suivant avait besoin.* Lister ce qu'on a créé,
+   ne supprimer que cela.
+
 ## developer
 
 1. **Un mock de module natif ou de service externe se calque sur la source réelle.** Citer le

@@ -282,10 +282,51 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 - **Suite** : étape 3, maquettes des écrans principaux (accueil, explorer, détail, profil) à valider ;
   étape 4, migration par zone et retrait de React Native Paper ; étape 5, écran catalogue en dev.
 
+### UI-07 — Migration Accueil et Explorer vers le kit (P1)
+
+- **Décision (2026-10-29)** : maquettes de tous les écrans validées en direction par l'utilisateur
+  (canvas https://claude.ai/artifact/WLXBZm78scsjXm9epfNcnC, rangée « Accueil et recherche ») ;
+  migration par zone, en commençant par Accueil et Explorer.
+- **Périmètre** : `app/(tabs)/index.tsx` (accueil), `app/(tabs)/explore/index.tsx` (liste),
+  `app/(tabs)/explore/map.tsx` (carte), `app/(modals)/filter-sheet.tsx` (filtres), la barre d'onglets
+  `app/(tabs)/_layout.tsx`, et les composants qu'ils utilisent (`components/home`, `components/search`,
+  `components/listing` pour les cartes d'annonce, `components/maps`).
+- **Nouveaux composants du kit** : `SearchBar`, `ListingCard` (verticale et compacte horizontale),
+  `TabBar` (bouton Publier central).
+- **Critères d'acceptation** : écrans conformes aux maquettes (identité, hiérarchie, composants) ;
+  uniquement le kit et les jetons (0 avertissement de la règle de lint dans les fichiers migrés) ; plus
+  de React Native Paper dans ces écrans ; comportement inchangé (requêtes, filtres, navigation,
+  pagination, favoris, partage) ; AA clair et sombre, 48 dp, 200 %, TalkBack ; build release vérifié.
+
+### F-02 — Carte des annonces (P1)
+
+- **Constat (2026-10-29, lot UI-07)** : `app.json` n'a jamais eu de clé Google Maps
+  (`android.config.googleMaps.apiKey`) : l'onglet Carte plantait l'app sur Android, probablement aussi en
+  production. Depuis UI-07, la carte est masquée tant que la clé manque (`lib/map-availability.ts`).
+- **Décision (utilisateur)** : carte désactivée pour l'instant ; lot dédié quand la clé existera.
+- **À faire** : clé « Maps SDK for Android » (Google Cloud, projet domilix, restreinte au paquet
+  `com.jack0237.domilix` et aux 3 empreintes SHA-1), passée par secret CI et non commitée ; vraies
+  coordonnées des annonces (le backend les a : `maps.service`, `RealEstate.lat/lng` ; les marqueurs
+  actuels sont placés au hasard autour du centre-ville) ; « Ma position » (permission en contexte) et
+  « Rechercher dans cette zone » ; vérification sur appareil.
+
+### B-07 — « Charger plus » remplace la liste au lieu de l'allonger (P2)
+
+- **Constat** : Explorer affiche seulement la page N ; impossible de revenir aux annonces précédentes.
+- **Attendu** : défilement infini (`useInfiniteQuery`), pied de liste en chargement, fin de liste annoncée.
+
+### B-08 — Contenus à corriger (P3)
+
+- Bandeau d'accueil (diffusion serveur) en anglais : « Coming soon / The Domilix app is coming /
+  Discover the app » ; à traduire dans l'administration ou par l'équipe backend.
+- Annonces sans photo : image aléatoire (picsum) en repli ; remplacer par une illustration Domilix neutre.
+- `handleCategory` sur l'accueil garde d'anciens filtres et la recherche.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
 2. **Lot 2 — connexion, inscription et police** : UI-03 d'abord (base des deux écrans), puis UI-01,
    UI-02, B-02 (connexion Google native) et B-05.
 3. **Lot 3 — contraste et 200 %** : UI-04 (fusionné). Puis F-01 quand le backend renverra le `user_id`.
-4. **Lot 4 — système de design** : UI-06 étapes 1 et 2, puis maquettes, migration par zone.
+4. **Lot 4 — système de design** : UI-06 fusionné (PR #7, 2026-10-29).
+5. **Lot 5 — migration** : UI-07 Accueil et Explorer, puis Annonce, Compte, Publier.
