@@ -165,6 +165,10 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    relancer le code SMS (F-01).
 8. Ouverture des liens d'annonce dans l'app (Android App Links) : `/.well-known/assetlinks.json`
    sur `domilix.com` (B-03, hors lot).
+9. Données : noms de ville incohérents (casse, espaces, emoji) ; normaliser à la saisie et nettoyer
+   l'existant. `recommended=1` = « a au moins une photo » : prévoir un vrai critère (choix admin,
+   annonceur vérifié ou plus vues), sinon la rangée « Nos recommandations » double « Dernières annonces »
+   (UI-11).
 
 ## Améliorations demandées par l'utilisateur
 
@@ -361,6 +365,29 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   `listing-actions-bar`, `listing-amenities`, `listing-stats-row`.
 - `fontVariant: tabular-nums` (PriceTag) dessine les chiffres dans une police de repli au lieu de
   Mona Sans.
+
+### UI-11 — Accueil par catégories comme le site (P1)
+
+- **Décision (2026-10-30)** : l'accueil ne regroupe plus les biens par ville (trop de villes avec un
+  seul bien) mais par catégories, comme https://domilix.com/fr/houses (`domilix.com/src/views/Ads/Ads.tsx`) :
+  « Nos recommandations » (`recommended=1`), « Dernières annonces », « Séjours à la nuit »
+  (`ad_type=location&period=night`), « Biens à vendre » (`ad_type=sale`), immobilier seulement.
+- **Choix de l'utilisateur** :
+  - doublons : l'app retire d'une rangée les biens déjà montrés plus haut (option b), car côté backend
+    `recommended=1` signifie seulement « a au moins une photo » et renvoie aujourd'hui les mêmes biens
+    que « Dernières annonces » ;
+  - meubles : hors lot, un collègue prépare une PR pour la section Meubles ;
+  - accès par ville gardé sous forme de puces sous la recherche (villes avec au moins 5 biens, triées
+    par nombre via `useCities`), qui ouvrent Explorer filtré sur la ville ; filtrer sur
+    `city_normalized` (noms saisis de façon incohérente en base : « Douala », « douala », « Douala  »,
+    « 🇨🇲 YAOUNDÉ ») ;
+  - ordre fixe des sections, section masquée sous 3 biens, une requête par section en cache React
+    Query, squelette par rangée, une seule erreur globale avec « Réessayer ».
+- **« Tout voir »** de chaque section : ouvre Explorer avec exactement le filtre de la section (vérifier
+  que le store et l'API de l'app gèrent `period` et `recommended`), sans garder d'anciens filtres.
+- **Critères d'acceptation** : comportement ci-dessus ; kit et jetons uniquement (0 avertissement de la
+  règle de lint dans les fichiers touchés) ; AA clair et sombre, 48 dp, 200 %, TalkBack ; build release
+  vérifié.
 
 ## Lots proposés
 
