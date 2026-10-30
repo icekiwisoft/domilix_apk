@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Linking, View } from 'react-native';
+import { Linking, View, useWindowDimensions } from 'react-native';
 
 import {
   AppText,
@@ -26,43 +26,48 @@ import { isAnnouncerToken } from '@/lib/decode-token';
 import { isPackUsable } from '@/lib/subscription-helpers';
 import { useAuthStore } from '@/stores/auth.store';
 
+/**
+ * fontScale from which the profile stacks what sits side by side (balance and
+ * Recharger, avatar and name), so no word is cut in a narrow column (QA-12).
+ */
+const STACK_SCALE = 1.5;
+
+function useStacked() {
+  return useWindowDimensions().fontScale >= STACK_SCALE;
+}
+
 /** Domicoin balance on the dark promo surface (mockup Profil), with Recharger. */
 function BalanceCard({ credits, onRecharge }: { credits: number; onRecharge: () => void }) {
   const C = useThemeColors();
+  const stacked = useStacked();
+  const recharge = <Button label="Recharger" onPress={onRecharge} fullWidth={stacked} />;
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        gap: Spacing.ms,
-        padding: Spacing.md,
-        borderRadius: Radii.card,
-        backgroundColor: C.promoSurface,
-      }}
-    >
-      <View
-        importantForAccessibility="no-hide-descendants"
-        style={{
-          width: Sizes.avatarMd,
-          height: Sizes.avatarMd,
-          borderRadius: Radii.full,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: C.cta,
-        }}
-      >
-        <MaterialIcons name="toll" size={Sizes.iconLg} color={C.onCta} />
+    <View style={{ gap: Spacing.ms, padding: Spacing.md, borderRadius: Radii.card, backgroundColor: C.promoSurface }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.ms }}>
+        <View
+          importantForAccessibility="no-hide-descendants"
+          style={{
+            width: Sizes.avatarMd,
+            height: Sizes.avatarMd,
+            borderRadius: Radii.full,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: C.cta,
+          }}
+        >
+          <MaterialIcons name="toll" size={Sizes.iconLg} color={C.onCta} />
+        </View>
+        <View accessible style={{ flex: 1 }}>
+          <AppText variant="caption" color="onPromoVariant">
+            Votre solde
+          </AppText>
+          <AppText variant="headline" color="onPromo">
+            {credits} Domicoin{credits > 1 ? 's' : ''}
+          </AppText>
+        </View>
+        {stacked ? null : recharge}
       </View>
-      <View accessible style={{ flexGrow: 1, flexShrink: 1, flexBasis: Sizes.listingThumb }}>
-        <AppText variant="caption" color="onPromoVariant">
-          Votre solde
-        </AppText>
-        <AppText variant="headline" color="onPromo">
-          {credits} Domicoin{credits > 1 ? 's' : ''}
-        </AppText>
-      </View>
-      <Button label="Recharger" onPress={onRecharge} />
+      {stacked ? recharge : null}
     </View>
   );
 }
@@ -81,6 +86,7 @@ export default function ProfileScreen() {
       : null;
   const isAnnouncer = isAnnouncerToken(accessToken) || !!user?.is_announcer || !!user?.announcer;
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
+  const stacked = useStacked();
 
   if (!accessToken) {
     return (
@@ -114,24 +120,33 @@ export default function ProfileScreen() {
   }
 
   const contact = user.email ?? user.phone_number ?? '';
+  const identity = (
+    <View style={{ flex: stacked ? undefined : 1, gap: Spacing.xxs }}>
+      <AppText variant="title" accessibilityRole="header">
+        {user.name}
+      </AppText>
+      {contact ? (
+        // An e-mail has no break points: one line with an ellipsis rather
+        // than a cut in the middle of a word (QA-12); TalkBack reads it whole.
+        <AppText color="onSurfaceVariant" numberOfLines={1} ellipsizeMode="middle">
+          {contact}
+        </AppText>
+      ) : null}
+      {activePlanLabel || isAnnouncer ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.xs }}>
+          {activePlanLabel ? <Badge label={activePlanLabel} variant="primary" icon="workspace-premium" status /> : null}
+          {isAnnouncer ? <Badge label="Annonceur certifié" variant="success" icon="verified" status /> : null}
+        </View>
+      ) : null}
+    </View>
+  );
 
   return (
     <Screen bottomInset={false} contentStyle={{ gap: Spacing.lg }}>
-      {/* Identity */}
+      {/* Identity: at large font sizes the name block goes under the avatar row. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.ms }}>
         <Avatar size="lg" name={user.name} uri={announcer?.avatar ?? undefined} />
-        <View style={{ flex: 1, gap: Spacing.xxs }}>
-          <AppText variant="title" accessibilityRole="header">
-            {user.name}
-          </AppText>
-          {contact ? <AppText color="onSurfaceVariant">{contact}</AppText> : null}
-          {activePlanLabel || isAnnouncer ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: Spacing.xs }}>
-              {activePlanLabel ? <Badge label={activePlanLabel} variant="primary" icon="workspace-premium" status /> : null}
-              {isAnnouncer ? <Badge label="Annonceur certifié" variant="success" icon="verified" status /> : null}
-            </View>
-          ) : null}
-        </View>
+        {stacked ? <View style={{ flex: 1 }} /> : identity}
         <IconButton
           icon="edit"
           label="Modifier le profil"
@@ -140,6 +155,7 @@ export default function ProfileScreen() {
           onPress={() => router.push('/profile/edit')}
         />
       </View>
+      {stacked ? identity : null}
 
       <BalanceCard credits={user.credits ?? 0} onRecharge={() => router.push('/profile/subscriptions')} />
 

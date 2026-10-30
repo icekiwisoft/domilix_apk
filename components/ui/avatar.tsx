@@ -16,6 +16,8 @@ export interface AvatarProps {
 }
 
 const DIMENSION: Record<AvatarSize, number> = { sm: Sizes.avatarSm, md: Sizes.avatarMd, lg: Sizes.avatarLg };
+/** Largest font scale of the initials: "WW" fits the sm, md and lg circles. */
+const INITIALS_MAX_SCALE = 1.3;
 const INITIALS: Record<AvatarSize, TextVariant> = { sm: 'caption', md: 'bodyStrong', lg: 'headline' };
 
 /**
@@ -58,8 +60,11 @@ export function Avatar({ name, uri, size = 'md', style }: AvatarProps) {
         <AppText
           variant={INITIALS[size]}
           color="onPrimaryContainer"
-          // The initials must fit the circle: cap their growth at 200 %.
-          maxFontSizeMultiplier={2}
+          // The initials must fit the fixed circle: at 2.0 "NW" was clipped
+          // (QA-12, UI-10). They are decorative (the avatar is read as the
+          // name, which is written next to it at full size), so their growth
+          // is capped where two wide capitals still fit every size.
+          maxFontSizeMultiplier={INITIALS_MAX_SCALE}
           style={size === 'lg' ? Typography.headlineSm : undefined}
         >
           {initials}
