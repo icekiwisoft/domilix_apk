@@ -171,14 +171,12 @@ function ListingRow({ state, onLike }: { state: RowState; onLike: (id: string) =
 
   if (state.status === 'loading') {
     return (
-      <View
-        accessible
-        accessibilityLabel={`${row.title}, chargement…`}
-        accessibilityState={{ busy: true }}
-        style={{ gap: Spacing.xs }}
-      >
+      // The title stays a TalkBack header; only the placeholders are grouped as "loading".
+      <View style={{ gap: Spacing.xs }}>
         <SectionHeader title={row.title} />
-        <SkeletonRow />
+        <View accessible accessibilityLabel={`${row.title}, chargement…`} accessibilityState={{ busy: true }}>
+          <SkeletonRow />
+        </View>
       </View>
     );
   }
