@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { View, type TextInput } from 'react-native';
 
 import { CategoryPicker } from '@/components/forms/category-picker';
-import { DEVISE_OPTIONS } from '@/components/forms/listing-options';
+import { DEVISE_OPTIONS, deviseLabel } from '@/components/forms/listing-options';
 import { CREATE_TITLE, createStepTotal, StepFooter, StepIntro } from '@/components/forms/step-layout';
 import { Field, Screen, SegmentedControl, StepHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -48,7 +48,7 @@ export default function CreateStep2Screen() {
           value={draft.price}
           onChangeText={(t) => setDraft({ price: digitsOnly(t) })}
           keyboardType="number-pad"
-          suffix={draft.devise}
+          suffix={deviseLabel(draft.devise)}
           returnKeyType={isRealestate ? 'next' : 'done'}
           submitBehavior={isRealestate ? 'submit' : 'blurAndSubmit'}
           onSubmitEditing={() => sizeRef.current?.focus()}

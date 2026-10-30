@@ -1,5 +1,6 @@
 import { useMutation, useQueries, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
-import { AnnouncesService } from '@/services/announces.service';
+import { AnnouncesService, type AnnounceUpdate } from '@/services/announces.service';
+import { UploadsService } from '@/services/uploads.service';
 import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
 
 function flipLiked(id: string) {
@@ -139,8 +140,16 @@ export function useUnlockAnnounce() {
 export function useUpdateAnnounce() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, formData }: { id: string; formData: FormData }) =>
-      AnnouncesService.update(id, formData),
+    /**
+     * Uploads the new photos one by one (POST /uploads), then saves the
+     * listing with `media_ids` = kept photos followed by the new ones, as the
+     * website's edit modal does. The first id is the main photo.
+     */
+    mutationFn: async ({ id, data, newMediaUris }: { id: string; data: AnnounceUpdate; newMediaUris: string[] }) => {
+      const uploaded: string[] = [];
+      for (const uri of newMediaUris) uploaded.push((await UploadsService.upload(uri, 'media')).id);
+      return AnnouncesService.update(id, { ...data, media_ids: [...data.media_ids, ...uploaded] });
+    },
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: ['announce', id] });
       qc.invalidateQueries({ queryKey: ['announces'] });

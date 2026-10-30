@@ -6,6 +6,8 @@ import { Sizes, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import type { AdType, AnnounceType } from '@/types/announce';
 
+import { deviseLabel } from './listing-options';
+
 export interface ListingRecapProps {
   type: AnnounceType;
   adType: AdType;
@@ -40,7 +42,7 @@ export function ListingRecap({ type, adType, photos, price, devise, address, cit
         {`${type === 'realestate' ? 'Immobilier' : 'Mobilier'} · ${adType === 'location' ? 'Location' : 'Vente'}`}
       </Row>
       <Row icon="photo-library">{photos}</Row>
-      {price ? <Row icon="payments">{`${Number(price).toLocaleString('fr-FR')} ${devise}`}</Row> : null}
+      {price ? <Row icon="payments">{`${Number(price).toLocaleString('fr-FR')} ${deviseLabel(devise)}`}</Row> : null}
       {city ? <Row icon="place">{`${address || '—'}, ${city}`}</Row> : null}
     </Card>
   );

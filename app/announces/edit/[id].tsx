@@ -9,8 +9,9 @@ import { AmenityPicker, StandingPicker } from '@/components/forms/listing-featur
 import {
   AD_TYPE_OPTIONS,
   DEVISE_OPTIONS,
+  deviseLabel,
   MAX_BEDROOMS,
-  TYPE_OPTIONS,
+  MAX_LISTING_MEDIAS,
   type AmenityKey,
 } from '@/components/forms/listing-options';
 import { ListingRecap } from '@/components/forms/listing-recap';
@@ -32,6 +33,7 @@ import {
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useAnnounce, useUpdateAnnounce } from '@/hooks/queries/use-announces';
+import type { AnnounceUpdate } from '@/services/announces.service';
 import { digitsOnly } from '@/lib/digits';
 import { isNetworkError } from '@/lib/network-error';
 import type { AdType, AnnounceType, Media, Standing } from '@/types/announce';
@@ -61,7 +63,7 @@ export default function EditAnnounceScreen() {
   const [adType, setAdType] = useState<AdType>('location');
   const [categoryId, setCategoryId] = useState('');
   const [price, setPrice] = useState('');
-  const [devise, setDevise] = useState('FCFA');
+  const [devise, setDevise] = useState('XAF');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('Douala');
@@ -91,7 +93,7 @@ export default function EditAnnounceScreen() {
     setAdType(announce.ad_type);
     setCategoryId(announce.category_id ?? '');
     setPrice(String(announce.price ?? ''));
-    setDevise(announce.devise ?? 'FCFA');
+    setDevise(announce.devise ?? 'XAF');
     setDescription(announce.description ?? '');
     setAddress(announce.address ?? '');
     setCity(announce.city ?? 'Douala');
@@ -127,10 +129,11 @@ export default function EditAnnounceScreen() {
       mediaTypes: ['images'],
       quality: 0.85,
       allowsMultipleSelection: true,
+      selectionLimit: MAX_LISTING_MEDIAS - totalPhotos,
     });
     if (!result.canceled) {
       const picked = result.assets.map((a) => a.uri);
-      setNewMediaUris((prev) => [...prev, ...picked]);
+      setNewMediaUris((prev) => [...prev, ...picked].slice(0, MAX_LISTING_MEDIAS - existingMedias.length));
     }
   }
 
@@ -144,39 +147,37 @@ export default function EditAnnounceScreen() {
 
   function handleSave() {
     if (!canSave) return;
-    const formData = new FormData();
-    formData.append('type', type);
-    formData.append('ad_type', adType);
-    if (categoryId) formData.append('category_id', categoryId);
-    formData.append('price', price);
-    formData.append('devise', devise);
-    formData.append('description', description);
-    formData.append('address', address);
-    formData.append('city', city);
-    if (size) formData.append('size', size);
-    if (bedrooms) formData.append('bedrooms', String(bedrooms));
-    if (standing) formData.append('standing', standing);
-    formData.append('wifi', amenities.wifi ? '1' : '0');
-    formData.append('air_conditioning', amenities.air_conditioning ? '1' : '0');
-    formData.append('security_24h', amenities.security_24h ? '1' : '0');
-    formData.append('smart_tv', amenities.smart_tv ? '1' : '0');
-    formData.append('equipped_kitchen', amenities.equipped_kitchen ? '1' : '0');
-    formData.append('gate', amenities.gate ? '1' : '0');
-    formData.append('pool', amenities.pool ? '1' : '0');
-
-    newMediaUris.forEach((uri) => {
-      const filename = uri.split('/').pop() ?? 'photo.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const mimeType = match ? `image/${match[1]}` : 'image/jpeg';
-      formData.append('medias[]', { uri, name: filename, type: mimeType } as unknown as Blob);
-    });
-
-    removedMediaIds.forEach((mediaId) => {
-      formData.append('remove_media_ids[]', mediaId);
-    });
+    // JSON body with the backend's field names (AdsService.updateAd), as the
+    // website's edit modal sends it. The property type cannot change on the
+    // backend, so it is not sent; location fields the screen does not edit
+    // (coordinates, region) are left as they are.
+    const data: AnnounceUpdate = {
+      description,
+      price: Number(price),
+      ad_type: adType,
+      category_id: categoryId || null,
+      devise,
+      media_ids: existingMedias.map((m) => String(m.id)),
+      address,
+      city,
+      ...(isRealestate
+        ? {
+            bedroom: bedrooms,
+            size: size ? Number(size) : null,
+            ...(standing ? { standing } : {}),
+            wifi: amenities.wifi ? '1' : '0',
+            air_conditioning: amenities.air_conditioning ? '1' : '0',
+            security_24h: amenities.security_24h ? '1' : '0',
+            smart_tv: amenities.smart_tv ? '1' : '0',
+            equipped_kitchen: amenities.equipped_kitchen ? '1' : '0',
+            gate: amenities.gate ? '1' : '0',
+            pool: amenities.pool ? '1' : '0',
+          }
+        : {}),
+    };
 
     updateAnnounce.mutate(
-      { id, formData },
+      { id, data, newMediaUris },
       {
         onSuccess: () => {
           toast.show('Annonce mise à jour.', 'success');
@@ -228,18 +229,10 @@ export default function EditAnnounceScreen() {
       }
       contentStyle={{ gap: Spacing.lg }}
     >
-      <View style={{ gap: Spacing.sm }}>
-        <Heading>Type de bien</Heading>
-        <SegmentedControl
-          label="Type de bien"
-          options={TYPE_OPTIONS}
-          value={type}
-          onChange={(v) => {
-            setType(v);
-            setCategoryId('');
-          }}
-        />
-      </View>
+      {/* The backend keeps the property type of a listing (the website does not offer to change it). */}
+      <Banner icon={type === 'realestate' ? 'home-work' : 'chair'}>
+        {type === 'realestate' ? 'Annonce immobilière' : 'Annonce de mobilier'}
+      </Banner>
 
       <View style={{ gap: Spacing.sm }}>
         <Heading>{"Type d'annonce"}</Heading>
@@ -269,7 +262,7 @@ export default function EditAnnounceScreen() {
               onRemove={() => removeNewMedia(i)}
             />
           ))}
-          <AddPhotoTile label="Ajouter" onPress={handlePickPhotos} />
+          {totalPhotos < MAX_LISTING_MEDIAS ? <AddPhotoTile label="Ajouter" onPress={handlePickPhotos} /> : null}
         </PhotoGrid>
         {removedMediaIds.length > 0 ? (
           <Banner icon="delete-outline">
@@ -284,7 +277,7 @@ export default function EditAnnounceScreen() {
           value={price}
           onChangeText={(t) => setPrice(digitsOnly(t))}
           keyboardType="number-pad"
-          suffix={devise}
+          suffix={deviseLabel(devise)}
           returnKeyType="next"
           submitBehavior="submit"
           onSubmitEditing={() => descriptionRef.current?.focus()}

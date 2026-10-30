@@ -14,10 +14,22 @@ export const AD_TYPE_OPTIONS: readonly { value: AdType; label: string }[] = [
   { value: 'sale', label: 'Vente' },
 ];
 
-export const DEVISE_OPTIONS: readonly { value: string; label: string }[] = ['FCFA', 'EUR', 'USD'].map((d) => ({
-  value: d,
-  label: d,
-}));
+// `value` is the ISO code the backend accepts (AD_DEVISES in ads.service.ts);
+// "FCFA" was not one and was saved as XOF, the West African franc. XAF is
+// shown as FCFA, like on the website (utils/currencies.ts).
+export const DEVISE_OPTIONS: readonly { value: string; label: string }[] = [
+  { value: 'XAF', label: 'FCFA' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'USD', label: 'USD' },
+];
+
+/** Label of a currency code: XAF is shown as FCFA. */
+export function deviseLabel(code: string) {
+  return code === 'XAF' ? 'FCFA' : code;
+}
+
+/** Most photos of a listing (backend MAX_AD_MEDIAS, website MAX_ANNOUNCE_MEDIAS). */
+export const MAX_LISTING_MEDIAS = 15;
 
 export const STANDING_OPTIONS: readonly { value: Standing; label: string }[] = [
   { value: 'standard', label: 'Standard' },

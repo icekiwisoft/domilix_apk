@@ -37,7 +37,7 @@ const DEFAULT_DRAFT: CreateListingDraft = {
   category_id: '',
   medias: [],
   price: '',
-  devise: 'FCFA',
+  devise: 'XAF',
   description: '',
   address: '',
   city: 'Douala',

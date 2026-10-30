@@ -20,6 +20,8 @@ export default function CreateStep5Screen() {
 
   function handlePublish() {
     if (!canPublish) return;
+    // Field names as read by the backend (AdsService.create) and sent by the
+    // website: bedroom, neighbourhood, zip; devise is an ISO code (XAF).
     const formData = new FormData();
     formData.append('type', draft.type);
     formData.append('ad_type', draft.ad_type);
@@ -31,8 +33,8 @@ export default function CreateStep5Screen() {
     formData.append('city', draft.city);
     if (draft.state) formData.append('state', draft.state);
     if (draft.country) formData.append('country', draft.country);
-    if (draft.postal_code) formData.append('postal_code', draft.postal_code);
-    if (draft.neighborhood) formData.append('neighborhood', draft.neighborhood);
+    if (draft.postal_code) formData.append('zip', draft.postal_code);
+    if (draft.neighborhood) formData.append('neighbourhood', draft.neighborhood);
     formData.append('location_source', draft.location_source);
     formData.append('hide_on_map', draft.hide_on_map ? '1' : '0');
     if (draft.longitude != null && draft.latitude != null) {
@@ -40,7 +42,7 @@ export default function CreateStep5Screen() {
       formData.append('localization[1]', String(draft.latitude));
     }
     if (draft.size) formData.append('size', draft.size);
-    if (draft.bedrooms) formData.append('bedrooms', String(draft.bedrooms));
+    formData.append('bedroom', String(draft.bedrooms));
     if (draft.standing) formData.append('standing', draft.standing);
     formData.append('wifi', draft.wifi ? '1' : '0');
     formData.append('air_conditioning', draft.air_conditioning ? '1' : '0');
