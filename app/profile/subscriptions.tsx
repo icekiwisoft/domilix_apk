@@ -1,23 +1,28 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Button, IconButton, TextInput, TouchableRipple } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useSubscriptions, useCreateSubscription, usePlans } from '@/hooks/queries/use-subscriptions';
-import { useToast } from '@/components/ui/toast';
-import { PlanCard } from '@/components/ui/plan-card';
+import { useEffect, useMemo, useState } from 'react';
+import { View } from 'react-native';
+
+import {
+  AppText,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  Field,
+  ListRow,
+  LoadingState,
+  PlanCard,
+  Screen,
+  ScreenHeader,
+  Section,
+  Sheet,
+  formatAmount,
+  useToast,
+  type IconName,
+} from '@/components/ui';
+import { Sizes, Spacing } from '@/constants/theme';
+import { useCreateSubscription, usePlans, useSubscriptions } from '@/hooks/queries/use-subscriptions';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import { isPackUsable } from '@/lib/subscription-helpers';
 import type { Subscription, SubscriptionPlan, SubscriptionPlanName } from '@/types/notification';
 
@@ -69,13 +74,12 @@ type MethodId = 'mtn' | 'orange';
 interface PaymentMethod {
   id: MethodId;
   label: string;
-  icon: React.ComponentProps<typeof MaterialIcons>['name'];
-  accent: string;
+  icon: IconName;
 }
 
 const PAYMENT_METHODS: PaymentMethod[] = [
-  { id: 'mtn',    label: 'MTN Mobile Money', icon: 'phone-android', accent: '#FFCB05' },
-  { id: 'orange', label: 'Orange Money',     icon: 'phone-android', accent: '#FF6600' },
+  { id: 'mtn', label: 'MTN Mobile Money', icon: 'phone-android' },
+  { id: 'orange', label: 'Orange Money', icon: 'phone-android' },
 ];
 
 // ─── Active packs ──────────────────────────────────────────────────────────────
@@ -90,62 +94,25 @@ function formatExpiry(dateStr: string): string {
   });
 }
 
-function ActivePackRow({ sub }: { sub: Subscription }) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+function ActivePackCard({ sub }: { sub: Subscription }) {
   const expiry = sub.expires_at ?? sub.end_date;
-
   return (
-    <View style={[banner.wrap, { backgroundColor: C.primaryContainer + '22', borderColor: C.primary + '55' }]}>
-      <View style={banner.row}>
-        <View style={[banner.iconCircle, { backgroundColor: C.primary + '22' }]}>
-          <MaterialIcons name="toll" size={20} color={C.primary} />
-        </View>
-        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 150 }}>
-          <Text style={[Typography.labelSm, { color: C.link, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-            {sub.plan_name}
-          </Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: Fonts.semiBold, marginTop: 1 }]}>
-            {sub.credits} Domicoins restants
-          </Text>
-        </View>
-        {expiry ? (
-          <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
-            <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>Expire le</Text>
-            <Text style={[Typography.caption, { color: C.onSurface, fontFamily: Fonts.semiBold, marginTop: 1 }]}>
-              {formatExpiry(expiry)}
-            </Text>
-          </View>
-        ) : null}
+    <Card outlined accessible style={{ gap: Spacing.xs }}>
+      <AppText variant="label" color="success">
+        Pack actif
+      </AppText>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', columnGap: Spacing.ms }}>
+        <AppText variant="headline">{sub.plan_name}</AppText>
+        <AppText variant="bodyStrong">{sub.credits} Domicoins restants</AppText>
       </View>
-    </View>
+      {expiry ? <AppText color="onSurfaceVariant">Valable jusqu&apos;au {formatExpiry(expiry)}</AppText> : null}
+    </Card>
   );
 }
 
-const banner = StyleSheet.create({
-  wrap: {
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
-    padding: Spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+// ─── Payment sheet ─────────────────────────────────────────────────────────────
 
-// ─── Payment modal ─────────────────────────────────────────────────────────────
-
-function PaymentModal({
+function PaymentSheet({
   plan,
   visible,
   onClose,
@@ -158,9 +125,7 @@ function PaymentModal({
   onConfirm: (phone: string, method: MethodId) => void;
   loading: boolean;
 }) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-
+  const C = useThemeColors();
   const [step, setStep] = useState<'method' | 'phone'>('method');
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [phone, setPhone] = useState('');
@@ -173,152 +138,98 @@ function PaymentModal({
     }
   }, [visible]);
 
-  function handleClose() {
-    onClose();
-  }
-
   function handleMethodSelect(m: PaymentMethod) {
     setMethod(m);
     setStep('phone');
   }
 
+  const cleaned = phone.replace(/\s/g, '');
+  const phoneReady = cleaned.length >= 9;
+
   function handleConfirm() {
-    const cleaned = phone.replace(/\s/g, '');
-    if (cleaned.length < 9 || !method) return;
+    if (!phoneReady || !method) return;
     onConfirm(cleaned.startsWith('+') ? cleaned : `+237${cleaned}`, method.id);
   }
 
-  const planTitle = plan ? PLAN_DISPLAY[plan.name]?.title ?? plan.name : '';
+  const planTitle = plan ? (PLAN_DISPLAY[plan.name]?.title ?? plan.name) : '';
+  const summary = plan ? `${planTitle} · ${formatAmount(plan.price)} FCFA` : '';
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <KeyboardAvoidingView
-        style={styles.modalOverlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        <View style={[styles.modalSheet, { backgroundColor: C.surface }]}>
-          {/* Handle */}
-          <View style={styles.handleWrapper}>
-            <View style={[styles.handle, { backgroundColor: C.outlineVariant }]} />
-          </View>
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      title={step === 'method' ? 'Méthode de paiement' : 'Numéro Mobile Money'}
+      footer={
+        step === 'phone' ? (
+          <>
+            <Button
+              label="Confirmer le paiement"
+              icon="lock"
+              size="lg"
+              fullWidth
+              loading={loading}
+              disabled={!phoneReady}
+              onPress={handleConfirm}
+            />
+            <Button label="Annuler" variant="text" fullWidth onPress={onClose} disabled={loading} />
+          </>
+        ) : (
+          <Button label="Annuler" variant="text" fullWidth onPress={onClose} />
+        )
+      }
+    >
+      <AppText color="onSurfaceVariant">{summary}</AppText>
 
-          {/* Icon */}
-          <View style={[styles.modalIconCircle, { backgroundColor: C.primaryFixed }]}>
-            <MaterialIcons name="payment" size={28} color={C.onPrimaryFixed} />
-          </View>
-
-          <Text style={[Typography.headlineMd, { color: C.onSurface, textAlign: 'center', fontSize: 20, marginBottom: Spacing.xs }]}>
-            {step === 'method' ? 'Méthode de paiement' : 'Numéro Mobile Money'}
-          </Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginBottom: Spacing.lg, fontSize: 14 }]}>
-            {planTitle} — {plan ? `${plan.price.toLocaleString('fr-FR')} XAF` : ''}
-          </Text>
-
-          {step === 'method' ? (
-            /* ── Step 1 : method selection ─── */
-            <View style={{ gap: Spacing.sm }}>
-              {PAYMENT_METHODS.map((m) => (
-                <TouchableRipple
-                  key={m.id}
-                  onPress={() => handleMethodSelect(m)}
-                  accessibilityRole="button"
-                  accessibilityLabel={m.label}
-                  style={[styles.methodBtn, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}
-                >
-                  <View style={styles.methodBtnRow}>
-                    <View style={[styles.methodIconWrap, { backgroundColor: m.accent + '22' }]}>
-                      <MaterialIcons name={m.icon} size={20} color={m.accent} />
-                    </View>
-                    <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: Fonts.semiBold }]}>
-                      {m.label}
-                    </Text>
-                    <MaterialIcons name="chevron-right" size={20} color={C.onSurfaceVariant} />
-                  </View>
-                </TouchableRipple>
-              ))}
-
-              <Button mode="text" textColor={C.link} onPress={handleClose} style={{ marginTop: Spacing.sm }}>
-                Annuler
-              </Button>
-            </View>
-          ) : (
-            /* ── Step 2 : phone input ─── */
-            <View>
-              {/* Selected method badge */}
-              {method && (
-                <TouchableRipple
-                  onPress={() => setStep('method')}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Changer de méthode de paiement, actuellement ${method.label}`}
-                  style={[styles.selectedMethodRow, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }]}
-                >
-                  <View style={styles.methodBtnRow}>
-                    <View style={[styles.methodIconWrap, { backgroundColor: method.accent + '22' }]}>
-                      <MaterialIcons name={method.icon} size={18} color={method.accent} />
-                    </View>
-                    <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, fontFamily: Fonts.semiBold, fontSize: 14 }]}>
-                      {method.label}
-                    </Text>
-                    <Text style={[Typography.caption, { color: C.link }]}>Changer</Text>
-                  </View>
-                </TouchableRipple>
-              )}
-
-              {/* Phone field */}
-              <TextInput
-                mode="outlined"
-                activeOutlineColor={C.link}
-                label="Numéro associé"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                placeholder="6XX XXX XXX"
-                maxLength={12}
-                autoFocus
-                left={<TextInput.Affix text="+237" />}
-                style={styles.phoneInput}
+      {step === 'method' ? (
+        <Section title="Choisissez votre méthode de paiement">
+          {PAYMENT_METHODS.map((m) => (
+            <ListRow key={m.id} icon={m.icon} title={m.label} onPress={() => handleMethodSelect(m)} />
+          ))}
+        </Section>
+      ) : (
+        <>
+          {method ? (
+            <Section>
+              <ListRow
+                icon={method.icon}
+                title={method.label}
+                value="Changer"
+                accessibilityLabel={`Changer de méthode de paiement, actuellement ${method.label}`}
+                onPress={() => setStep('method')}
               />
-
-              <View style={[styles.operatorsNote, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }]}>
-                <MaterialIcons name="info-outline" size={14} color={C.onSurfaceVariant} />
-                <Text style={[Typography.caption, { color: C.onSurfaceVariant, flex: 1 }]}>
-                  Un code de confirmation vous sera envoyé par votre opérateur.
-                </Text>
-              </View>
-
-              {/* Confirm */}
-              <Button
-                mode="contained"
-                icon="lock"
-                loading={loading}
-                disabled={loading || phone.replace(/\s/g, '').length < 9}
-                onPress={handleConfirm}
-                style={styles.confirmBtn}
-              >
-                Confirmer le paiement
-              </Button>
-
-              <Button mode="text" textColor={C.link} onPress={handleClose} style={{ marginTop: Spacing.md }}>
-                Annuler
-              </Button>
-            </View>
-          )}
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+            </Section>
+          ) : null}
+          <Field
+            label="Numéro associé"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            placeholder="6XX XXX XXX"
+            maxLength={12}
+            autoFocus
+            prefix="+237"
+            helper="Un code de confirmation vous sera envoyé par votre opérateur."
+          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+            <MaterialIcons name="verified-user" size={Sizes.iconSm} color={C.onSurfaceVariant} />
+            <AppText variant="caption" color="onSurfaceVariant" style={{ flex: 1 }}>
+              Vous confirmerez le paiement sur votre téléphone.
+            </AppText>
+          </View>
+        </>
+      )}
+    </Sheet>
   );
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function SubscriptionsScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
   const toast = useToast();
 
   const { data: subs = [] } = useSubscriptions();
-  const { data: plans = [], isLoading: plansLoading } = usePlans();
+  const { data: plans = [], isLoading: plansLoading, isError: plansError, refetch: refetchPlans } = usePlans();
   const createSub = useCreateSubscription();
 
   const activePacks = useMemo(() => subs.filter(isPackUsable), [subs]);
@@ -329,11 +240,11 @@ export default function SubscriptionsScreen() {
   }, [plans]);
 
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
 
   function handleChoose(plan: SubscriptionPlan) {
     setSelectedPlan(plan);
-    setModalVisible(true);
+    setSheetVisible(true);
   }
 
   function handleConfirmPayment(phone: string, method: MethodId) {
@@ -349,7 +260,7 @@ export default function SubscriptionsScreen() {
       },
       {
         onSuccess: () => {
-          setModalVisible(false);
+          setSheetVisible(false);
           toast.show('Demande envoyée. Confirmez sur votre téléphone.', 'success');
         },
         onError: () => {
@@ -359,179 +270,67 @@ export default function SubscriptionsScreen() {
     );
   }
 
-  return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <IconButton
-          icon="arrow-left"
-          accessibilityLabel="Retour"
-          onPress={() => router.back()}
-          iconColor={C.onSurface}
-          style={styles.backBtn}
+  let plansBlock;
+  if (plansLoading) {
+    plansBlock = <LoadingState label="Chargement des packs…" media={false} count={2} />;
+  } else if (plansError) {
+    plansBlock = <ErrorState title="Impossible de charger les packs" onRetry={() => refetchPlans()} />;
+  } else if (orderedPlans.length === 0) {
+    plansBlock = (
+      <EmptyState
+        icon="toll"
+        title="Aucun pack disponible"
+        description="Les packs ne sont pas disponibles pour le moment. Réessayez plus tard."
+      />
+    );
+  } else {
+    plansBlock = orderedPlans.map((plan) => {
+      const display = PLAN_DISPLAY[plan.name];
+      return (
+        <PlanCard
+          key={plan.id}
+          title={display.title}
+          tagline={display.tagline}
+          price={plan.price}
+          credits={plan.credits}
+          validityLabel={formatValidity(plan.duration)}
+          features={PLAN_FEATURES}
+          recommended={display.recommended}
+          onPress={() => handleChoose(plan)}
         />
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>
-          Packs Domicoin
-        </Text>
-        <View style={{ width: 24 }} />
+      );
+    });
+  }
+
+  return (
+    <Screen header={<ScreenHeader title="Packs Domicoin" />} contentStyle={{ gap: Spacing.lg }}>
+      <View style={{ gap: Spacing.xs }}>
+        <AppText variant="title">Choisissez votre pack</AppText>
+        <AppText color="onSurfaceVariant">
+          Débloquez les coordonnées des biens qui vous intéressent et augmentez vos chances de trouver rapidement.
+        </AppText>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Intro */}
-        <View>
-          <Text style={[Typography.headlineLg, { color: C.onSurface, textAlign: 'center', fontSize: 24, fontFamily: Fonts.bold }]}>
-            Choisissez votre pack idéal !
-          </Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm, lineHeight: 22 }]}>
-            Débloquez les coordonnées des biens qui vous intéressent et augmentez vos chances de trouver rapidement.
-          </Text>
-        </View>
+      {activePacks.map((sub) => (
+        <ActivePackCard key={sub.id} sub={sub} />
+      ))}
 
-        {/* Active packs */}
-        {activePacks.map((sub) => <ActivePackRow key={sub.id} sub={sub} />)}
+      {plansBlock}
 
-        {/* Plans */}
-        {orderedPlans.map((plan) => {
-          const display = PLAN_DISPLAY[plan.name];
-          return (
-            <PlanCard
-              key={plan.id}
-              title={display.title}
-              tagline={display.tagline}
-              price={plan.price}
-              credits={plan.credits}
-              validityLabel={formatValidity(plan.duration)}
-              features={PLAN_FEATURES}
-              recommended={display.recommended}
-              ctaLabel="Débloquer mes contacts"
-              onPress={() => handleChoose(plan)}
-            />
-          );
-        })}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+        <MaterialIcons name="verified-user" size={Sizes.icon} color={C.onSurfaceVariant} />
+        <AppText variant="caption" color="onSurfaceVariant" style={{ flex: 1 }}>
+          Paiement sécurisé · MTN Mobile Money · Orange Money
+        </AppText>
+      </View>
 
-        {!plansLoading && orderedPlans.length === 0 && (
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}>
-            Les packs ne sont pas disponibles pour le moment. Réessayez plus tard.
-          </Text>
-        )}
-
-        {/* Security note */}
-        <View style={[styles.securityNote, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}>
-          <MaterialIcons name="verified-user" size={18} color={C.onSurfaceVariant} />
-          <Text style={[Typography.caption, { color: C.onSurfaceVariant, flex: 1, lineHeight: 18 }]}>
-            Paiement sécurisé · MTN Mobile Money · Orange Money
-          </Text>
-        </View>
-
-        <View style={{ height: Spacing.xxl }} />
-      </ScrollView>
-
-      <PaymentModal
+      <PaymentSheet
         plan={selectedPlan}
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        visible={sheetVisible}
+        onClose={() => setSheetVisible(false)}
         onConfirm={handleConfirmPayment}
         loading={createSub.isPending}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  scroll: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.xl,
-    gap: Spacing.lg,
-  },
-  securityNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  modalSheet: {
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    padding: Spacing.marginMobile,
-    paddingBottom: Spacing.xxl,
-  },
-  handleWrapper: {
-    alignItems: 'center',
-    paddingTop: Spacing.xs,
-    paddingBottom: Spacing.md,
-  },
-  handle: {
-    width: 48,
-    height: 5,
-    borderRadius: Radius.full,
-  },
-  modalIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: Spacing.md,
-  },
-  methodBtn: {
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  methodBtnRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    padding: Spacing.md,
-  },
-  methodIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: Radius.sm + 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selectedMethodRow: {
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  phoneInput: {
-    marginTop: Spacing.xs,
-  },
-  operatorsNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    padding: Spacing.sm,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-    marginTop: Spacing.sm,
-  },
-  confirmBtn: {
-    marginTop: Spacing.lg,
-  },
-  backBtn: {
-    margin: 0,
-  },
-});
