@@ -427,4 +427,4 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    UI-02, B-02 (connexion Google native) et B-05.
 3. **Lot 3 — contraste et 200 %** : UI-04 (fusionné). Puis F-01 quand le backend renverra le `user_id`.
 4. **Lot 4 — système de design** : UI-06 fusionné (PR #7, 2026-10-29).
-5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend ; PR #9 fusionnée 2026-10-30), UI-10 Compte, Publier.
+5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend ; PR #9 fusionnée 2026-10-30), UI-10 Compte (PR #10 fusionnée 2026-10-30), UI-11 Accueil par catégories, puis Publier.
