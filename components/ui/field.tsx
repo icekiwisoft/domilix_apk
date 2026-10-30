@@ -16,6 +16,11 @@ export interface FieldProps extends Omit<TextInputProps, 'secureTextEntry'> {
   labelAction?: ReactNode;
   /** Text under the field when there is no error. */
   helper?: string;
+  /**
+   * Custom content under the field when there is no error, in place of
+   * `helper` (e.g. a password rule with a check icon that updates as you type).
+   */
+  helperContent?: ReactNode;
   error?: string;
   /** Fixed prefix inside the field, separated by a border (e.g. +237). */
   prefix?: ReactNode;
@@ -76,6 +81,7 @@ export function Field({
   labelHint,
   labelAction,
   helper,
+  helperContent,
   error,
   prefix,
   suffix,
@@ -188,7 +194,9 @@ export function Field({
       </View>
       {/* Always mounted: TalkBack announces a live region when its text changes. */}
       <View accessibilityLiveRegion="polite">
-        {message ? (
+        {!error && helperContent ? (
+          helperContent
+        ) : message ? (
           <AppText
             variant="caption"
             color={error ? 'error' : 'onSurfaceVariant'}
