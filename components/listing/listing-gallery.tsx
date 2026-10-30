@@ -1,7 +1,13 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
-import Animated, { runOnJS, useAnimatedReaction, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedRef,
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui';
 import { Radii, Spacing } from '@/constants/theme';
@@ -28,6 +34,14 @@ export function ListingGallery({ medias, height, announceId, bottomInset = 0 }: 
   const scrollX = useSharedValue(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [viewerVisible, setViewerVisible] = useState(false);
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+
+  // Back from the viewer on the photo it showed (QA-05): the scroll then updates the counter.
+  function closeViewer(index: number) {
+    setViewerVisible(false);
+    setCurrentIndex(index);
+    scrollRef.current?.scrollTo({ x: index * width, animated: false });
+  }
 
   const sources =
     medias.length > 0 ? medias.map((m) => m.file) : [`https://picsum.photos/seed/${announceId ?? 'domilix'}/800/600`];
@@ -48,6 +62,7 @@ export function ListingGallery({ medias, height, announceId, bottomInset = 0 }: 
   return (
     <View style={{ height, backgroundColor: C.surfaceContainerHigh }}>
       <Animated.ScrollView
+        ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -99,7 +114,7 @@ export function ListingGallery({ medias, height, announceId, bottomInset = 0 }: 
         visible={viewerVisible}
         images={sources}
         initialIndex={currentIndex}
-        onClose={() => setViewerVisible(false)}
+        onClose={closeViewer}
       />
     </View>
   );

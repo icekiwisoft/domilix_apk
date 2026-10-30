@@ -5,7 +5,7 @@ import { Linking, Share, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnnouncerCard } from '@/components/announcer/announcer-card';
-import { announcePlace, announceTitle } from '@/components/listing/announce-card';
+import { announcePlace, announceTitle, categoryLabel } from '@/components/listing/announce-card';
 import { AnnounceDetailSkeleton } from '@/components/listing/announce-detail-skeleton';
 import { ListingGallery } from '@/components/listing/listing-gallery';
 import {
@@ -289,7 +289,7 @@ export default function AnnounceDetailScreen() {
             <Badge label={rent ? 'À louer' : 'À vendre'} variant={rent ? 'primary' : 'tertiary'} />
             {a.category?.name ? (
               <AppText variant="caption" color="onSurfaceVariant" style={{ flexShrink: 1 }}>
-                {a.category.name}
+                {categoryLabel(a.category.name)}
               </AppText>
             ) : null}
           </View>

@@ -94,7 +94,8 @@ interface ImageViewerModalProps {
   visible: boolean;
   images: string[];
   initialIndex: number;
-  onClose: () => void;
+  /** Receives the photo shown when closing, so the gallery can follow. */
+  onClose: (index: number) => void;
 }
 
 export function ImageViewerModal({ visible, images, initialIndex, onClose }: ImageViewerModalProps) {
@@ -114,7 +115,7 @@ export function ImageViewerModal({ visible, images, initialIndex, onClose }: Ima
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={() => onClose(index)}
       statusBarTranslucent
       navigationBarTranslucent
     >
@@ -132,7 +133,7 @@ export function ImageViewerModal({ visible, images, initialIndex, onClose }: Ima
             gap: Spacing.sm,
           }}
         >
-          <IconButton icon="close" label="Fermer" color="onViewer" background="photoBadge" onPress={onClose} />
+          <IconButton icon="close" label="Fermer" color="onViewer" background="photoBadge" onPress={() => onClose(index)} />
           {total > 1 ? (
             <AppText
               variant="label"
