@@ -39,6 +39,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
   const C = useThemeColors();
   const { fontScale } = useWindowDimensions();
   const large = fontScale >= WRAP_SCALE;
+  const crowded = options.length > 2;
   return (
     <View
       accessibilityRole="radiogroup"
@@ -57,7 +58,10 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
     >
       {options.map((o) => {
         const on = o.value === value;
-        const icon = on ? 'check' : o.icon;
+        // With three segments or more the check mark no longer fits beside a
+        // label such as "Annonces" (cut to "Annonce / s", UI-08): the raised
+        // surface and the semi-bold label still tell the selection.
+        const icon = on && !crowded ? 'check' : o.icon;
         return (
           <Pressable
             key={o.value}
@@ -70,7 +74,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
                 flexGrow: 1,
                 flexBasis: large ? '100%' : 0,
                 minHeight: Sizes.touchTarget,
-                paddingHorizontal: Spacing.ms,
+                paddingHorizontal: crowded ? Spacing.sm : Spacing.ms,
                 paddingVertical: Spacing.xs,
                 borderRadius: large ? Radii.control : Radii.full,
                 overflow: 'hidden',

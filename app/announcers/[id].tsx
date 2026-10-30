@@ -41,9 +41,7 @@ const TABS = [
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <View accessible accessibilityLabel={`${value} ${label}`} style={{ flex: 1, alignItems: 'center' }}>
-      <AppText variant="headline" style={{ fontVariant: ['tabular-nums'] }}>
-        {value}
-      </AppText>
+      <AppText variant="headline">{value}</AppText>
       <AppText variant="caption" color="onSurfaceVariant" style={{ textAlign: 'center' }}>
         {label}
       </AppText>
