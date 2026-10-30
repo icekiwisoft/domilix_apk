@@ -61,6 +61,11 @@ const DEFAULT_DRAFT: CreateListingDraft = {
   smart_tv: false,
 };
 
+/** True while nothing was entered since the last reset (the flow can start fresh silently). */
+export function isDraftEmpty(draft: CreateListingDraft) {
+  return JSON.stringify(draft) === JSON.stringify(DEFAULT_DRAFT);
+}
+
 interface CreateListingStore {
   draft: CreateListingDraft;
   setDraft: (patch: Partial<CreateListingDraft>) => void;
