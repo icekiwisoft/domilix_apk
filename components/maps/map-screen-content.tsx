@@ -10,7 +10,7 @@ import { ListingMapPin } from '@/components/listing/listing-map-pin';
 import { activeFilters } from '@/components/search/active-filters';
 import { ExploreHeader } from '@/components/search/explore-header';
 import { AppText, Button, Card, formatAmount } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { Sizes, Spacing } from '@/constants/theme';
 import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 import { toAnnounceQuery, useFilterStore } from '@/stores/filter.store';
 
@@ -77,7 +77,7 @@ export default function MapScreenContent() {
 
       <View
         pointerEvents="box-none"
-        style={{ position: 'absolute', left: Spacing.marginMobile, right: Spacing.marginMobile, bottom: Spacing.md }}
+        style={{ position: 'absolute', left: Spacing.marginMobile, right: Spacing.marginMobile, bottom: Sizes.tabBarOverhang + Spacing.sm }}
       >
         {isError ? (
           <Card style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>

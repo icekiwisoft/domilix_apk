@@ -78,7 +78,7 @@ export function TabBar({ state, descriptors, navigation, items, centerRoute, cen
                 onPress={centerAction.onPress}
                 style={({ pressed }) => [
                   {
-                    marginTop: -Spacing.lg,
+                    marginTop: -Sizes.tabBarOverhang,
                     width: Sizes.publishButton,
                     height: Sizes.publishButton,
                     borderRadius: Radii.full,

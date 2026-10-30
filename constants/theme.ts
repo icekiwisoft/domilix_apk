@@ -416,6 +416,7 @@ export const Sizes = {
   tabPillWidth: 56, // active-tab indicator behind the icon (Material 3 navigation bar)
   tabPillHeight: 32,
   publishButton: 60, // raised round "Publier" button of the tab bar
+  tabBarOverhang: Spacing.lg, // how far the Publier button rises above the tab bar, over the screen (QA-16)
   countBadge: 22, // number badge on the filter button
   dot: 10, // unread dot on the notification bell
   // UI-08: listing detail and announcer profile
