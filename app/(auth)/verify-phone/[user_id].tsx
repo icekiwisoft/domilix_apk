@@ -1,19 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Button, IconButton } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
 
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppText, Button, Screen, ScreenHeader, useToast } from '@/components/ui';
 import { OtpInput } from '@/components/ui/otp-input';
-import { useToast } from '@/components/ui/toast';
+import { Fonts, Spacing } from '@/constants/theme';
 import { useResendVerificationCode, useVerifyPhone } from '@/hooks/queries/use-auth-queries';
 
 const RESEND_SECONDS = 60;
@@ -28,9 +19,6 @@ function maskPhone(phone?: string) {
 }
 
 export default function VerifyPhoneScreen() {
-  const insets = useSafeAreaInsets();
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
   const toast = useToast();
   const router = useRouter();
   const { user_id, phone } = useLocalSearchParams<{ user_id: string; phone?: string }>();
@@ -90,100 +78,42 @@ export default function VerifyPhoneScreen() {
   }
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.scroll,
-        { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl },
-      ]}
-      style={{ backgroundColor: C.surface }}
-      keyboardShouldPersistTaps="handled"
-    >
-      {/* Back */}
-      <IconButton
-        icon="arrow-left"
-        mode="outlined"
-        size={22}
-        onPress={() => router.back()}
-        accessibilityLabel="Retour"
-        style={styles.backBtn}
-      />
+    <Screen background="surface" header={<ScreenHeader title="Vérifier votre numéro" />} contentStyle={{ gap: Spacing.xl }}>
+      <AppText color="onSurfaceVariant">
+        {'Un code à 6 chiffres a été envoyé au '}
+        <AppText style={{ fontFamily: Fonts.semiBold }}>{maskPhone(phone)}</AppText>
+      </AppText>
 
-      {/* Headline */}
-      <View style={styles.header}>
-        <Text style={[Typography.headlineLg, { color: C.link }]}>Vérifier votre numéro</Text>
-        <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.sm }]}>
-          {'Un code à 6 chiffres a été envoyé au '}
-          <Text style={{ color: C.onSurface, fontFamily: Fonts.semiBold }}>
-            {maskPhone(phone)}
-          </Text>
-        </Text>
-      </View>
-
-      {/* OTP input */}
-      <View style={styles.otpSection}>
+      <View style={{ gap: Spacing.sm }}>
         <OtpInput value={otp} onChange={setOtp} error={error} />
-        {error && (
-          <Text style={[Typography.caption, { color: C.error, textAlign: 'center', marginTop: Spacing.sm }]}>
+        {error ? (
+          <AppText variant="caption" color="error" style={{ textAlign: 'center' }} accessibilityLiveRegion="polite">
             Code incorrect. Veuillez réessayer.
-          </Text>
-        )}
+          </AppText>
+        ) : null}
       </View>
 
-      {/* Resend */}
-      <View style={styles.resendRow}>
+      <View style={{ alignItems: 'center' }}>
         {seconds > 0 ? (
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
+          <AppText color="onSurfaceVariant">
             {'Renvoyer dans '}
-            <Text style={{ color: C.link, fontFamily: Fonts.semiBold }}>
+            <AppText color="link" style={{ fontFamily: Fonts.semiBold }}>
               {seconds}s
-            </Text>
-          </Text>
+            </AppText>
+          </AppText>
         ) : (
-          <Button mode="text" textColor={C.link} onPress={resend} loading={resendCode.isPending} disabled={resendCode.isPending}>
-            Renvoyer le code
-          </Button>
+          <Button variant="text" label="Renvoyer le code" onPress={resend} loading={resendCode.isPending} />
         )}
       </View>
 
-      {/* Verify CTA */}
       <Button
-        mode="contained"
+        label="Vérifier"
+        size="lg"
+        fullWidth
         onPress={verify}
         loading={verifyPhone.isPending}
-        disabled={verifyPhone.isPending || otp.length < 6}
-        contentStyle={styles.submitBtnContent}
-        style={styles.submitBtn}
-      >
-        Vérifier
-      </Button>
-    </ScrollView>
+        disabled={otp.length < 6}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.marginMobile,
-  },
-  backBtn: {
-    alignSelf: 'flex-start',
-    margin: 0,
-    marginBottom: Spacing.xl,
-  },
-  header: {
-    marginBottom: Spacing.xxl,
-  },
-  otpSection: {
-    marginBottom: Spacing.xl,
-  },
-  resendRow: {
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  submitBtn: {
-    borderRadius: Radius.md,
-  },
-  submitBtnContent: {
-    height: 50,
-  },
-});
