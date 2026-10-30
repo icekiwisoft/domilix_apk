@@ -52,9 +52,9 @@ interface HomeRow {
 
 // Same rows, in the same order, as the website (domilix.com src/views/Ads/Ads.tsx), real estate only.
 const ROWS: HomeRow[] = [
-  { key: 'recommended', title: 'Nos recommandations', filters: { ad_type: 'all', recommended: 1 } },
-  { key: 'recent', title: 'Dernières annonces', filters: { ad_type: 'all' } },
-  { key: 'night', title: 'Séjours à la nuit', filters: { period: 'night' } },
+  { key: 'recommended', title: 'Nos recommandations', filters: { recommended: 1 } },
+  { key: 'recent', title: 'Dernières annonces', filters: {} },
+  { key: 'night', title: 'Séjours à la nuit', filters: { ad_type: 'location', period: 'night' } },
   { key: 'sale', title: 'Biens à vendre', filters: { ad_type: 'sale' } },
 ];
 

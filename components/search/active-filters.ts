@@ -38,7 +38,7 @@ export function cityLabel(f: Pick<ExploreFilters, 'city' | 'cityLabel'>): string
 
 /**
  * Filters the user chose, as removable chips (explore header) and as the
- * count on the filter button. The defaults (Immobilier, À louer) are not
+ * count on the filter button. The defaults (Immobilier, rentals and sales) are not
  * listed: only what narrows the results.
  */
 export function activeFilters(f: ExploreFilters): ActiveFilter[] {
@@ -46,7 +46,7 @@ export function activeFilters(f: ExploreFilters): ActiveFilter[] {
   if (f.type === 'furniture') out.push({ key: 'type', label: 'Mobilier', remove: () => ({ type: undefined }) });
   if (f.recommended) out.push({ key: 'recommended', label: 'Recommandations', remove: () => ({ recommended: undefined }) });
   if (f.ad_type === 'sale') out.push({ key: 'ad_type', label: 'À vendre', remove: () => ({ ad_type: undefined }) });
-  if (f.ad_type === 'all') out.push({ key: 'ad_type', label: 'À louer et à vendre', remove: () => ({ ad_type: undefined }) });
+  if (f.ad_type === 'location') out.push({ key: 'ad_type', label: 'À louer', remove: () => ({ ad_type: undefined }) });
   if (f.period === 'night') out.push({ key: 'period', label: 'À la nuit', remove: () => ({ period: undefined }) });
   else if (f.period) out.push({ key: 'period', label: `Par ${periodLabel(f.period) ?? f.period}`, remove: () => ({ period: undefined }) });
   if (f.city) out.push({ key: 'city', label: cityLabel(f) ?? f.city, remove: () => ({ city: undefined, cityLabel: undefined }) });

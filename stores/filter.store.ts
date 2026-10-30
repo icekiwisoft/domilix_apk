@@ -1,13 +1,11 @@
 import { create } from 'zustand';
-import type { AdType, AnnounceFilters } from '@/types/announce';
+import type { AnnounceFilters } from '@/types/announce';
 
 /**
- * Explore criteria. Unset `type` and `ad_type` mean the defaults (Immobilier,
- * À louer); `ad_type: 'all'` lists rentals and sales together (home rows
- * "Nos recommandations" and "Dernières annonces", UI-11).
+ * Explore criteria. Unset `type` means Immobilier; unset `ad_type` means rentals
+ * and sales together ("Tout" in the filter sheet), as on the website's search.
  */
-export type ExploreFilters = Omit<AnnounceFilters, 'ad_type'> & {
-  ad_type?: AdType | 'all';
+export type ExploreFilters = AnnounceFilters & {
   /**
    * Display name of `city` when it comes from a home city chip ("Yaoundé"); `city`
    * holds the API's `city_normalized` ("yaounde"). Never sent to the API.
@@ -44,13 +42,12 @@ export const useFilterStore = create<FilterState>((set) => ({
   clearFilters: () => set({ filters: DEFAULT_FILTERS }),
 }));
 
-/** API query of the explore list and map: defaults applied, `all` sent as no ad_type. */
+/** API query of the explore list and map: Immobilier by default, no ad_type for "Tout". */
 export function toAnnounceQuery(f: ExploreFilters): AnnounceFilters {
-  const { ad_type, search, cityLabel: _cityLabel, ...rest } = f;
+  const { search, cityLabel: _cityLabel, ...rest } = f;
   return {
     ...rest,
     type: f.type ?? 'realestate',
-    ad_type: ad_type === 'all' ? undefined : (ad_type ?? 'location'),
     search: search?.trim() || undefined,
   };
 }
