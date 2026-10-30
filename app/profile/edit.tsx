@@ -1,106 +1,71 @@
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { IconButton } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { View } from 'react-native';
+
 import { ProfileForm, type ProfileFormValues } from '@/components/forms/profile-form';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useMe, useUpdateProfile } from '@/hooks/queries/use-auth-queries';
+import { Avatar, ErrorState, LoadingState, OfflineState, Screen, ScreenHeader, useToast } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useAnnouncer } from '@/hooks/queries/use-announcers';
+import { useMe, useUpdateProfile } from '@/hooks/queries/use-auth-queries';
+import { isNetworkError } from '@/lib/network-error';
 
 export default function EditProfileScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const { data: user } = useMe();
+  const router = useRouter();
+  const toast = useToast();
+  const { data: user, isLoading, isError, error, refetch } = useMe();
   const { data: announcer } = useAnnouncer(user?.announcer ?? '');
   const updateProfile = useUpdateProfile();
 
   function handleSave(values: ProfileFormValues) {
     updateProfile.mutate(values, {
       onSuccess: () => router.back(),
+      onError: (err) =>
+        toast.show(
+          isNetworkError(err)
+            ? 'Pas de connexion internet. Vos modifications ne sont pas enregistrées.'
+            : "Le profil n'a pas pu être mis à jour. Réessayez dans un instant.",
+          'error',
+        ),
     });
   }
 
+  const header = <ScreenHeader title="Modifier le profil" onBack={() => router.back()} />;
+
+  // The form reads its values once: wait for the account before showing it.
+  if (isLoading) {
+    return (
+      <Screen header={header}>
+        <LoadingState label="Chargement du profil…" media={false} count={1} />
+      </Screen>
+    );
+  }
+  if (!user && isError) {
+    return (
+      <Screen header={header} contentStyle={{ flexGrow: 1 }}>
+        {isNetworkError(error) ? (
+          <OfflineState onRetry={() => refetch()} />
+        ) : (
+          <ErrorState title="Impossible de charger le profil" onRetry={() => refetch()} />
+        )}
+      </Screen>
+    );
+  }
+
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <IconButton
-          icon="arrow-left"
-          accessibilityLabel="Retour"
-          onPress={() => router.back()}
-          iconColor={C.onSurface}
-          style={styles.backBtn}
-        />
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>
-          Modifier le profil
-        </Text>
-        <View style={{ width: 24 }} />
+    <Screen keyboard header={header} contentStyle={{ gap: Spacing.lg }}>
+      {/* Read-only: the photo is managed for announcer accounts, from Profil annonceur. */}
+      <View style={{ alignItems: 'center', paddingVertical: Spacing.md }}>
+        <Avatar size="lg" name={user?.name} uri={announcer?.avatar ?? undefined} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Avatar (read-only — photo management is only available for announcer accounts, via Profil annonceur) */}
-        <View style={styles.avatarSection}>
-          {announcer?.avatar ? (
-            <Image source={{ uri: announcer.avatar }} style={[styles.avatar, { borderColor: C.primary + '40' }]} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}>
-              <MaterialIcons name="person" size={44} color={C.onSurfaceVariant} />
-            </View>
-          )}
-        </View>
-
-        {/* Form */}
-        <View style={styles.formWrapper}>
-          <ProfileForm
-            defaultValues={{
-              name: user?.name,
-              email: user?.email,
-              phone_number: user?.phone_number,
-            }}
-            onSubmit={handleSave}
-            loading={updateProfile.isPending}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <ProfileForm
+        defaultValues={{
+          name: user?.name,
+          email: user?.email,
+          phone_number: user?.phone_number,
+        }}
+        onSubmit={handleSave}
+        loading={updateProfile.isPending}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  backBtn: { margin: 0 },
-  scroll: {
-    paddingBottom: Spacing.xxl,
-  },
-  avatarSection: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xl,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-  },
-  avatarFallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  formWrapper: {
-    paddingHorizontal: Spacing.marginMobile,
-  },
-});
