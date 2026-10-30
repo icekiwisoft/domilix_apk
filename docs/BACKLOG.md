@@ -383,6 +383,12 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   écrans ; comportement inchangé (favoris, notifications, déconnexion, thème, achat de pack jusqu'à la
   confirmation exclue) ; aucune écriture sur l'API de production en QA sans accord ; AA clair et
   sombre, 48 dp, 200 %, TalkBack ; build release vérifié.
+- Suites de UI-10 (2026-10-30) : `components/ui/empty-state.tsx` orphelin à supprimer ; non vérifié faute
+  de compte adapté : liste de favoris, pack actif, Mes annonces (compte annonceur avec favoris et pack).
+- Fonctions des maquettes Compte non faites, **à valider par l'utilisateur avant tout développement** :
+  onglet « Annonces débloquées » dans Favoris ; filtre et badges de statut (« En ligne », « En attente »)
+  dans Mes annonces ; choix du pack et du moyen de paiement sur un seul écran avec « Payer » ; ligne
+  « Contacts débloqués » dans Profil.
 
 ## Lots proposés
 
