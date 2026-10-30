@@ -258,6 +258,10 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 
 - **Source** : revue du lot 3. `app/profile/subscriptions.tsx:396` ne passe jamais `current` à
   `PlanCard` : l'état « Plan actuel » est du code mort. Le brancher sur l'abonnement actif ou le retirer.
+- **Résolu par suppression (UI-10, 2026-10-30)** : un pack Domicoin est un achat ponctuel, plusieurs
+  peuvent être actifs en même temps, et ni le site ni le backend (`subscriptions` : liste des achats,
+  aucun « plan courant ») n'ont cette notion. L'état `current` est retiré de `PlanCard` ; les packs
+  actifs restent listés au-dessus des cartes.
 
 ### UI-06 — Système de design : échelles, garde-fous et composants partagés (P1)
 
