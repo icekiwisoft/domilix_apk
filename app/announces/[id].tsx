@@ -53,6 +53,8 @@ const STANDING_LABELS: Record<Standing, string> = {
 /** Descriptions longer than this are folded to a few lines with "Lire la suite". */
 const LONG_DESCRIPTION = 180;
 const FOLDED_LINES = 4;
+/** The full text stays readable in the Description section below. */
+const TITLE_LINES = 3;
 
 type Fact = { icon: IconName; value: string; label: string };
 
@@ -295,7 +297,8 @@ export default function AnnounceDetailScreen() {
               </AppText>
             ) : null}
           </View>
-          <AppText variant="title" accessibilityRole="header">
+          {/* The API has no title: the first sentence can be the whole description (no full stop). */}
+          <AppText variant="title" accessibilityRole="header" numberOfLines={TITLE_LINES}>
             {announceTitle(a)}
           </AppText>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
