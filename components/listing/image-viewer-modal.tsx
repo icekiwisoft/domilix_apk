@@ -156,6 +156,8 @@ export function ImageViewerModal({ visible, images, initialIndex, onClose }: Ima
               left: 0,
               right: 0,
               top: '50%',
+              // Centred on the screen: the row is one 48 dp button tall.
+              marginTop: -Sizes.touchTarget / 2,
               flexDirection: 'row',
               justifyContent: 'space-between',
               paddingHorizontal: Spacing.xs,

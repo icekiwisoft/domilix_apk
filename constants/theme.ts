@@ -91,8 +91,8 @@ export const Colors = {
     onPromo: '#feeee1',
     onPromoVariant: '#ffdcbb',
     // Photo counter over a listing photo and the full-screen photo viewer
-    // (UI-08), same in both themes. onPhotoBadge on photoBadge over a white
-    // photo 8.9:1; onViewer on viewer 21:1.
+    // (UI-08), same in both themes. onPhotoBadge on photoBadge: 7.57:1 over a
+    // white photo (worst case), 18.4:1 over black; onViewer on viewer 21:1.
     photoBadge: 'rgba(33,26,18,0.75)',
     onPhotoBadge: '#ffffff',
     viewer: '#000000',
@@ -176,8 +176,8 @@ export const Colors = {
     onPromo: '#feeee1',
     onPromoVariant: '#ffdcbb',
     // Photo counter over a listing photo and the full-screen photo viewer
-    // (UI-08), same in both themes. onPhotoBadge on photoBadge over a white
-    // photo 8.9:1; onViewer on viewer 21:1.
+    // (UI-08), same in both themes. onPhotoBadge on photoBadge: 7.57:1 over a
+    // white photo (worst case), 18.4:1 over black; onViewer on viewer 21:1.
     photoBadge: 'rgba(33,26,18,0.75)',
     onPhotoBadge: '#ffffff',
     viewer: '#000000',

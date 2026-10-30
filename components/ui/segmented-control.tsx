@@ -30,7 +30,8 @@ const WRAP_SCALE = 1.5;
 /**
  * Pill track with one raised segment (replaces Paper SegmentedButtons). Each
  * segment is a 48 dp radio; the selected one is shown by its raised surface,
- * a check mark and a semi-bold label, not by colour alone. At large font
+ * a semi-bold label and, with two segments, a check mark (left out from three
+ * segments, where it no longer fits), not by colour alone. At large font
  * sizes the segments wrap onto several rows instead of truncating.
  * Contrast: onSurface on the raised segment 17:1, onSurfaceVariant on the
  * track 7.61:1 (light) / 8.57:1 (dark).
