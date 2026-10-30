@@ -1,52 +1,49 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Pressable, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+
+import { AppText, pressedStyle, type IconName } from '@/components/ui';
+import { Borders, Radii, Sizes, Spacing, type ColorToken } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import type { Notification } from '@/types/notification';
 
-type NotifIconConfig = {
-  icon: React.ComponentProps<typeof MaterialIcons>['name'];
-  bg: string;
-  color: string;
-};
+type Tone = { icon: IconName; bg: ColorToken; fg: ColorToken };
 
-function getIconConfig(type: string, C: (typeof Colors)['light'] | (typeof Colors)['dark']): NotifIconConfig {
+// Container / on-container pairs of the theme (AA in both themes), as in the
+// mockup: amber for money and listings, green for an unlocked contact, blue
+// for account events.
+function toneOf(type: string): Tone {
   switch (type) {
-    // Payment / Domicoin credits
     case 'payment_success':
-      return { icon: 'payment', bg: C.primaryFixed, color: C.onPrimaryFixed };
+      return { icon: 'payment', bg: 'primaryFixed', fg: 'onPrimaryFixed' };
     case 'credits_received':
-      return { icon: 'toll', bg: C.primaryFixed, color: C.onPrimaryFixed };
+      return { icon: 'toll', bg: 'primaryFixed', fg: 'onPrimaryFixed' };
     case 'signup_gift_received':
-      return { icon: 'card-giftcard', bg: C.tertiaryContainer, color: C.onTertiaryContainer };
-    // Announce lifecycle
+      return { icon: 'card-giftcard', bg: 'tertiaryContainer', fg: 'onTertiaryContainer' };
     case 'ad_unlocked':
-      return { icon: 'lock-open', bg: C.secondaryContainer, color: C.secondary };
+      return { icon: 'lock-open', bg: 'successContainer', fg: 'onSuccessContainer' };
     case 'ad_published':
-      return { icon: 'campaign', bg: C.primaryFixed, color: C.onPrimaryFixed };
-    // Account / auth
+      return { icon: 'campaign', bg: 'primaryFixed', fg: 'onPrimaryFixed' };
     case 'welcome':
-      return { icon: 'celebration', bg: C.tertiaryContainer, color: C.onTertiaryContainer };
+      return { icon: 'celebration', bg: 'tertiaryContainer', fg: 'onTertiaryContainer' };
     case 'new_login':
-      return { icon: 'login', bg: C.surfaceContainerHigh, color: C.onSurfaceVariant };
-    // Announcer subscription
+      return { icon: 'login', bg: 'tertiaryContainer', fg: 'onTertiaryContainer' };
     case 'announcer_subscription_assigned':
-      return { icon: 'workspace-premium', bg: C.primaryFixed, color: C.onPrimaryFixed };
+      return { icon: 'workspace-premium', bg: 'primaryFixed', fg: 'onPrimaryFixed' };
     default:
-      return { icon: 'info', bg: C.surfaceContainerHigh, color: C.onSurfaceVariant };
+      return { icon: 'info', bg: 'surfaceContainerHigh', fg: 'onSurfaceVariant' };
   }
 }
 
-function formatTime(iso: string): string {
+/** Hour for today and yesterday (the group says the day), the date before. */
+function formatWhen(iso: string): string {
   const date = new Date(iso);
-  return date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
+  const yesterday = new Date();
+  yesterday.setHours(0, 0, 0, 0);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date >= yesterday) return date.toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString('fr', { day: 'numeric', month: 'short' });
 }
 
 interface NotifItemProps {
@@ -55,28 +52,33 @@ interface NotifItemProps {
   onDelete?: (id: string) => void;
 }
 
-const SWIPE_THRESHOLD = -80;
+/** Distance (dp) past which a left swipe deletes the notification. */
+const SWIPE_THRESHOLD = Sizes.touchTarget + Spacing.xl;
 
+/**
+ * Notification row (mockup Notifications): round tone icon, title, text and
+ * time, unread rows on a tinted surface with a dot and a bolder title. Swipe
+ * left to delete; TalkBack gets a "Supprimer" action instead.
+ */
 export function NotifItem({ notification, onPress, onDelete }: NotifItemProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const { icon, bg, color } = getIconConfig(notification.type, C);
+  const C = useThemeColors();
+  const tone = toneOf(notification.type);
   const isUnread = notification.read_at === null;
 
   const translateX = useSharedValue(0);
   const deleteOpacity = useSharedValue(0);
 
   const swipeGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10])
+    .activeOffsetX([-Spacing.ms, Spacing.ms])
     .onUpdate((e) => {
       if (e.translationX < 0) {
-        translateX.value = Math.max(e.translationX, -120);
-        deleteOpacity.value = Math.min((-e.translationX) / 80, 1);
+        translateX.value = Math.max(e.translationX, -SWIPE_THRESHOLD * 1.5);
+        deleteOpacity.value = Math.min(-e.translationX / SWIPE_THRESHOLD, 1);
       }
     })
     .onEnd((e) => {
-      if (e.translationX < SWIPE_THRESHOLD && onDelete) {
-        translateX.value = withTiming(-400, { duration: 250 }, () => {
+      if (e.translationX < -SWIPE_THRESHOLD && onDelete) {
+        translateX.value = withTiming(-SWIPE_THRESHOLD * 5, { duration: 250 }, () => {
           runOnJS(onDelete)(notification.id);
         });
       } else {
@@ -85,137 +87,102 @@ export function NotifItem({ notification, onPress, onDelete }: NotifItemProps) {
       }
     });
 
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  const deleteStyle = useAnimatedStyle(() => ({
-    opacity: deleteOpacity.value,
-  }));
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ translateX: translateX.value }] }));
+  const deleteStyle = useAnimatedStyle(() => ({ opacity: deleteOpacity.value }));
 
   return (
-    <View style={styles.wrapper}>
-      {/* Delete hint behind */}
-      <Animated.View style={[styles.deleteHint, { backgroundColor: C.errorContainer }, deleteStyle]}>
-        <MaterialIcons name="delete" size={22} color={C.error} />
+    <View style={{ overflow: 'hidden' }}>
+      <Animated.View
+        importantForAccessibility="no-hide-descendants"
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: SWIPE_THRESHOLD,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: C.errorContainer,
+          },
+          deleteStyle,
+        ]}
+      >
+        <MaterialIcons name="delete" size={Sizes.iconLg} color={C.onErrorContainer} />
       </Animated.View>
 
       <GestureDetector gesture={swipeGesture}>
         <Animated.View
           style={[
-            styles.item,
             {
-              backgroundColor: isUnread ? C.surfaceContainerLow : C.surface,
-              borderBottomColor: C.outlineVariant + '40',
+              backgroundColor: isUnread ? C.surfaceContainerLow : C.background,
+              borderBottomWidth: Borders.thin,
+              borderBottomColor: C.outlineVariant,
             },
             animStyle,
           ]}
         >
           <Pressable
             onPress={onPress}
-            style={styles.content}
             accessibilityRole="button"
-            accessibilityLabel={`${notification.title}. ${notification.body}`}
-            accessibilityState={{ selected: isUnread }}
-            accessibilityHint={isUnread ? 'Marquer comme lue' : undefined}
+            accessibilityLabel={`${isUnread ? 'Non lue. ' : ''}${notification.title}. ${notification.body}. ${formatWhen(notification.created_at)}`}
+            accessibilityHint={isUnread ? 'Marque la notification comme lue' : undefined}
             accessibilityActions={onDelete ? [{ name: 'delete', label: 'Supprimer' }] : undefined}
             onAccessibilityAction={(event) => {
               if (event.nativeEvent.actionName === 'delete') onDelete?.(notification.id);
               else onPress?.();
             }}
+            style={({ pressed }) => [
+              {
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: Spacing.ms,
+                paddingHorizontal: Spacing.marginMobile,
+                paddingVertical: Spacing.ms,
+                minHeight: Sizes.touchTarget,
+              },
+              pressedStyle(pressed),
+            ]}
           >
-            {/* Icon */}
-            <View style={[styles.iconBox, { backgroundColor: bg }]}>
-              <MaterialIcons name={icon} size={20} color={color} />
+            <View
+              style={{
+                width: Sizes.avatarMd,
+                height: Sizes.avatarMd,
+                borderRadius: Radii.full,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: C[tone.bg],
+              }}
+            >
+              <MaterialIcons name={tone.icon} size={Sizes.iconLg} color={C[tone.fg]} />
             </View>
 
-            {/* Text */}
-            <View style={styles.textBlock}>
-              <View style={styles.titleRow}>
-                <Text
-                  style={[Typography.labelSm, styles.title, { color: C.onSurface }]}
-                  numberOfLines={2}
-                >
-                  {notification.title}
-                </Text>
-                <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-                  {formatTime(notification.created_at)}
-                </Text>
-              </View>
-              <Text
-                style={[Typography.bodyMd, styles.body, { color: C.onSurfaceVariant }]}
-                numberOfLines={2}
-              >
+            <View style={{ flex: 1, gap: Spacing.xxs }}>
+              <AppText variant={isUnread ? 'bodyStrong' : 'body'}>
+                {notification.title}
+              </AppText>
+              <AppText variant="bodySm" color="onSurfaceVariant" numberOfLines={3}>
                 {notification.body}
-              </Text>
+              </AppText>
+              <AppText variant="caption" color="onSurfaceVariant">
+                {formatWhen(notification.created_at)}
+              </AppText>
             </View>
 
-            {/* Unread dot */}
-            {isUnread && (
-              <View style={[styles.dot, { backgroundColor: C.primary }]} />
-            )}
+            {isUnread ? (
+              <View
+                style={{
+                  width: Sizes.dot,
+                  height: Sizes.dot,
+                  marginTop: Spacing.sm,
+                  borderRadius: Radii.full,
+                  backgroundColor: C.link,
+                }}
+              />
+            ) : null}
           </Pressable>
         </Animated.View>
       </GestureDetector>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  deleteHint: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  item: {
-    borderBottomWidth: 1,
-  },
-  content: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    gap: Spacing.md,
-  },
-  iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  textBlock: {
-    flex: 1,
-    gap: Spacing.xs,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-  },
-  title: {
-    flex: 1,
-    textTransform: 'none',
-    letterSpacing: 0,
-  },
-  body: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    flexShrink: 0,
-  },
-});
