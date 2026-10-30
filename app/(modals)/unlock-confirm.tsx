@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Button, Divider } from '@/components/ui';
@@ -9,6 +9,9 @@ import { Borders, Radii, Shadows, Sizes, Spacing } from '@/constants/theme';
 import { useUnlockAnnounce } from '@/hooks/queries/use-announces';
 import { useMe } from '@/hooks/queries/use-auth-queries';
 import { useThemeColors } from '@/hooks/use-theme-color';
+
+/** Largest share of the window the sheet takes; the text scrolls beyond (200 % font size). */
+const MAX_HEIGHT = 0.9;
 
 /** Domicoins taken by one unlock. */
 const UNLOCK_COST = 1;
@@ -43,6 +46,7 @@ export default function UnlockConfirmScreen() {
   const C = useThemeColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const { announceId } = useLocalSearchParams<{ announceId: string }>();
   const { data: me } = useMe();
   const unlockAnnounce = useUnlockAnnounce();
@@ -81,8 +85,8 @@ export default function UnlockConfirmScreen() {
           {
             borderTopLeftRadius: Radii.card,
             borderTopRightRadius: Radii.card,
+            maxHeight: (height - insets.top) * MAX_HEIGHT,
             backgroundColor: C.surface,
-            paddingHorizontal: Spacing.lg,
             paddingTop: Spacing.sm,
             paddingBottom: insets.bottom + Spacing.lg,
             gap: Spacing.md,
@@ -101,64 +105,71 @@ export default function UnlockConfirmScreen() {
           }}
         />
 
-        <View
-          importantForAccessibility="no-hide-descendants"
-          style={{
-            alignSelf: 'center',
-            width: Sizes.stateIcon,
-            height: Sizes.stateIcon,
-            borderRadius: Radii.full,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: C.primaryFixed,
-          }}
+        {/* The buttons stay pinned under the scrolling text, always reachable. */}
+        <ScrollView
+          style={{ flexShrink: 1 }}
+          contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: Spacing.md }}
         >
-          <MaterialIcons name="lock-open" size={Sizes.stateIcon / 2} color={C.onPrimaryFixed} />
-        </View>
-
-        <View style={{ gap: Spacing.xs }}>
-          <AppText variant="headline" accessibilityRole="header" style={{ textAlign: 'center' }}>
-            Débloquer cette annonce
-          </AppText>
-          <AppText color="onSurfaceVariant" style={{ textAlign: 'center' }}>
-            {"Vous aurez accès au numéro de téléphone et aux coordonnées de l'annonceur."}
-          </AppText>
-        </View>
-
-        <View
-          style={{
-            borderRadius: Radii.card,
-            borderWidth: Borders.thin,
-            borderColor: C.outlineVariant,
-            backgroundColor: C.surfaceContainerLowest,
-          }}
-        >
-          <CostRow label="Coût" value={domicoins(UNLOCK_COST)} />
-          <Divider />
-          <CostRow label="Votre solde" value={domicoins(userCredits)} warn={showShortage} />
-        </View>
-
-        {showShortage ? (
           <View
-            accessible
-            accessibilityLiveRegion="polite"
+            importantForAccessibility="no-hide-descendants"
             style={{
-              flexDirection: 'row',
+              alignSelf: 'center',
+              width: Sizes.stateIcon,
+              height: Sizes.stateIcon,
+              borderRadius: Radii.full,
               alignItems: 'center',
-              gap: Spacing.sm,
-              padding: Spacing.ms,
-              borderRadius: Radii.control,
-              backgroundColor: C.errorContainer,
+              justifyContent: 'center',
+              backgroundColor: C.primaryFixed,
             }}
           >
-            <MaterialIcons name="warning-amber" size={Sizes.icon} color={C.onErrorContainer} />
-            <AppText variant="caption" color="onErrorContainer" style={{ flex: 1 }}>
-              Domicoins insuffisants. Rechargez votre solde pour débloquer cette annonce.
+            <MaterialIcons name="lock-open" size={Sizes.stateIcon / 2} color={C.onPrimaryFixed} />
+          </View>
+
+          <View style={{ gap: Spacing.xs }}>
+            <AppText variant="headline" accessibilityRole="header" style={{ textAlign: 'center' }}>
+              Débloquer cette annonce
+            </AppText>
+            <AppText color="onSurfaceVariant" style={{ textAlign: 'center' }}>
+              {"Vous aurez accès au numéro de téléphone et aux coordonnées de l'annonceur."}
             </AppText>
           </View>
-        ) : null}
 
-        <View style={{ gap: Spacing.sm }}>
+          <View
+            style={{
+              borderRadius: Radii.card,
+              borderWidth: Borders.thin,
+              borderColor: C.outlineVariant,
+              backgroundColor: C.surfaceContainerLowest,
+            }}
+          >
+            <CostRow label="Coût" value={domicoins(UNLOCK_COST)} />
+            <Divider />
+            <CostRow label="Votre solde" value={domicoins(userCredits)} warn={showShortage} />
+          </View>
+
+          {showShortage ? (
+            <View
+              accessible
+              accessibilityLiveRegion="polite"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: Spacing.sm,
+                padding: Spacing.ms,
+                borderRadius: Radii.control,
+                backgroundColor: C.errorContainer,
+              }}
+            >
+              <MaterialIcons name="warning-amber" size={Sizes.icon} color={C.onErrorContainer} />
+              <AppText variant="caption" color="onErrorContainer" style={{ flex: 1 }}>
+                Domicoins insuffisants. Rechargez votre solde pour débloquer cette annonce.
+              </AppText>
+            </View>
+          ) : null}
+
+        </ScrollView>
+
+        <View style={{ gap: Spacing.sm, paddingHorizontal: Spacing.lg }}>
           <Button
             size="lg"
             fullWidth
