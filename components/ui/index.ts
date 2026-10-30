@@ -2,6 +2,7 @@
 // from '@/components/ui' and uses only these and the theme tokens.
 export { AppText, type AppTextProps } from './app-text';
 export { Avatar, type AvatarProps, type AvatarSize } from './avatar';
+export { Banner, type BannerProps, type BannerTone } from './banner';
 export { Badge, type BadgeProps, type BadgeVariant } from './badge';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './button';
 export { Card, type CardProps } from './card';
