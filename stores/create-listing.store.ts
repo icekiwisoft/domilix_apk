@@ -37,7 +37,7 @@ const DEFAULT_DRAFT: CreateListingDraft = {
   category_id: '',
   medias: [],
   price: '',
-  devise: 'FCFA',
+  devise: 'XAF',
   description: '',
   address: '',
   city: 'Douala',
@@ -60,6 +60,11 @@ const DEFAULT_DRAFT: CreateListingDraft = {
   pool: false,
   smart_tv: false,
 };
+
+/** True while nothing was entered since the last reset (the flow can start fresh silently). */
+export function isDraftEmpty(draft: CreateListingDraft) {
+  return JSON.stringify(draft) === JSON.stringify(DEFAULT_DRAFT);
+}
 
 interface CreateListingStore {
   draft: CreateListingDraft;

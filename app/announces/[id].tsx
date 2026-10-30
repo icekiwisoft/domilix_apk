@@ -5,7 +5,8 @@ import { Linking, Share, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnnouncerCard } from '@/components/announcer/announcer-card';
-import { announcePlace, announceTitle, categoryLabel } from '@/components/listing/announce-card';
+import { announcePlace, announceTitle } from '@/components/listing/announce-card';
+import { categoryLabel } from '@/lib/category-label';
 import { AnnounceDetailSkeleton } from '@/components/listing/announce-detail-skeleton';
 import { ListingGallery } from '@/components/listing/listing-gallery';
 import {
@@ -60,8 +61,8 @@ type Fact = { icon: IconName; value: string; label: string };
 
 function facts(a: Announce): Fact[] {
   const list: (Fact | null)[] = [
-    a.bedrooms != null
-      ? { icon: 'bed', value: String(a.bedrooms), label: a.bedrooms > 1 ? 'Chambres' : 'Chambre' }
+    a.bedroom != null
+      ? { icon: 'bed', value: String(a.bedroom), label: a.bedroom > 1 ? 'Chambres' : 'Chambre' }
       : null,
     a.size != null ? { icon: 'square-foot', value: `${a.size} m²`, label: 'Superficie' } : null,
     a.standing ? { icon: 'star-outline', value: STANDING_LABELS[a.standing] ?? a.standing, label: 'Standing' } : null,
@@ -175,7 +176,7 @@ export default function AnnounceDetailScreen() {
 
   function handleUnlock() {
     if (a.unlocked) {
-      const phone = a.contact_phone ?? a.announcer?.professional_phone ?? a.announcer?.contact;
+      const phone = a.contact_phone ?? a.announcer?.contact;
       if (phone) Linking.openURL(`tel:${phone}`);
     } else if (!accessToken) {
       router.push({

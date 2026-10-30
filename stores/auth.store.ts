@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User } from '@/types/auth';
 import { TokenStorage } from '@/lib/secure-storage';
+import { useCreateListingStore } from '@/stores/create-listing.store';
 
 interface AuthState {
   user: User | null;
@@ -42,12 +43,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   clearAuth: () => {
     set({ user: null, accessToken: null, refreshToken: null });
     TokenStorage.clearTokens();
+    // The listing draft belongs to the account that typed it.
+    useCreateListingStore.getState().resetDraft();
   },
 
   expireSession: () => {
     const hadSession = !!get().accessToken;
     set({ user: null, accessToken: null, refreshToken: null, sessionExpired: hadSession });
     TokenStorage.clearTokens();
+    useCreateListingStore.getState().resetDraft();
   },
 
   acknowledgeSessionExpired: () => set({ sessionExpired: false }),

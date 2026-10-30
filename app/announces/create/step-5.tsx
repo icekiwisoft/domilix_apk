@@ -1,26 +1,44 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Button } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
-import { MediaUploadGrid, MAX_PHOTOS } from '@/components/forms/media-upload-grid';
-import { CreateStepHeader } from '@/components/forms/create-step-header';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCreateListingStore } from '@/stores/create-listing.store';
+import { isAxiosError } from 'axios';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+
+import { ListingRecap } from '@/components/forms/listing-recap';
+import { MAX_PHOTOS, MediaUploadGrid } from '@/components/forms/media-upload-grid';
+import { CREATE_TITLE, createStepTotal, StepFooter, StepIntro } from '@/components/forms/step-layout';
+import { Banner, Button, Screen, StepHeader, useToast } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useCreateAnnounce } from '@/hooks/queries/use-announces';
+import { isNetworkError } from '@/lib/network-error';
+import { useCreateListingStore } from '@/stores/create-listing.store';
+
+/** `message` of a NestJS error response (a string, or the validation list). */
+function serverMessage(error: unknown): string | null {
+  if (!isAxiosError(error)) return null;
+  const message = (error.response?.data as { message?: unknown } | undefined)?.message;
+  if (typeof message === 'string' && message.trim()) return message;
+  if (Array.isArray(message) && message.length) return message.join(' ');
+  return null;
+}
 
 export default function CreateStep5Screen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const router = useRouter();
+  const toast = useToast();
   const { draft, setDraft, resetDraft } = useCreateListingStore();
   const createAnnounce = useCreateAnnounce();
-  const total = draft.type === 'furniture' ? 4 : 5;
+  const total = createStepTotal(draft.type);
 
   const canPublish = draft.medias.length > 0;
+  // 403 from POST /announces: not an announcer, or no publication left in
+  // the packs (backend ensureAnnouncerUser / assertCanPublish). The server's
+  // message is shown as is, with the way to the packs.
+  const [refusal, setRefusal] = useState<string | null>(null);
 
   function handlePublish() {
     if (!canPublish) return;
+    // Field names as read by the backend (AdsService.create) and sent by the
+    // website: bedroom, neighbourhood; devise is an ISO code (XAF). No zip: the
+    // website's form has no postal code field (the backend fills it from the
+    // coordinates when the location is automatic).
     const formData = new FormData();
     formData.append('type', draft.type);
     formData.append('ad_type', draft.ad_type);
@@ -32,8 +50,7 @@ export default function CreateStep5Screen() {
     formData.append('city', draft.city);
     if (draft.state) formData.append('state', draft.state);
     if (draft.country) formData.append('country', draft.country);
-    if (draft.postal_code) formData.append('postal_code', draft.postal_code);
-    if (draft.neighborhood) formData.append('neighborhood', draft.neighborhood);
+    if (draft.neighborhood) formData.append('neighbourhood', draft.neighborhood);
     formData.append('location_source', draft.location_source);
     formData.append('hide_on_map', draft.hide_on_map ? '1' : '0');
     if (draft.longitude != null && draft.latitude != null) {
@@ -41,7 +58,7 @@ export default function CreateStep5Screen() {
       formData.append('localization[1]', String(draft.latitude));
     }
     if (draft.size) formData.append('size', draft.size);
-    if (draft.bedrooms) formData.append('bedrooms', String(draft.bedrooms));
+    formData.append('bedroom', String(draft.bedrooms));
     if (draft.standing) formData.append('standing', draft.standing);
     formData.append('wifi', draft.wifi ? '1' : '0');
     formData.append('air_conditioning', draft.air_conditioning ? '1' : '0');
@@ -56,134 +73,88 @@ export default function CreateStep5Screen() {
       const type = match ? `image/${match[1]}` : 'image/jpeg';
       formData.append('medias[]', { uri, name: filename, type } as unknown as Blob);
     });
+    setRefusal(null);
     createAnnounce.mutate(formData, {
       onSuccess: () => {
         resetDraft();
         router.replace('/profile/my-listings');
       },
+      // The draft is kept: the user can publish again once the cause is fixed.
+      onError: (error) => {
+        const status = isAxiosError(error) ? error.response?.status : undefined;
+        if (status === 401) {
+          router.push({ pathname: '/(auth)/login', params: { redirect: '/announces/create/step-5' } });
+          return;
+        }
+        if (status === 403) {
+          const message = serverMessage(error) ?? "Votre compte ne permet pas de publier cette annonce pour l'instant.";
+          // The toast is seen wherever the page is scrolled; the banner keeps
+          // the message and the link to the packs.
+          toast.show(message, 'error');
+          setRefusal(message);
+          return;
+        }
+        toast.show(
+          isNetworkError(error)
+            ? "Pas de connexion internet. Votre annonce n'a pas été publiée, réessayez."
+            : "L'annonce n'a pas pu être publiée. Réessayez dans un instant.",
+          'error',
+        );
+      },
     });
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      <CreateStepHeader step={total} total={total} onBack={() => router.back()} />
-
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontFamily: Fonts.bold }]}>
-          Photos
-        </Text>
-        <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs, marginBottom: Spacing.lg }]}>
-          Ajoutez des photos de votre bien.
-        </Text>
-
-        {/* Tip — encouraging, not a requirement */}
-        <View style={[styles.tip, { backgroundColor: C.primaryContainer + '1A', borderColor: C.primaryContainer + '33' }]}>
-          <MaterialIcons name="lightbulb-outline" size={18} color={C.primary} />
-          <Text style={[Typography.caption, { color: C.onSurface, flex: 1, lineHeight: 18 }]}>
-            Plus vous ajoutez de photos, plus votre annonce inspire confiance et attire de contacts. Vous pouvez en ajouter jusqu'à {MAX_PHOTOS}.
-          </Text>
-        </View>
-
-        <MediaUploadGrid
-          uris={draft.medias}
-          onChange={(uris) => setDraft({ medias: uris })}
-        />
-
-        {/* Recap */}
-        <View style={[styles.recap, { backgroundColor: C.primaryContainer + '1A', borderColor: C.primaryContainer + '33' }]}>
-          <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: Spacing.sm }]}>
-            Récapitulatif
-          </Text>
-          <View style={styles.recapRow}>
-            <MaterialIcons name={draft.type === 'realestate' ? 'home-work' : 'chair'} size={16} color={C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-              {draft.type === 'realestate' ? 'Immobilier' : 'Mobilier'} · {draft.ad_type === 'location' ? 'Location' : 'Vente'}
-            </Text>
-          </View>
-          <View style={styles.recapRow}>
-            <MaterialIcons name="photo-library" size={16} color={C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-              {draft.medias.length} photo{draft.medias.length > 1 ? 's' : ''}
-            </Text>
-          </View>
-          {draft.price && (
-            <View style={styles.recapRow}>
-              <MaterialIcons name="payments" size={16} color={C.primary} />
-              <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-                {Number(draft.price).toLocaleString('fr-FR')} {draft.devise}
-              </Text>
-            </View>
-          )}
-          {draft.city && (
-            <View style={styles.recapRow}>
-              <MaterialIcons name="place" size={16} color={C.primary} />
-              <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-                {draft.address || '—'}, {draft.city}
-              </Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={[styles.footer, { borderTopColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Button
-          mode="contained"
-          onPress={handlePublish}
-          disabled={!canPublish || createAnnounce.isPending}
+    <Screen
+      header={<StepHeader title={CREATE_TITLE} step={total} total={total} onBack={() => router.back()} />}
+      footer={
+        <StepFooter
+          onPrevious={() => router.back()}
+          label="Publier l'annonce"
+          icon="publish"
+          onNext={handlePublish}
+          disabled={!canPublish}
           loading={createAnnounce.isPending}
-          icon={createAnnounce.isPending ? undefined : 'publish'}
-          contentStyle={styles.publishBtnContent}
-          style={styles.publishBtn}
+          hint="Ajoutez au moins une photo pour publier."
+        />
+      }
+      contentStyle={{ gap: Spacing.lg }}
+    >
+      <StepIntro title="Photos" description="Ajoutez des photos de votre bien." />
+
+      {/* Tip: encouraging, not a requirement */}
+      <Banner icon="lightbulb-outline">
+        {`Plus vous ajoutez de photos, plus votre annonce inspire confiance et attire de contacts. Vous pouvez en ajouter jusqu'à ${MAX_PHOTOS}.`}
+      </Banner>
+
+      {refusal ? (
+        <Banner
+          tone="error"
+          action={
+            <Button
+              variant="text"
+              icon="toll"
+              label="Voir les packs Domicoin"
+              onPress={() => router.push('/profile/subscriptions')}
+              style={{ alignSelf: 'flex-start' }}
+            />
+          }
         >
-          Publier l'annonce
-        </Button>
-      </View>
-    </SafeAreaView>
+          {refusal}
+        </Banner>
+      ) : null}
+
+      <MediaUploadGrid uris={draft.medias} onChange={(uris) => setDraft({ medias: uris })} />
+
+      <ListingRecap
+        type={draft.type}
+        adType={draft.ad_type}
+        photos={`${draft.medias.length} photo${draft.medias.length > 1 ? 's' : ''}`}
+        price={draft.price}
+        devise={draft.devise}
+        address={draft.address}
+        city={draft.city}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  scroll: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.lg,
-  },
-  tip: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    marginBottom: Spacing.lg,
-  },
-  recap: {
-    padding: Spacing.lg,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    gap: Spacing.xs,
-  },
-  recapRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  footer: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderTopWidth: 1,
-  },
-  publishBtn: {
-    borderRadius: Radius.md,
-  },
-  publishBtnContent: {
-    height: 52,
-    flexDirection: 'row-reverse',
-  },
-});

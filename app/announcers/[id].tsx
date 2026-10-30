@@ -120,7 +120,7 @@ export default function AnnouncerProfileScreen() {
     ? listings.filter((a) => a.description?.toLowerCase().includes(query) || a.city?.toLowerCase().includes(query))
     : listings;
 
-  const displayName = announcer.company_name ?? announcer.name;
+  const displayName = announcer.name;
   const memberYear = announcer.creation_date ? new Date(announcer.creation_date).getFullYear() : null;
 
   // Two columns on the page gutter, one at large font sizes.

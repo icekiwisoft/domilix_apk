@@ -22,6 +22,8 @@ type ScreenKeyboard = {
   targetRef: RefObject<View | null>;
   /** Fields call it on focus: moving between fields fires no keyboard event. */
   revealOnFocus: () => void;
+  /** Scrolls a node shown under the focused field (suggestions) above the keyboard. */
+  revealNode: (node: View | null) => void;
 };
 
 const ScreenKeyboardContext = createContext<ScreenKeyboard | null>(null);
@@ -124,7 +126,7 @@ export function Screen({
   const keyboardShown = useKeyboardShown(keyboard && !!footer);
   const bottom = bottomInset ? insets.bottom : Sizes.tabBarOverhang;
   const hero = heroHeight != null && !header;
-  const { scrollRef, targetRef, onScroll: trackScroll, onLayout: revealOnLayout, revealOnFocus, pastBanner } =
+  const { scrollRef, targetRef, footerHeight, onScroll: trackScroll, onLayout: revealOnLayout, revealOnFocus, revealNode, pastBanner } =
     useKeyboardReveal(hero ? heroHeight : 0);
   // Without a hero, the band is always there (the content starts under it).
   const showBand = !header && (!hero || pastBanner);
@@ -172,7 +174,7 @@ export function Screen({
   );
 
   return (
-    <ScreenKeyboardContext.Provider value={keyboard ? { targetRef, revealOnFocus } : null}>
+    <ScreenKeyboardContext.Provider value={keyboard ? { targetRef, revealOnFocus, revealNode } : null}>
       <KeyboardAvoidingView
         enabled={keyboard}
         // 'padding' on Android too: with edge-to-edge the window is not resized (lot 2).
@@ -182,7 +184,14 @@ export function Screen({
         {header ? <View style={{ paddingTop: insets.top, backgroundColor: bg }}>{header}</View> : null}
         {body}
         {footer ? (
-          <View style={{ paddingBottom: keyboardShown ? 0 : bottom, backgroundColor: bg }}>{footer}</View>
+          <View
+            onLayout={(e) => {
+              footerHeight.current = e.nativeEvent.layout.height;
+            }}
+            style={{ paddingBottom: keyboardShown ? 0 : bottom, backgroundColor: bg }}
+          >
+            {footer}
+          </View>
         ) : null}
         {showBand ? (
           <View

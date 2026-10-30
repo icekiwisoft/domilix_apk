@@ -54,6 +54,18 @@ avant de commencer.** Copie de référence : vault `30_Resources/Leçons - équi
    `components/ui/**`. S'il manque une valeur, on l'ajoute au thème, pas à l'écran. *Constat
    (2026-10-29) : 21 rayons, 14 tailles de police et plus d'une centaine d'espacements différents,
    un bouton maison par écran : chaque page avait sa propre allure.*
+11. **Un parcours qui écrit (publier, modifier, profil) se teste contre un backend local, jamais en
+   lisant seulement le code.** Copie du backend dans le scratchpad (le repo reste intact), MySQL et S3
+   local en conteneurs dédiés, valeurs factices et envois externes coupés, APK pointé sur
+   `http://10.0.2.2:3000` avec `usesCleartextTraffic` temporaire, puis build de production réinstallé.
+   Comparer chaque champ envoyé ET chaque champ lu au formulaire avec la vraie réponse de l'API
+   (`curl` avant/après, diff complet). *Constat (2026-10-30, UI-12) : la modification d'une annonce
+   effaçait chambres et catégorie (`bedrooms`/`category_id` lus au lieu de `bedroom`/`category.id`),
+   la devise `FCFA` était enregistrée en XOF, et le PUT multipart n'était jamais lu par le serveur :
+   tous ces défauts existaient avant le lot et aucune revue de code ne les avait vus.*
+12. **L'utilisateur se sert aussi de l'émulateur avec son compte de production.** Avant toute QA,
+   regarder si une session est ouverte ; si ce n'est pas le compte de test, ne pas s'en servir et le
+   signaler.
 
 ## Commun à tous les rôles
 

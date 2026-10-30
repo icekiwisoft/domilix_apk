@@ -1,35 +1,26 @@
-import { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { Button, TextInput } from 'react-native-paper';
 import * as Location from 'expo-location';
-import { AddressAutocomplete } from '@/components/forms/address-autocomplete';
-import { CreateStepHeader } from '@/components/forms/create-step-header';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCreateListingStore } from '@/stores/create-listing.store';
-import { GeoapifyError, GeoapifyService, type GeoapifyAddressSuggestion } from '@/services/geoapify.service';
+import { useRouter } from 'expo-router';
+import { useRef, useState } from 'react';
+import { Linking, View, type TextInput } from 'react-native';
 
-function SectionLabel({ children }: { children: string }) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  return (
-    <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 1.12, marginBottom: Spacing.sm }]}>
-      {children}
-    </Text>
-  );
-}
+import { AddressAutocomplete } from '@/components/forms/address-autocomplete';
+import { CREATE_TITLE, createStepTotal, StepFooter, StepIntro } from '@/components/forms/step-layout';
+import { AppText, Banner, Button, Divider, Field, Screen, StepHeader } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
+import { GeoapifyError, GeoapifyService, type GeoapifyAddressSuggestion } from '@/services/geoapify.service';
+import { useCreateListingStore } from '@/stores/create-listing.store';
 
 export default function CreateStep3Screen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const router = useRouter();
   const { draft, setDraft } = useCreateListingStore();
-  const total = draft.type === 'furniture' ? 4 : 5;
+  const total = createStepTotal(draft.type);
   const [locating, setLocating] = useState(false);
   // Shown under the GPS button; `openSettings` when the permission can only be
   // granted from the system settings (Android "Ne plus demander").
   const [locationError, setLocationError] = useState<{ message: string; openSettings?: boolean } | null>(null);
+  const cityRef = useRef<TextInput>(null);
+  const stateRef = useRef<TextInput>(null);
+  const descriptionRef = useRef<TextInput>(null);
 
   const canContinue = !!draft.address && !!draft.city && !!draft.description;
 
@@ -110,190 +101,124 @@ export default function CreateStep3Screen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      <CreateStepHeader step={3} total={total} onBack={() => router.back()} />
+    <Screen
+      keyboard
+      header={<StepHeader title={CREATE_TITLE} step={3} total={total} onBack={() => router.back()} />}
+      footer={
+        <StepFooter
+          onPrevious={() => router.back()}
+          onNext={handleNext}
+          disabled={!canContinue}
+          hint="Indiquez l'adresse, la ville et une description pour continuer."
+        />
+      }
+      contentStyle={{ gap: Spacing.lg }}
+    >
+      <StepIntro title="Localisation" description="Utilisez votre position ou saisissez l'adresse de votre bien." />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs, marginBottom: Spacing.xl }]}>
-          {"Utilisez votre position ou saisissez l'adresse de votre bien."}
-        </Text>
-
-        {/* GPS button */}
+      <View style={{ gap: Spacing.sm }}>
         <Button
-          mode="outlined"
-          textColor={C.link}
-          icon={locating ? undefined : 'crosshairs-gps'}
+          variant="secondary"
+          size="lg"
+          icon="my-location"
+          label={locating ? 'Localisation en cours…' : 'Utiliser ma position actuelle'}
           loading={locating}
           onPress={useMyLocation}
-          disabled={locating}
-        >
-          {locating ? 'Localisation en cours…' : 'Utiliser ma position actuelle'}
-        </Button>
-
-        {locationError && (
-          <View
-            style={[styles.locationError, { backgroundColor: C.errorContainer }]}
-            accessibilityLiveRegion="polite"
+          fullWidth
+        />
+        {locationError ? (
+          <Banner
+            tone="error"
+            action={
+              locationError.openSettings ? (
+                <Button
+                  variant="text"
+                  icon="settings"
+                  label="Ouvrir les réglages"
+                  onPress={() => Linking.openSettings()}
+                  style={{ alignSelf: 'flex-start' }}
+                />
+              ) : undefined
+            }
           >
-            <Text style={[Typography.bodyMd, { color: C.onErrorContainer }]}>{locationError.message}</Text>
-            {locationError.openSettings && (
-              <Button
-                mode="text"
-                icon="cog-outline"
-                textColor={C.onErrorContainer}
-                onPress={() => Linking.openSettings()}
-                style={styles.settingsBtn}
-                contentStyle={styles.settingsBtnContent}
-              >
-                Ouvrir les réglages
-              </Button>
-            )}
-          </View>
-        )}
+            {locationError.message}
+          </Banner>
+        ) : null}
+      </View>
 
-        <View style={[styles.dividerRow, { marginVertical: Spacing.lg }]}>
-          <View style={[styles.dividerLine, { backgroundColor: C.outlineVariant }]} />
-          <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginHorizontal: Spacing.sm }]}>ou saisir manuellement</Text>
-          <View style={[styles.dividerLine, { backgroundColor: C.outlineVariant }]} />
-        </View>
+      <View
+        importantForAccessibility="no-hide-descendants"
+        accessibilityElementsHidden
+        style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}
+      >
+        <Divider style={{ flex: 1 }} />
+        <AppText variant="caption" color="onSurfaceVariant">
+          ou saisir manuellement
+        </AppText>
+        <Divider style={{ flex: 1 }} />
+      </View>
 
-        {/* Address */}
-        <View style={styles.section}>
-          <SectionLabel>Adresse</SectionLabel>
-          <AddressAutocomplete
-            value={draft.address}
-            onChange={(v) => {
-              // Typing the address manually answers the GPS error banner.
-              setLocationError(null);
-              setDraft({
-                address: v,
-                longitude: undefined,
-                latitude: undefined,
-                location_source: 'manual',
-                hide_on_map: true,
-              });
-            }}
-            onSelect={applyLocation}
-          />
-          {draft.latitude != null && draft.longitude != null && (
-            <View style={[styles.locationStatus, { backgroundColor: C.primaryContainer + '1A', borderColor: C.primaryContainer + '33' }]}>
-              <Text style={[Typography.caption, { color: C.onSurface }]}>Position précise enregistrée pour cette annonce.</Text>
-            </View>
-          )}
-        </View>
-
-        {/* City */}
-        <View style={[styles.section, { marginTop: Spacing.lg }]}>
-          <SectionLabel>Ville</SectionLabel>
-          <AddressAutocomplete
-            kind="city"
-            value={draft.city}
-            onChange={(city) => setDraft({
-              city,
+      <View style={{ gap: Spacing.sm }}>
+        <AddressAutocomplete
+          value={draft.address}
+          onChange={(v) => {
+            // Typing the address manually answers the GPS error banner.
+            setLocationError(null);
+            setDraft({
+              address: v,
               longitude: undefined,
               latitude: undefined,
               location_source: 'manual',
               hide_on_map: true,
-            })}
-            onSelect={applyCity}
-          />
-        </View>
-
-        {/* State/Region */}
-        <View style={[styles.section, { marginTop: Spacing.lg }]}>
-          <TextInput
-            mode="outlined"
-            activeOutlineColor={C.link}
-            label="Région / État — optionnel"
-            value={draft.state}
-            onChangeText={(t) => setDraft({ state: t })}
-          />
-        </View>
-
-        {/* Description */}
-        <View style={[styles.section, { marginTop: Spacing.lg }]}>
-          <TextInput
-            mode="outlined"
-            activeOutlineColor={C.link}
-            label="Description"
-            value={draft.description}
-            onChangeText={(t) => setDraft({ description: t })}
-            placeholder="Décrivez votre bien : état, atouts, équipements..."
-            multiline
-            numberOfLines={5}
-            style={styles.textArea}
-          />
-        </View>
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={[styles.footer, { borderTopColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Button
-          mode="contained"
-          onPress={handleNext}
-          disabled={!canContinue}
-          icon="arrow-right"
-          contentStyle={styles.nextBtnContent}
-          style={styles.nextBtn}
-        >
-          Suivant
-        </Button>
+            });
+          }}
+          onSelect={applyLocation}
+          onSubmitEditing={() => cityRef.current?.focus()}
+        />
+        {draft.latitude != null && draft.longitude != null ? (
+          <Banner tone="success" icon="my-location">
+            Position précise enregistrée pour cette annonce.
+          </Banner>
+        ) : null}
       </View>
-    </SafeAreaView>
+
+      <AddressAutocomplete
+        ref={cityRef}
+        kind="city"
+        value={draft.city}
+        onChange={(city) =>
+          setDraft({
+            city,
+            longitude: undefined,
+            latitude: undefined,
+            location_source: 'manual',
+            hide_on_map: true,
+          })
+        }
+        onSelect={applyCity}
+        onSubmitEditing={() => stateRef.current?.focus()}
+      />
+
+      <Field
+        ref={stateRef}
+        label="Région"
+        labelHint="(facultatif)"
+        value={draft.state}
+        onChangeText={(t) => setDraft({ state: t })}
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => descriptionRef.current?.focus()}
+      />
+
+      <Field
+        ref={descriptionRef}
+        label="Description"
+        value={draft.description}
+        onChangeText={(t) => setDraft({ description: t })}
+        placeholder="Décrivez votre bien : état, atouts, équipements..."
+        multiline
+        numberOfLines={5}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  scroll: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xxl,
-  },
-  section: {},
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  textArea: {
-    minHeight: 100,
-  },
-  locationError: {
-    marginTop: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: Radius.sm,
-  },
-  settingsBtn: {
-    alignSelf: 'flex-start',
-    marginTop: Spacing.xs,
-  },
-  settingsBtnContent: {
-    minHeight: 48,
-  },
-  locationStatus: {
-    marginTop: Spacing.sm,
-    padding: Spacing.sm,
-    borderWidth: 1,
-    borderRadius: Radius.sm,
-  },
-  footer: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderTopWidth: 1,
-  },
-  nextBtn: {
-    borderRadius: Radius.md,
-  },
-  nextBtnContent: {
-    height: 52,
-    flexDirection: 'row-reverse',
-  },
-});

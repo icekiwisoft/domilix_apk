@@ -54,9 +54,6 @@ const LEGACY_UI = [
   'components/ui/login-gate.tsx',
   'components/ui/otp-input.tsx',
   'components/ui/plan-card.tsx',
-  // Still used by my-listings with a Paper button; replaced by EmptyState from
-  // states.tsx when that screen is migrated (step 4).
-  'components/ui/empty-state.tsx',
 ];
 
 module.exports = defineConfig([
