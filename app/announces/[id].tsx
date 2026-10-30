@@ -21,7 +21,7 @@ import {
   type IconName,
 } from '@/components/ui';
 import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
-import { useAnnounce, useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
+import { useAnnounce, useToggleLike } from '@/hooks/queries/use-announces';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { useAuthStore } from '@/stores/auth.store';
 import type { Announce, Standing } from '@/types/announce';
@@ -139,9 +139,6 @@ export default function AnnounceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const { data: announce, isLoading, isError, isFetching, refetch } = useAnnounce(id ?? '');
-  const { data: announcerListingsData } = useAnnounces(
-    announce?.announcer?.id ? { AnnouncerId: announce.announcer.id } : {}
-  );
   const toggleLike = useToggleLike();
   const accessToken = useAuthStore((s) => s.accessToken);
   const [expanded, setExpanded] = useState(false);
@@ -171,7 +168,6 @@ export default function AnnounceDetailScreen() {
   const a = announce;
   const rent = a.ad_type === 'location';
   const galleryHeight = insets.top + Sizes.detailGallery;
-  const announcerListingsCount = (announcerListingsData?.data ?? []).filter((x) => x.id !== a.id).length;
   const activeAmenities = a.type === 'realestate' ? AMENITIES.filter((m) => a[m.key]) : [];
   const factList = facts(a);
   const longDescription = a.description.length > LONG_DESCRIPTION;
@@ -368,16 +364,11 @@ export default function AnnounceDetailScreen() {
         </View>
 
         {/* Announcer */}
-        {a.announcer ? (
-          <View style={{ gap: Spacing.ms }}>
-            <SectionTitle>{"L'annonceur"}</SectionTitle>
-            <AnnouncerCard
-              announcer={a.announcer}
-              announcesCount={announcerListingsCount}
-              onPress={() => router.push(`/announcers/${a.announcer.id}`)}
-            />
-          </View>
-        ) : null}
+        {/* Anonymised by the backend on every listing, as on the website: no profile link (QA-01). */}
+        <View style={{ gap: Spacing.ms }}>
+          <SectionTitle>{"L'annonceur"}</SectionTitle>
+          <AnnouncerCard verified={!!a.announcer?.verified} />
+        </View>
       </View>
     </Screen>
   );

@@ -1,45 +1,59 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { View } from 'react-native';
 
-import { AppText, Avatar, Card } from '@/components/ui';
-import { Sizes, Spacing } from '@/constants/theme';
+import { AppText, Card } from '@/components/ui';
+import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
-import type { Announcer } from '@/types/announcer';
+
+const FAVICON = require('@/assets/images/favicon.png');
 
 interface AnnouncerCardProps {
-  announcer: Announcer;
-  /** Other listings of the announcer; the line is left out when unknown or 0. */
-  announcesCount?: number;
-  onPress?: () => void;
+  /** `announcer.verified`, the only announcer field the API returns on a listing. */
+  verified?: boolean;
 }
 
-/** Announcer of a listing: avatar, name, verified status and listing count, opens the profile. */
-export function AnnouncerCard({ announcer, announcesCount, onPress }: AnnouncerCardProps) {
+/**
+ * Announcer of a listing, as on the website (domilix.com Ad.tsx, announcer
+ * mini-card). The backend anonymises the announcer on every listing
+ * (`serializePublicAnnouncer` returns only `{ verified }`), so there is no
+ * name, profile link or listing count: the Domilix logo, "Annonce proposée
+ * sur Domilix" and, when verified, "Identité vérifiée". One TalkBack item.
+ */
+export function AnnouncerCard({ verified = false }: AnnouncerCardProps) {
   const C = useThemeColors();
-  const displayName = announcer.company_name ?? announcer.name ?? 'Annonceur';
-  const count =
-    announcesCount && announcesCount > 0 ? `${announcesCount} annonce${announcesCount > 1 ? 's' : ''}` : null;
-  const subtitle = [announcer.verified ? 'Annonceur vérifié' : 'Annonceur', count].filter(Boolean).join(' · ');
-
+  const title = 'Annonce proposée sur Domilix';
   return (
     <Card
-      onPress={onPress}
-      accessibilityLabel={`${displayName}, ${subtitle}. Voir le profil`}
+      accessible
+      accessibilityLabel={verified ? `${title}, identité vérifiée` : title}
       style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.ms, padding: Spacing.ms }}
     >
-      <Avatar name={displayName} uri={announcer.avatar} />
-      <View style={{ flex: 1, gap: Spacing.xxs }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, flexWrap: 'wrap' }}>
-          <AppText variant="bodyStrong" style={{ flexShrink: 1 }}>
-            {displayName}
-          </AppText>
-          {announcer.verified ? <MaterialIcons name="verified" size={Sizes.iconSm} color={C.link} /> : null}
-        </View>
-        <AppText variant="caption" color="onSurfaceVariant">
-          {subtitle}
-        </AppText>
+      <View
+        style={{
+          width: Sizes.avatarMd,
+          height: Sizes.avatarMd,
+          borderRadius: Radii.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: Borders.thin,
+          borderColor: C.outlineVariant,
+          backgroundColor: C.surfaceContainerLowest,
+        }}
+      >
+        <Image source={FAVICON} style={{ width: Sizes.avatarSm, height: Sizes.avatarSm }} contentFit="contain" />
       </View>
-      <MaterialIcons name="chevron-right" size={Sizes.iconLg} color={C.onSurfaceVariant} />
+      <View style={{ flex: 1, gap: Spacing.xxs }}>
+        <AppText variant="bodyStrong">{title}</AppText>
+        {verified ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
+            <MaterialIcons name="check-circle" size={Sizes.iconSm} color={C.success} />
+            <AppText variant="caption" color="success">
+              Identité vérifiée
+            </AppText>
+          </View>
+        ) : null}
+      </View>
     </Card>
   );
 }
