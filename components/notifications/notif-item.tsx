@@ -65,6 +65,12 @@ export function NotifItem({ notification, onPress, onDelete }: NotifItemProps) {
   const C = useThemeColors();
   const tone = toneOf(notification.type);
   const isUnread = notification.read_at === null;
+  const when = formatWhen(notification.created_at);
+  // Only the parts the API sent: a missing body was read as "undefined" (QA-11).
+  const spoken = [isUnread ? 'Non lue' : null, notification.title, notification.body, when]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join('. ');
 
   const translateX = useSharedValue(0);
   const deleteOpacity = useSharedValue(0);
@@ -127,7 +133,7 @@ export function NotifItem({ notification, onPress, onDelete }: NotifItemProps) {
             onPress={onPress}
             // A read row has nothing to press: plain text for TalkBack, not a button.
             accessibilityRole={onPress ? 'button' : 'text'}
-            accessibilityLabel={`${isUnread ? 'Non lue. ' : ''}${notification.title}. ${notification.body}. ${formatWhen(notification.created_at)}`}
+            accessibilityLabel={spoken}
             accessibilityHint={isUnread ? 'Marque la notification comme lue' : undefined}
             accessibilityActions={onDelete ? [{ name: 'delete', label: 'Supprimer' }] : undefined}
             onAccessibilityAction={(event) => {
@@ -163,11 +169,13 @@ export function NotifItem({ notification, onPress, onDelete }: NotifItemProps) {
               <AppText variant={isUnread ? 'bodyStrong' : 'body'}>
                 {notification.title}
               </AppText>
-              <AppText variant="bodySm" color="onSurfaceVariant" numberOfLines={3}>
-                {notification.body}
-              </AppText>
+              {notification.body ? (
+                <AppText variant="bodySm" color="onSurfaceVariant" numberOfLines={3}>
+                  {notification.body}
+                </AppText>
+              ) : null}
               <AppText variant="caption" color="onSurfaceVariant">
-                {formatWhen(notification.created_at)}
+                {when}
               </AppText>
             </View>
 
