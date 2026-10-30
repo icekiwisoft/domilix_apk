@@ -39,9 +39,18 @@ const TABS = [
   { value: 'about' as const, label: 'À propos' },
 ];
 
-function Stat({ value, label }: { value: number; label: string }) {
+/** Stat of the identity card; `stacked`: one row per stat, value then label (large font sizes). */
+function Stat({ value, label, stacked }: { value: number; label: string; stacked: boolean }) {
   return (
-    <View accessible accessibilityLabel={`${value} ${label}`} style={{ flex: 1, alignItems: 'center' }}>
+    <View
+      accessible
+      accessibilityLabel={`${value} ${label}`}
+      style={
+        stacked
+          ? { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', gap: Spacing.sm }
+          : { flex: 1, alignItems: 'center' }
+      }
+    >
       <AppText variant="headline">{value}</AppText>
       <AppText variant="caption" color="onSurfaceVariant" style={{ textAlign: 'center' }}>
         {label}
@@ -116,6 +125,7 @@ export default function AnnouncerProfileScreen() {
 
   // Two columns on the page gutter, one at large font sizes.
   const columns = fontScale >= ONE_COLUMN_SCALE ? 1 : 2;
+  const stackedStats = fontScale >= ONE_COLUMN_SCALE;
   const tileWidth = (width - Spacing.marginMobile * 2 - Spacing.ms * (columns - 1)) / columns;
 
   function handleRefresh() {
@@ -328,10 +338,18 @@ export default function AnnouncerProfileScreen() {
           </AppText>
         ) : null}
         <Divider style={{ marginTop: Spacing.sm }} />
-        <View style={{ flexDirection: 'row', alignSelf: 'stretch', paddingTop: Spacing.xs }}>
-          <Stat value={announcer.furnitures ?? 0} label="Meubles" />
-          <Stat value={announcer.houses ?? 0} label="Maisons" />
-          <Stat value={totalListings} label="Annonces" />
+        {/* Three columns cut "Annonces" mid-word at 200 %: one row per stat from 130 % (QA-03). */}
+        <View
+          style={{
+            flexDirection: stackedStats ? 'column' : 'row',
+            alignSelf: 'stretch',
+            gap: stackedStats ? Spacing.xs : 0,
+            paddingTop: Spacing.xs,
+          }}
+        >
+          <Stat value={announcer.furnitures ?? 0} label="Meubles" stacked={stackedStats} />
+          <Stat value={announcer.houses ?? 0} label="Maisons" stacked={stackedStats} />
+          <Stat value={totalListings} label="Annonces" stacked={stackedStats} />
         </View>
       </Card>
 
