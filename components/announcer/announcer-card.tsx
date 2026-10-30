@@ -1,117 +1,45 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { View } from 'react-native';
+
+import { AppText, Avatar, Card } from '@/components/ui';
+import { Sizes, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import type { Announcer } from '@/types/announcer';
 
 interface AnnouncerCardProps {
   announcer: Announcer;
+  /** Other listings of the announcer; the line is left out when unknown or 0. */
   announcesCount?: number;
   onPress?: () => void;
 }
 
+/** Announcer of a listing: avatar, name, verified status and listing count, opens the profile. */
 export function AnnouncerCard({ announcer, announcesCount, onPress }: AnnouncerCardProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-
-  const displayName = announcer.company_name ?? announcer.name;
+  const C = useThemeColors();
+  const displayName = announcer.company_name ?? announcer.name ?? 'Annonceur';
+  const count =
+    announcesCount && announcesCount > 0 ? `${announcesCount} annonce${announcesCount > 1 ? 's' : ''}` : null;
+  const subtitle = [announcer.verified ? 'Annonceur vérifié' : 'Annonceur', count].filter(Boolean).join(' · ');
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Voir le profil de ${displayName}`}
+    <Card
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        {
-          backgroundColor: C.surfaceContainer,
-          borderColor: C.outlineVariant + '4D',
-          opacity: pressed ? 0.95 : 1,
-        },
-      ]}
+      accessibilityLabel={`${displayName}, ${subtitle}. Voir le profil`}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.ms, padding: Spacing.ms }}
     >
-      {/* Avatar */}
-      <View style={[styles.avatarWrapper, { borderColor: C.surface }]}>
-        {announcer.avatar ? (
-          <Image source={{ uri: announcer.avatar }} style={styles.avatar} resizeMode="cover" />
-        ) : (
-          <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: C.surfaceVariant }]}>
-            <MaterialIcons name="person" size={32} color={C.onSurfaceVariant} />
-          </View>
-        )}
-      </View>
-
-      {/* Details */}
-      <View style={styles.details}>
-        <Text style={[Typography.bodyLg, styles.name, { color: C.onSurface }]} numberOfLines={1}>
-          {displayName}
-        </Text>
-        <View style={styles.verifiedRow}>
-          <MaterialIcons name="verified" size={16} color={C.secondary} />
-          <Text style={[Typography.bodyMd, { color: C.secondary, fontSize: 13 }]}>Agence certifiée</Text>
+      <Avatar name={displayName} uri={announcer.avatar} />
+      <View style={{ flex: 1, gap: Spacing.xxs }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, flexWrap: 'wrap' }}>
+          <AppText variant="bodyStrong" style={{ flexShrink: 1 }}>
+            {displayName}
+          </AppText>
+          {announcer.verified ? <MaterialIcons name="verified" size={Sizes.iconSm} color={C.link} /> : null}
         </View>
-        {announcesCount != null && (
-          <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 2 }]}>
-            {announcesCount} annonces actives
-          </Text>
-        )}
+        <AppText variant="caption" color="onSurfaceVariant">
+          {subtitle}
+        </AppText>
       </View>
-
-      {/* Chevron */}
-      <View style={[styles.chevronCircle, { borderColor: C.outlineVariant + '80' }]}>
-        <MaterialIcons name="chevron-right" size={20} color={C.onSurfaceVariant} />
-      </View>
-    </Pressable>
+      <MaterialIcons name="chevron-right" size={Sizes.iconLg} color={C.onSurfaceVariant} />
+    </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    borderRadius: Radius.md,
-    padding: Spacing.lg,
-    borderWidth: 1,
-    ...Shadows.card,
-  },
-  avatarWrapper: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 2,
-    overflow: 'hidden',
-    flexShrink: 0,
-  },
-  avatar: {
-    width: '100%',
-    height: '100%',
-  },
-  avatarFallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  details: {
-    flex: 1,
-  },
-  name: {
-    fontFamily: Fonts.bold,
-    fontSize: 18,
-    lineHeight: 22,
-  },
-  verifiedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  chevronCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-});
