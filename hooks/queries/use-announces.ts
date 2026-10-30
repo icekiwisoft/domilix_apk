@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { AnnouncesService } from '@/services/announces.service';
 import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
 
@@ -18,6 +18,16 @@ export function useAnnounces(filters: AnnounceFilters = {}, options?: { enabled?
     queryKey: ['announces', filters],
     queryFn: () => AnnouncesService.list(filters),
     enabled: options?.enabled,
+  });
+}
+
+/** Several listing queries at once (home rows), each cached like useAnnounces. */
+export function useAnnouncesList(filtersList: AnnounceFilters[]) {
+  return useQueries({
+    queries: filtersList.map((filters) => ({
+      queryKey: ['announces', filters],
+      queryFn: () => AnnouncesService.list(filters),
+    })),
   });
 }
 
