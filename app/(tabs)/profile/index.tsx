@@ -14,6 +14,7 @@ import {
   ListRow,
   LoadingState,
   LoginGate,
+  OfflineState,
   Screen,
   Section,
 } from '@/components/ui';
@@ -23,6 +24,7 @@ import { useLogout, useMe } from '@/hooks/queries/use-auth-queries';
 import { useSubscriptions } from '@/hooks/queries/use-subscriptions';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { isAnnouncerToken } from '@/lib/decode-token';
+import { isNetworkError } from '@/lib/network-error';
 import { isPackUsable } from '@/lib/subscription-helpers';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -75,7 +77,7 @@ function BalanceCard({ credits, onRecharge }: { credits: number; onRecharge: () 
 export default function ProfileScreen() {
   const router = useRouter();
   const accessToken = useAuthStore((s) => s.accessToken);
-  const { data: user, isLoading, isError, refetch } = useMe();
+  const { data: user, isLoading, isError, error, refetch } = useMe();
   const { data: announcer } = useAnnouncer(user?.announcer ?? '');
   const logout = useLogout();
   const { data: subs = [] } = useSubscriptions();
@@ -103,7 +105,9 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <Screen bottomInset={false}>
-        {isError ? (
+        {isError && isNetworkError(error) ? (
+          <OfflineState onRetry={() => refetch()} />
+        ) : isError ? (
           <ErrorState title="Impossible de charger votre profil" onRetry={() => refetch()} />
         ) : isLoading ? (
           <LoadingState label="Chargement du profil…" media={false} count={3} />
@@ -121,14 +125,16 @@ export default function ProfileScreen() {
 
   const contact = user.email ?? user.phone_number ?? '';
   const identity = (
-    <View style={{ flex: stacked ? undefined : 1, gap: Spacing.xxs }}>
+    // minWidth 0 / flexShrink: the column never grows past the page gutter, so the
+    // ellipsized e-mail ends at the same margin as the other lines (N-2).
+    <View style={{ flex: stacked ? undefined : 1, alignSelf: 'stretch', minWidth: 0, flexShrink: 1, gap: Spacing.xxs }}>
       <AppText variant="title" accessibilityRole="header">
         {user.name}
       </AppText>
       {contact ? (
         // An e-mail has no break points: one line with an ellipsis rather
         // than a cut in the middle of a word (QA-12); TalkBack reads it whole.
-        <AppText color="onSurfaceVariant" numberOfLines={1} ellipsizeMode="middle">
+        <AppText color="onSurfaceVariant" numberOfLines={1} ellipsizeMode="middle" style={{ flexShrink: 1 }}>
           {contact}
         </AppText>
       ) : null}
