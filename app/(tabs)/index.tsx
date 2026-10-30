@@ -289,8 +289,9 @@ export default function HomeScreen() {
     router.push('/(tabs)/explore');
   }
 
-  function handleCity(city: string) {
-    useFilterStore.getState().replaceFilters({ city });
+  function handleCity(chip: CityChip) {
+    // Filter on the normalised name, show the backend's accented one ("Yaoundé").
+    useFilterStore.getState().replaceFilters({ city: chip.value, cityLabel: chip.label });
     router.push('/(tabs)/explore');
   }
 
@@ -378,7 +379,7 @@ export default function HomeScreen() {
                 accessibilityRole="button"
                 accessibilityState={{}}
                 accessibilityLabel={`Annonces à ${c.label}`}
-                onPress={() => handleCity(c.value)}
+                onPress={() => handleCity(c)}
               />
             ))}
           </ScrollView>

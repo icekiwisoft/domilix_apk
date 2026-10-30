@@ -109,7 +109,7 @@ export default function ExploreScreen() {
         ListHeaderComponent={
           !isLoading && !isError && announces.length > 0 ? (
             <View style={{ paddingBottom: Spacing.xs }}>
-              <ResultsCount count={total} query={search.trim() || undefined} city={filters.city ? cityLabel(filters.city) : undefined} />
+              <ResultsCount count={total} query={search.trim() || undefined} city={cityLabel(filters)} />
             </View>
           ) : null
         }

@@ -28,10 +28,12 @@ const fcfa = (v: number) => `${formatAmount(v)} FCFA`;
 
 /**
  * Display name of a city filter. The home city chips filter on the API's
- * `city_normalized` ("yaounde"): capitalised for the chip and the result count.
+ * `city_normalized` ("yaounde") and store the backend's own name ("Yaoundé")
+ * as `cityLabel`; without it, the normalised name is capitalised.
  */
-export function cityLabel(city: string) {
-  return city.replace(/(^|[\s-])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
+export function cityLabel(f: Pick<ExploreFilters, 'city' | 'cityLabel'>): string | undefined {
+  if (!f.city) return undefined;
+  return f.cityLabel || f.city.replace(/(^|[\s-])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
 }
 
 /**
@@ -47,7 +49,7 @@ export function activeFilters(f: ExploreFilters): ActiveFilter[] {
   if (f.ad_type === 'all') out.push({ key: 'ad_type', label: 'À louer et à vendre', remove: () => ({ ad_type: undefined }) });
   if (f.period === 'night') out.push({ key: 'period', label: 'À la nuit', remove: () => ({ period: undefined }) });
   else if (f.period) out.push({ key: 'period', label: `Par ${periodLabel(f.period) ?? f.period}`, remove: () => ({ period: undefined }) });
-  if (f.city) out.push({ key: 'city', label: cityLabel(f.city), remove: () => ({ city: undefined }) });
+  if (f.city) out.push({ key: 'city', label: cityLabel(f) ?? f.city, remove: () => ({ city: undefined, cityLabel: undefined }) });
   if (f.budget_min) out.push({ key: 'budget_min', label: `À partir de ${fcfa(f.budget_min)}`, remove: () => ({ budget_min: undefined }) });
   if (f.budget_max) out.push({ key: 'budget_max', label: `Jusqu’à ${fcfa(f.budget_max)}`, remove: () => ({ budget_max: undefined }) });
   if (f.bedroom_min) {

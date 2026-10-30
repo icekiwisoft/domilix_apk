@@ -6,7 +6,14 @@ import type { AdType, AnnounceFilters } from '@/types/announce';
  * À louer); `ad_type: 'all'` lists rentals and sales together (home rows
  * "Nos recommandations" and "Dernières annonces", UI-11).
  */
-export type ExploreFilters = Omit<AnnounceFilters, 'ad_type'> & { ad_type?: AdType | 'all' };
+export type ExploreFilters = Omit<AnnounceFilters, 'ad_type'> & {
+  ad_type?: AdType | 'all';
+  /**
+   * Display name of `city` when it comes from a home city chip ("Yaoundé"); `city`
+   * holds the API's `city_normalized` ("yaounde"). Never sent to the API.
+   */
+  cityLabel?: string;
+};
 
 interface FilterState {
   filters: ExploreFilters;
@@ -39,7 +46,7 @@ export const useFilterStore = create<FilterState>((set) => ({
 
 /** API query of the explore list and map: defaults applied, `all` sent as no ad_type. */
 export function toAnnounceQuery(f: ExploreFilters): AnnounceFilters {
-  const { ad_type, search, ...rest } = f;
+  const { ad_type, search, cityLabel: _cityLabel, ...rest } = f;
   return {
     ...rest,
     type: f.type ?? 'realestate',
