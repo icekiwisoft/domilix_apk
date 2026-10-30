@@ -31,13 +31,12 @@ function formatDate(value?: string): string | null {
 interface OwnerActionsProps {
   announce: Announce;
   deleting: boolean;
-  onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-/** Under each of the announcer's cards: favourites, date, then Modifier / Voir / Supprimer. */
-function OwnerActions({ announce, deleting, onView, onEdit, onDelete }: OwnerActionsProps) {
+/** Under each of the announcer's cards: favourites, date, then Modifier and Supprimer (the card itself opens the listing). */
+function OwnerActions({ announce, deleting, onEdit, onDelete }: OwnerActionsProps) {
   const C = useThemeColors();
   const title = announceTitle(announce);
   const likes = announce.likes_count ?? 0;
@@ -68,14 +67,6 @@ function OwnerActions({ announce, deleting, onView, onEdit, onDelete }: OwnerAct
           variant="secondary"
           accessibilityLabel={`Modifier ${title}`}
           onPress={onEdit}
-          style={{ flexGrow: 1 }}
-        />
-        <Button
-          label="Voir"
-          icon="visibility"
-          variant="secondary"
-          accessibilityLabel={`Voir ${title}`}
-          onPress={onView}
           style={{ flexGrow: 1 }}
         />
         <IconButton
@@ -234,7 +225,6 @@ export default function MyListingsScreen() {
               <OwnerActions
                 announce={item}
                 deleting={deleteAnnounce.isPending}
-                onView={() => router.push(`/announces/${item.id}`)}
                 onEdit={() => router.push(`/announces/edit/${item.id}`)}
                 onDelete={() => setDeleteTarget(item)}
               />
