@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { AppText, ChipGroup, ErrorState, OfflineState, Skeleton } from '@/components/ui';
 import { Radii, Sizes, Spacing } from '@/constants/theme';
 import { useCategories } from '@/hooks/queries/use-categories';
+import { categoryLabel } from '@/lib/category-label';
 import { isNetworkError } from '@/lib/network-error';
 import type { AnnounceType } from '@/types/announce';
 
@@ -52,7 +53,7 @@ export function CategoryPicker({ type, value, onChange }: CategoryPickerProps) {
     body = (
       <ChipGroup
         label="Catégorie"
-        options={categories.map((c) => ({ value: c.id, label: c.name }))}
+        options={categories.map((c) => ({ value: c.id, label: categoryLabel(c.name) }))}
         value={value || null}
         onChange={onChange}
       />
