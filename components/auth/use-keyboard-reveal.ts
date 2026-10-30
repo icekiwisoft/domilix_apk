@@ -37,13 +37,14 @@ export function useKeyboardReveal(bannerBottom: number) {
   // Top of the open keyboard in window coordinates, null when it is closed.
   const keyboardTop = useRef<number | null>(null);
 
-  async function reveal() {
+  /** `node`: what must end above the keyboard; the main button by default. */
+  async function reveal(node?: View | null) {
     const scroll = scrollRef.current;
     if (!scroll || keyboardTop.current == null) return;
     const focused = TextInput.State.currentlyFocusedInput() as unknown as View | null;
     const [viewport, target, field] = await Promise.all([
       measure(scroll as unknown as View),
-      measure(targetRef.current),
+      measure(node ?? targetRef.current),
       measure(focused),
     ]);
     if (!viewport || !target || keyboardTop.current == null) return;
@@ -57,7 +58,7 @@ export function useKeyboardReveal(bannerBottom: number) {
     const show = Keyboard.addListener('keyboardDidShow', (e) => {
       keyboardTop.current = e.endCoordinates.screenY;
       // Let the layout settle after the keyboard opens before measuring.
-      setTimeout(reveal, 80);
+      setTimeout(() => reveal(), 80);
     });
     const hide = Keyboard.addListener('keyboardDidHide', () => {
       keyboardTop.current = null;
@@ -84,7 +85,16 @@ export function useKeyboardReveal(bannerBottom: number) {
    * keyboard (sign-up, password field). Pass this as the fields' onFocus.
    */
   function revealOnFocus() {
-    if (keyboardTop.current != null) setTimeout(reveal, 80);
+    if (keyboardTop.current != null) setTimeout(() => reveal(), 80);
+  }
+
+  /**
+   * Content that appears under the focused field while the keyboard is open
+   * (address suggestions, UI-12) lands under the keyboard: scroll it into
+   * view, keeping the field itself on screen.
+   */
+  function revealNode(node: View | null) {
+    if (keyboardTop.current != null) setTimeout(() => reveal(node), 80);
   }
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -93,5 +103,5 @@ export function useKeyboardReveal(bannerBottom: number) {
     if (past !== pastBanner) setPastBanner(past);
   }
 
-  return { scrollRef, targetRef, onScroll, onLayout, revealOnFocus, pastBanner };
+  return { scrollRef, targetRef, onScroll, onLayout, revealOnFocus, revealNode, pastBanner };
 }

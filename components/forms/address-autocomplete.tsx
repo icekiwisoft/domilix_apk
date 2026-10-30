@@ -1,8 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useState, type Ref } from 'react';
+import { useEffect, useRef, useState, type Ref } from 'react';
 import { Pressable, View, type TextInput, type TextInputProps } from 'react-native';
 
-import { AppText, Divider, Field, IconButton, pressedStyle } from '@/components/ui';
+import { AppText, Divider, Field, IconButton, pressedStyle, useScreenKeyboard } from '@/components/ui';
 import { Borders, Radii, Shadows, Sizes, Spacing } from '@/constants/theme';
 import { useAddressSearch } from '@/hooks/queries/use-addresses';
 import { useThemeColors } from '@/hooks/use-theme-color';
@@ -42,12 +42,20 @@ export function AddressAutocomplete({
   const C = useThemeColors();
   const [open, setOpen] = useState(false);
   const isCity = kind === 'city';
+  const keyboard = useScreenKeyboard();
+  const listRef = useRef<View>(null);
 
   const { data: suggestions = [], isFetching, isError, error: searchError } = useAddressSearch(
     value,
     open,
     isCity ? 'city' : undefined,
   );
+
+  const shown = open && suggestions.length > 0;
+  // Inside <Screen keyboard>, the list would open under the keyboard.
+  useEffect(() => {
+    if (shown) keyboard?.revealNode(listRef.current);
+  }, [shown, suggestions.length, keyboard]);
 
   function select(suggestion: GeoapifyAddressSuggestion) {
     const selectedValue = isCity
@@ -105,8 +113,10 @@ export function AddressAutocomplete({
         onSubmitEditing={onSubmitEditing}
         autoCorrect={false}
       />
-      {open && suggestions.length > 0 ? (
+      {shown ? (
         <View
+          ref={listRef}
+          collapsable={false}
           accessibilityLabel={`${suggestions.length} suggestion${suggestions.length > 1 ? 's' : ''}`}
           style={[
             {
