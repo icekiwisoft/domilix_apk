@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 
 import { BroadcastBanner } from '@/components/home/broadcast-banner';
@@ -17,6 +17,7 @@ import {
   ListingCardSkeleton,
   Screen,
   SearchBar,
+  Skeleton,
 } from '@/components/ui';
 import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
 import { useCities, useHomeRows, useToggleLike } from '@/hooks/queries/use-announces';
@@ -121,6 +122,34 @@ function CardRow({ children }: { children: ReactNode }) {
     >
       {children}
     </ScrollView>
+  );
+}
+
+/** Horizontal row of chips (city chips and their placeholders), bleeding to the screen edges. */
+function ChipRow({ children, ...rest }: { children: ReactNode } & ComponentProps<typeof ScrollView>) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginHorizontal: -Spacing.marginMobile }}
+      contentContainerStyle={{ gap: Spacing.sm, paddingHorizontal: Spacing.marginMobile }}
+      {...rest}
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
+/** Same height as the city chips, so the page does not move down when GET /cities answers. */
+function CityChipsSkeleton() {
+  return (
+    <View accessible accessibilityLabel="Chargement des villes…" accessibilityState={{ busy: true }}>
+      <ChipRow scrollEnabled={false}>
+        {[1, 2, 3, 4].map((k) => (
+          <Skeleton key={k} width={Sizes.chipSkeletonWidth} height={Sizes.touchTarget} radius={Radii.full} />
+        ))}
+      </ChipRow>
+    </View>
   );
 }
 
@@ -250,7 +279,7 @@ export default function HomeScreen() {
   const filterCount = useFilterStore((s) => activeFilters(s.filters).length);
 
   const { data: broadcastsData, refetch: refetchBroadcasts } = useBroadcasts();
-  const { data: cities, refetch: refetchCities } = useCities({
+  const { data: cities, isLoading: citiesLoading, refetch: refetchCities } = useCities({
     type: 'realestate',
     order_by: 'count',
     order: 'desc',
@@ -362,14 +391,10 @@ export default function HomeScreen() {
           value="realestate"
           onChange={handleCategory}
         />
-        {chips.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            accessibilityLabel="Villes"
-            style={{ marginHorizontal: -Spacing.marginMobile }}
-            contentContainerStyle={{ gap: Spacing.sm, paddingHorizontal: Spacing.marginMobile }}
-          >
+        {citiesLoading ? (
+          <CityChipsSkeleton />
+        ) : chips.length > 0 ? (
+          <ChipRow accessibilityLabel="Villes">
             {chips.map((c) => (
               <Chip
                 key={c.value}
@@ -382,7 +407,7 @@ export default function HomeScreen() {
                 onPress={() => handleCity(c)}
               />
             ))}
-          </ScrollView>
+          </ChipRow>
         ) : null}
       </View>
 
