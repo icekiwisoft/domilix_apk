@@ -420,6 +420,26 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   règle de lint dans les fichiers touchés) ; AA clair et sombre, 48 dp, 200 %, TalkBack ; build release
   vérifié.
 
+### UI-12 — Migration Publier et formulaires de profil vers le kit (P1)
+
+- **Décision (2026-10-30)** : dernière zone de la migration (« fusionne la PR et commence la
+  migration »), maquettes du canvas `Publier1` (type) et `Publier2` (détails) ; les étapes sans
+  maquette suivent le même langage visuel.
+- **Périmètre** : `app/announces/create/` (étapes 1 à 5 et `_layout`), `app/announces/edit/`,
+  `app/profile/edit.tsx`, `app/profile/announcer-profile.tsx`, et les composants qu'ils utilisent
+  (`components/forms/`, dont `media-upload-grid`, `create-step-header`, `profile-form`, sélection du
+  lieu de B-01).
+- **Inclus** : suppression de React Native Paper si plus rien ne l'importe (sinon lister ce qui reste) ;
+  suppression des composants orphelins notés en UI-09/UI-10 (`empty-state`, `announcer-hero`,
+  `announcer-stats`, `announcer-contact`, `listing-actions-bar`, `listing-amenities`,
+  `listing-stats-row`) s'ils ne sont toujours importés nulle part.
+- **Critères d'acceptation** : écrans conformes aux maquettes ; uniquement le kit et les jetons
+  (0 avertissement de la règle de lint dans les fichiers migrés) ; comportement inchangé (étapes,
+  validations Zod en français, brouillon du store, envoi des médias, payload de création et de
+  modification identiques, garde annonceur) ; **aucune annonce créée, modifiée ou supprimée sur l'API de
+  production en QA** (arrêt avant l'envoi final) ; AA clair et sombre, 48 dp, 200 %, TalkBack, clavier
+  qui ne masque pas les champs ; build release vérifié.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
@@ -427,4 +447,4 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    UI-02, B-02 (connexion Google native) et B-05.
 3. **Lot 3 — contraste et 200 %** : UI-04 (fusionné). Puis F-01 quand le backend renverra le `user_id`.
 4. **Lot 4 — système de design** : UI-06 fusionné (PR #7, 2026-10-29).
-5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend ; PR #9 fusionnée 2026-10-30), UI-10 Compte (PR #10 fusionnée 2026-10-30), UI-11 Accueil par catégories, puis Publier.
+5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend ; PR #9 fusionnée 2026-10-30), UI-10 Compte (PR #10 fusionnée 2026-10-30), UI-11 Accueil par catégories (PR #11 fusionnée 2026-10-30), UI-12 Publier.
