@@ -86,6 +86,7 @@ export default function ProfileScreen() {
     return (
       <Screen bottomInset={false}>
         <LoginGate
+          redirect="/(tabs)/profile"
           title="Votre espace personnel"
           subtitle="Connectez-vous pour gérer votre profil, vos annonces et vos packs Domicoin."
         />

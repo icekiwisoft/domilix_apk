@@ -60,6 +60,7 @@ export default function NotificationsScreen() {
     return (
       <Screen bottomInset={false} header={<ScreenHeader title="Notifications" />}>
         <LoginGate
+          redirect="/(tabs)/notifications"
           title="Vos alertes vous attendent"
           subtitle="Connectez-vous pour recevoir des notifications sur vos annonces et vos recherches."
         />

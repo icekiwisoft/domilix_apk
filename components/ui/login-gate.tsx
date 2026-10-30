@@ -11,6 +11,8 @@ import { Button } from './button';
 interface LoginGateProps {
   title: string;
   subtitle: string;
+  /** Route to return to after signing in (goAfterAuth); Home when omitted. */
+  redirect?: string;
 }
 
 /**
@@ -19,7 +21,7 @@ interface LoginGateProps {
  * TalkBack the bare label, without the icon glyph Paper's button read first
  * (QA-06, UI-09).
  */
-export function LoginGate({ title, subtitle }: LoginGateProps) {
+export function LoginGate({ title, subtitle, redirect }: LoginGateProps) {
   const C = useThemeColors();
   const router = useRouter();
   return (
@@ -46,7 +48,10 @@ export function LoginGate({ title, subtitle }: LoginGateProps) {
         </AppText>
       </View>
       <View style={{ alignSelf: 'stretch', gap: Spacing.ms }}>
-        <Button label="Se connecter" icon="login" size="lg" fullWidth onPress={() => router.push('/(auth)/login')} />
+        <Button label="Se connecter" icon="login" size="lg" fullWidth onPress={() =>
+            router.push(redirect ? { pathname: '/(auth)/login', params: { redirect } } : '/(auth)/login')
+          }
+        />
         <Button
           label="Créer un compte"
           variant="secondary"

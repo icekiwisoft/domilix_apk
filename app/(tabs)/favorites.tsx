@@ -38,6 +38,7 @@ export default function FavoritesScreen() {
     return (
       <Screen bottomInset={false} header={<ScreenHeader title={TITLE} onBack={false} />}>
         <LoginGate
+          redirect="/(tabs)/favorites"
           title="Connectez-vous pour voir vos favoris"
           subtitle="Sauvegardez vos annonces préférées et retrouvez-les en vous connectant à votre compte."
         />
