@@ -1,6 +1,18 @@
 import { client } from './api.client';
 import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
 
+/**
+ * One row of GET /cities (backend `AdsService.cities`): listings grouped by
+ * normalised city and country, so a city can come back once per country.
+ */
+export interface CityCount {
+  city: string;
+  city_normalized: string;
+  country: string;
+  country_normalized: string;
+  ads_count: number;
+}
+
 export const AnnouncesService = {
   list: (filters: AnnounceFilters = {}) =>
     client
@@ -42,23 +54,7 @@ export const AnnouncesService = {
     order_by?: 'name' | 'count';
     order?: 'asc' | 'desc';
   }) =>
-    client.get<unknown>('/cities', { params }).then((r) => {
-      console.log('[cities] raw response', JSON.stringify(r.data));
-      // Response shape isn't documented in swagger — tolerate a plain string[],
-      // an array of { city | name } objects, or a { data: [...] } envelope.
-      const raw = r.data as unknown;
-      const list = Array.isArray(raw)
-        ? raw
-        : Array.isArray((raw as { data?: unknown[] })?.data)
-        ? (raw as { data: unknown[] }).data
-        : [];
-      return list
-        .map((entry) =>
-          typeof entry === 'string'
-            ? entry
-            : ((entry as { city?: string; name?: string })?.city ??
-                (entry as { city?: string; name?: string })?.name)
-        )
-        .filter((c): c is string => !!c);
-    }),
+    client
+      .get<{ success: boolean; data: CityCount[] }>('/cities', { params })
+      .then((r) => r.data.data ?? []),
 };

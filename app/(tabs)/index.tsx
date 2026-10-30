@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 
 import { BroadcastBanner } from '@/components/home/broadcast-banner';
@@ -9,6 +9,7 @@ import { AnnounceCard } from '@/components/listing/announce-card';
 import { activeFilters } from '@/components/search/active-filters';
 import {
   AppText,
+  Chip,
   ChipGroup,
   EmptyState,
   ErrorState,
@@ -16,23 +17,99 @@ import {
   ListingCardSkeleton,
   Screen,
   SearchBar,
+  Skeleton,
 } from '@/components/ui';
 import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
-import { useAnnounces, useCities, useToggleLike } from '@/hooks/queries/use-announces';
+import { useCities, useHomeRows, useToggleLike } from '@/hooks/queries/use-announces';
 import { useBroadcasts } from '@/hooks/queries/use-broadcasts';
 import { useUnreadCount } from '@/hooks/queries/use-notifications';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { useAuthStore } from '@/stores/auth.store';
-import { useFilterStore } from '@/stores/filter.store';
-import type { AnnounceType } from '@/types/announce';
+import type { CityCount } from '@/services/announces.service';
+import { toAnnounceQuery, useFilterStore, type ExploreFilters } from '@/stores/filter.store';
+import type { Announce, AnnounceType, PaginatedResponse } from '@/types/announce';
 
 const CATEGORIES = [
   { value: 'realestate' as const, label: 'Immobilier', icon: 'home-work' as const },
   { value: 'furniture' as const, label: 'Mobilier', icon: 'chair' as const },
 ];
 
-const CITIES_LIMIT = '6';
-const LISTINGS_PER_CITY = 8;
+/** Cards shown per row. */
+const ROW_SIZE = 10;
+/** A row is hidden below this many listings once the duplicates are removed. */
+const ROW_MIN = 3;
+/** City chips: cities with at least this many listings. */
+const CITY_MIN_LISTINGS = 5;
+/** GET /cities caps `limit` at 50. */
+const CITIES_LIMIT = '50';
+
+interface HomeRow {
+  key: string;
+  title: string;
+  /** Exactly what "Tout voir" puts in the explore filters; the row's query derives from it. */
+  filters: ExploreFilters;
+}
+
+// Same rows, in the same order, as the website (domilix.com src/views/Ads/Ads.tsx), real estate only.
+const ROWS: HomeRow[] = [
+  { key: 'recommended', title: 'Nos recommandations', filters: { recommended: 1 } },
+  { key: 'recent', title: 'Dernières annonces', filters: {} },
+  { key: 'night', title: 'Séjours à la nuit', filters: { ad_type: 'location', period: 'night' } },
+  { key: 'sale', title: 'Biens à vendre', filters: { ad_type: 'sale' } },
+];
+
+type RowState =
+  | { row: HomeRow; status: 'loading' }
+  | { row: HomeRow; status: 'ready'; items: Announce[] };
+
+/**
+ * Removes from each row the listings already shown in a row above it, then
+ * keeps ROW_SIZE of them. A row waits for the rows above it, since its content
+ * depends on theirs. Row i asks for ROW_SIZE × (i + 1) listings, so it still
+ * has ROW_SIZE left when every listing shown above is in its page.
+ */
+function dedupeRows(pages: (PaginatedResponse<Announce> | undefined)[]): RowState[] {
+  const shown = new Set<string>();
+  let waiting = false;
+  return ROWS.map((row, i) => {
+    const page = pages[i];
+    if (waiting || !page) {
+      waiting = true;
+      return { row, status: 'loading' };
+    }
+    const items = page.data.filter((a) => !shown.has(String(a.id))).slice(0, ROW_SIZE);
+    for (const a of items) shown.add(String(a.id));
+    return { row, status: 'ready', items };
+  });
+}
+
+/** Strips flags and stray symbols typed into city names ("🇨🇲 yaounde" → "yaounde"). */
+function cleanCity(name: string) {
+  return name.replace(/[^\p{L}\p{N}\s'-]/gu, '').trim().replace(/\s+/g, ' ');
+}
+
+interface CityChip {
+  /** Explore filter: the API's `city_normalized`, cleaned. */
+  value: string;
+  label: string;
+  count: number;
+}
+
+/** Cities with at least CITY_MIN_LISTINGS listings, most listings first, one chip per normalised name. */
+function cityChips(rows: CityCount[]): CityChip[] {
+  const byCity = new Map<string, CityChip>();
+  // GET /cities groups by city and country: "yaounde" comes back once with an
+  // empty country and once with "cameroun". Rows arrive largest first, so the
+  // label comes from the biggest group.
+  for (const r of rows) {
+    const value = cleanCity(r.city_normalized);
+    if (!value) continue;
+    const chip = byCity.get(value);
+    if (chip) chip.count += r.ads_count;
+    else byCity.set(value, { value, label: cleanCity(r.city) || value, count: r.ads_count });
+  }
+  return [...byCity.values()].filter((c) => c.count >= CITY_MIN_LISTINGS).sort((a, b) => b.count - a.count);
+}
 
 /** Horizontal row that bleeds to the screen edges and starts on the page gutter. */
 function CardRow({ children }: { children: ReactNode }) {
@@ -48,6 +125,34 @@ function CardRow({ children }: { children: ReactNode }) {
   );
 }
 
+/** Horizontal row of chips (city chips and their placeholders), bleeding to the screen edges. */
+function ChipRow({ children, ...rest }: { children: ReactNode } & ComponentProps<typeof ScrollView>) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginHorizontal: -Spacing.marginMobile }}
+      contentContainerStyle={{ gap: Spacing.sm, paddingHorizontal: Spacing.marginMobile }}
+      {...rest}
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
+/** Same height as the city chips, so the page does not move down when GET /cities answers. */
+function CityChipsSkeleton() {
+  return (
+    <View accessible accessibilityLabel="Chargement des villes…" accessibilityState={{ busy: true }}>
+      <ChipRow scrollEnabled={false}>
+        {[1, 2, 3, 4].map((k) => (
+          <Skeleton key={k} width={Sizes.chipSkeletonWidth} height={Sizes.touchTarget} radius={Radii.full} />
+        ))}
+      </ChipRow>
+    </View>
+  );
+}
+
 function SkeletonRow() {
   return (
     <CardRow>
@@ -58,50 +163,46 @@ function SkeletonRow() {
   );
 }
 
-// ─── Region row (one horizontal scroll of listings per city) ──────────────────
+// ─── Listing row ──────────────────────────────────────────────────────────────
 
-function RegionRow({ city, onLike }: { city: string; onLike: (id: string) => void }) {
+function ListingRow({ state, onLike }: { state: RowState; onLike: (id: string) => void }) {
   const router = useRouter();
-  const { data, isLoading } = useAnnounces({ type: 'realestate', city, page: 1 });
-  const items = data?.data.slice(0, LISTINGS_PER_CITY) ?? [];
+  const { row } = state;
 
-  if (!isLoading && items.length === 0) return null;
+  if (state.status === 'loading') {
+    return (
+      // The title stays a TalkBack header; only the placeholders are grouped as "loading".
+      <View style={{ gap: Spacing.xs }}>
+        <SectionHeader title={row.title} />
+        <View accessible accessibilityLabel={`${row.title}, chargement…`} accessibilityState={{ busy: true }}>
+          <SkeletonRow />
+        </View>
+      </View>
+    );
+  }
+
+  if (state.items.length < ROW_MIN) return null;
 
   function handleSeeAll() {
-    // Only the row's own criteria (this city, Immobilier): drop every other narrowing
-    // filter left by an earlier filter sheet so the list matches the row that was tapped.
-    useFilterStore.getState().setFilters({
-      city,
-      type: undefined,
-      ad_type: undefined,
-      budget_min: undefined,
-      budget_max: undefined,
-      bedroom_min: undefined,
-      amenities: undefined,
-      standing: undefined,
-      search: undefined,
-    });
+    // Only this row's criteria: nothing left over from an earlier search or filter sheet.
+    useFilterStore.getState().replaceFilters(row.filters);
     router.push('/(tabs)/explore');
   }
 
   return (
     <View style={{ gap: Spacing.xs }}>
-      <SectionHeader title={city} onSeeAll={handleSeeAll} seeAllLabel={`Tout voir à ${city}`} />
-      {isLoading ? (
-        <SkeletonRow />
-      ) : (
-        <CardRow>
-          {items.map((item) => (
-            <AnnounceCard
-              key={item.id}
-              announce={item}
-              onPress={() => router.push(`/announces/${item.id}`)}
-              onToggleFavorite={onLike}
-              style={{ width: Sizes.listingCardWidth }}
-            />
-          ))}
-        </CardRow>
-      )}
+      <SectionHeader title={row.title} onSeeAll={handleSeeAll} seeAllLabel={`Tout voir : ${row.title}`} />
+      <CardRow>
+        {state.items.map((item) => (
+          <AnnounceCard
+            key={item.id}
+            announce={item}
+            onPress={() => router.push(`/announces/${item.id}`)}
+            onToggleFavorite={onLike}
+            style={{ width: Sizes.listingCardWidth }}
+          />
+        ))}
+      </CardRow>
     </View>
   );
 }
@@ -176,12 +277,17 @@ export default function HomeScreen() {
   const filterCount = useFilterStore((s) => activeFilters(s.filters).length);
 
   const { data: broadcastsData, refetch: refetchBroadcasts } = useBroadcasts();
-  const {
-    data: cities,
-    isLoading: citiesLoading,
-    isError: citiesError,
-    refetch: refetchCities,
-  } = useCities({ type: 'realestate', order_by: 'count', order: 'desc', limit: CITIES_LIMIT });
+  const { data: cities, isLoading: citiesLoading, refetch: refetchCities } = useCities({
+    type: 'realestate',
+    order_by: 'count',
+    order: 'desc',
+    limit: CITIES_LIMIT,
+  });
+  // One cached query per row, under the same ['announces', …] key as the explore list so
+  // favourites toggled anywhere update the cards here too (without refetching the rows).
+  const rowQueries = useHomeRows(
+    ROWS.map((row, i) => ({ ...toAnnounceQuery(row.filters), page: 1, per_page: ROW_SIZE * (i + 1) })),
+  );
   const toggleLike = useToggleLike();
 
   async function onRefresh() {
@@ -195,6 +301,7 @@ export default function HomeScreen() {
   }
 
   const broadcast = broadcastsData?.[0];
+  const chips = cityChips(cities ?? []);
 
   function handleSearch() {
     if (search.trim()) {
@@ -206,6 +313,12 @@ export default function HomeScreen() {
 
   function handleCategory(type: AnnounceType) {
     useFilterStore.getState().setFilter('type', type === 'realestate' ? undefined : type);
+    router.push('/(tabs)/explore');
+  }
+
+  function handleCity(chip: CityChip) {
+    // Filter on the normalised name, show the backend's accented one ("Yaoundé").
+    useFilterStore.getState().replaceFilters({ city: chip.value, cityLabel: chip.label });
     router.push('/(tabs)/explore');
   }
 
@@ -221,17 +334,22 @@ export default function HomeScreen() {
     }
   }
 
-  let regions: ReactNode;
-  if (citiesLoading) {
-    regions = (
-      <View accessible accessibilityLabel="Chargement des annonces…" accessibilityState={{ busy: true }}>
-        <SkeletonRow />
-      </View>
+  // A row that failed with nothing in cache: one error for the whole list, rows above
+  // it included, since the duplicates can no longer be removed.
+  const failed = rowQueries.filter((q) => q.isError && !q.data);
+  const rowStates = dedupeRows(rowQueries.map((q) => q.data));
+  let rows: ReactNode;
+  if (failed.length > 0) {
+    rows = (
+      <ErrorState
+        title="Impossible de charger les annonces"
+        onRetry={() => {
+          for (const q of failed) q.refetch();
+        }}
+      />
     );
-  } else if (citiesError && !cities) {
-    regions = <ErrorState title="Impossible de charger les annonces" onRetry={() => refetchCities()} />;
-  } else if (!cities?.length) {
-    regions = (
+  } else if (rowStates.every((r) => r.status === 'ready' && r.items.length < ROW_MIN)) {
+    rows = (
       <EmptyState
         icon="home-work"
         title="Aucune annonce pour le moment"
@@ -241,7 +359,9 @@ export default function HomeScreen() {
       />
     );
   } else {
-    regions = cities.map((city) => <RegionRow key={city} city={city} onLike={(id) => toggleLike.mutate(id)} />);
+    rows = rowStates.map((state) => (
+      <ListingRow key={state.row.key} state={state} onLike={(id) => toggleLike.mutate(id)} />
+    ));
   }
 
   return (
@@ -269,13 +389,31 @@ export default function HomeScreen() {
           value="realestate"
           onChange={handleCategory}
         />
+        {citiesLoading ? (
+          <CityChipsSkeleton />
+        ) : chips.length > 0 ? (
+          <ChipRow accessibilityLabel="Villes">
+            {chips.map((c) => (
+              <Chip
+                key={c.value}
+                label={c.label}
+                icon="location-on"
+                // An action that opens the explore list, not a selectable chip.
+                accessibilityRole="button"
+                accessibilityState={{}}
+                accessibilityLabel={`Annonces à ${c.label}`}
+                onPress={() => handleCity(c)}
+              />
+            ))}
+          </ChipRow>
+        ) : null}
       </View>
 
       {broadcast ? (
         <BroadcastBanner broadcast={broadcast} onPress={() => handleBroadcastPress(broadcast.action_url)} />
       ) : null}
 
-      {regions}
+      {rows}
     </Screen>
   );
 }

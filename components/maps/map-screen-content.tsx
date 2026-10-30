@@ -10,9 +10,9 @@ import { ListingMapPin } from '@/components/listing/listing-map-pin';
 import { activeFilters } from '@/components/search/active-filters';
 import { ExploreHeader } from '@/components/search/explore-header';
 import { AppText, Button, Card, formatAmount } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { Sizes, Spacing } from '@/constants/theme';
 import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
-import { useFilterStore } from '@/stores/filter.store';
+import { toAnnounceQuery, useFilterStore } from '@/stores/filter.store';
 
 const INITIAL_REGION = {
   latitude: 4.05,
@@ -29,12 +29,7 @@ export default function MapScreenContent() {
   // Same filters as the list, so switching Liste / Carte shows the same listings.
   const { filters, setFilters } = useFilterStore();
   const search = filters.search ?? '';
-  const { data, isError, refetch } = useAnnounces({
-    ...filters,
-    type: filters.type ?? 'realestate',
-    ad_type: filters.ad_type ?? 'location',
-    search: search.trim() || undefined,
-  });
+  const { data, isError, refetch } = useAnnounces(toAnnounceQuery(filters));
   const toggleLike = useToggleLike();
   // The list API has no coordinates: listings are spread around their city
   // centre (existing behaviour, see the UI-07 report).
@@ -82,7 +77,7 @@ export default function MapScreenContent() {
 
       <View
         pointerEvents="box-none"
-        style={{ position: 'absolute', left: Spacing.marginMobile, right: Spacing.marginMobile, bottom: Spacing.md }}
+        style={{ position: 'absolute', left: Spacing.marginMobile, right: Spacing.marginMobile, bottom: Sizes.tabBarOverhang + Spacing.sm }}
       >
         {isError ? (
           <Card style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>

@@ -15,15 +15,17 @@ import {
 } from '@/components/ui';
 import { Borders, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
-import { useFilterStore } from '@/stores/filter.store';
-import type { AdType, AnnounceFilters, AnnounceType, Standing } from '@/types/announce';
+import { useFilterStore, type ExploreFilters } from '@/stores/filter.store';
+import type { AdType, AnnounceType, Standing } from '@/types/announce';
 
 const TYPE_OPTIONS = [
   { value: 'realestate' as const, label: 'Immobilier' },
   { value: 'furniture' as const, label: 'Mobilier' },
 ];
 
+// "Tout" (no ad_type) first and by default, as on the website's search.
 const AD_TYPE_OPTIONS = [
+  { value: 'all' as const, label: 'Tout' },
   { value: 'location' as const, label: 'À louer' },
   { value: 'sale' as const, label: 'À vendre' },
 ];
@@ -59,7 +61,7 @@ export default function FilterSheetScreen() {
   const budgetField = { flexGrow: 1, flexBasis: fontScale >= 1.5 ? ('100%' as const) : 0 };
 
   const [type, setType] = useState<AnnounceType>(filters.type ?? 'realestate');
-  const [adType, setAdType] = useState<AdType>(filters.ad_type ?? 'location');
+  const [adType, setAdType] = useState<AdType | 'all'>(filters.ad_type ?? 'all');
   const [budgetMin, setBudgetMin] = useState(filters.budget_min ? String(filters.budget_min) : '');
   const [budgetMax, setBudgetMax] = useState(filters.budget_max ? String(filters.budget_max) : '');
   const [bedroomMin, setBedroomMin] = useState(filters.bedroom_min ?? 0);
@@ -67,11 +69,13 @@ export default function FilterSheetScreen() {
   const [standing, setStanding] = useState<Standing | undefined>(filters.standing);
 
   function handleReset() {
-    // Reset only the criteria shown in this sheet: the city (chosen from home) and the
-    // search text are not in the sheet, so they stay.
+    // Reset the sheet's criteria and those a home row's "Tout voir" sets (recommended,
+    // period), which the sheet does not show. The city and the search text stay (UI-07).
     setFilters({
       type: undefined,
       ad_type: undefined,
+      recommended: undefined,
+      period: undefined,
       budget_min: undefined,
       budget_max: undefined,
       bedroom_min: undefined,
@@ -79,7 +83,7 @@ export default function FilterSheetScreen() {
       standing: undefined,
     });
     setType('realestate');
-    setAdType('location');
+    setAdType('all');
     setBudgetMin('');
     setBudgetMax('');
     setBedroomMin(0);
@@ -88,16 +92,19 @@ export default function FilterSheetScreen() {
   }
 
   function handleApply() {
-    const patch: Partial<AnnounceFilters> = {
-      // Defaults (Immobilier, À louer) are stored as "not set": they are not active filters.
+    const patch: Partial<ExploreFilters> = {
+      // Defaults (Immobilier, Tout) are stored as "not set": they are not active filters.
       type: type === 'realestate' ? undefined : type,
-      ad_type: adType === 'location' ? undefined : adType,
+      ad_type: adType === 'all' ? undefined : adType,
       budget_min: parseAmount(budgetMin),
       budget_max: parseAmount(budgetMax),
       bedroom_min: bedroomMin > 0 ? bedroomMin : undefined,
       amenities: amenities.length > 0 ? amenities : undefined,
       standing,
     };
+    // A rental period ("À la nuit" from the home row) never matches a sale: drop it
+    // rather than show a list that is always empty.
+    if (adType === 'sale') patch.period = undefined;
     setFilters(patch);
     router.back();
   }

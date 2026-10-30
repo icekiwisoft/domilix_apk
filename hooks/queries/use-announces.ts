@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { AnnouncesService } from '@/services/announces.service';
 import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
 
@@ -18,6 +18,26 @@ export function useAnnounces(filters: AnnounceFilters = {}, options?: { enabled?
     queryKey: ['announces', filters],
     queryFn: () => AnnouncesService.list(filters),
     enabled: options?.enabled,
+  });
+}
+
+/**
+ * Third key segment of the home rows' queries: still under ['announces'] so a
+ * favourite updates their cards in place, but left out of the refetch after a like.
+ */
+const HOME_ROW_TAG = 'home-row';
+
+/** Not a home row: what a successful like refetches. */
+const notHomeRow = (q: { queryKey: readonly unknown[] }) => q.queryKey[2] !== HOME_ROW_TAG;
+
+/** The home rows' listing queries, cached 5 minutes (four requests per home visit otherwise). */
+export function useHomeRows(filtersList: AnnounceFilters[]) {
+  return useQueries({
+    queries: filtersList.map((filters) => ({
+      queryKey: ['announces', filters, HOME_ROW_TAG],
+      queryFn: () => AnnouncesService.list(filters),
+      staleTime: 1000 * 60 * 5,
+    })),
   });
 }
 
@@ -90,7 +110,9 @@ export function useToggleLike() {
           old ? { ...old, liked: data.liked } : old
         );
       }
-      qc.invalidateQueries({ queryKey: ['announces'] });
+      // The home rows already show the flipped like (setQueriesData above): refetching
+      // their four lists for one heart costs data for nothing.
+      qc.invalidateQueries({ queryKey: ['announces'], predicate: notHomeRow });
       qc.invalidateQueries({ queryKey: ['announces-infinite'] });
     },
     onError: (_err, id, context) => {

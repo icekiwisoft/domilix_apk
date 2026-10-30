@@ -165,6 +165,13 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    relancer le code SMS (F-01).
 8. Ouverture des liens d'annonce dans l'app (Android App Links) : `/.well-known/assetlinks.json`
    sur `domilix.com` (B-03, hors lot).
+9. Données : noms de ville incohérents (casse, espaces, emoji) ; normaliser à la saisie et nettoyer
+   l'existant. `recommended=1` = « a au moins une photo » : prévoir un vrai critère (choix admin,
+   annonceur vérifié ou plus vues), sinon la rangée « Nos recommandations » double « Dernières annonces »
+   (UI-11).
+10. `/cities` applique `take: limit` (max 50) sur une liste alphabétique *avant* le tri par nombre
+    d'annonces : au-delà de 50 groupes de villes, de grandes villes peuvent manquer ; une ville est
+    aussi renvoyée une fois par pays (UI-11).
 
 ## Améliorations demandées par l'utilisateur
 
@@ -390,6 +397,29 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   dans Mes annonces ; choix du pack et du moyen de paiement sur un seul écran avec « Payer » ; ligne
   « Contacts débloqués » dans Profil.
 
+### UI-11 — Accueil par catégories comme le site (P1)
+
+- **Décision (2026-10-30)** : l'accueil ne regroupe plus les biens par ville (trop de villes avec un
+  seul bien) mais par catégories, comme https://domilix.com/fr/houses (`domilix.com/src/views/Ads/Ads.tsx`) :
+  « Nos recommandations » (`recommended=1`), « Dernières annonces », « Séjours à la nuit »
+  (`ad_type=location&period=night`), « Biens à vendre » (`ad_type=sale`), immobilier seulement.
+- **Choix de l'utilisateur** :
+  - doublons : l'app retire d'une rangée les biens déjà montrés plus haut (option b), car côté backend
+    `recommended=1` signifie seulement « a au moins une photo » et renvoie aujourd'hui les mêmes biens
+    que « Dernières annonces » ;
+  - meubles : hors lot, un collègue prépare une PR pour la section Meubles ;
+  - accès par ville gardé sous forme de puces sous la recherche (villes avec au moins 5 biens, triées
+    par nombre via `useCities`), qui ouvrent Explorer filtré sur la ville ; filtrer sur
+    `city_normalized` (noms saisis de façon incohérente en base : « Douala », « douala », « Douala  »,
+    « 🇨🇲 YAOUNDÉ ») ;
+  - ordre fixe des sections, section masquée sous 3 biens, une requête par section en cache React
+    Query, squelette par rangée, une seule erreur globale avec « Réessayer ».
+- **« Tout voir »** de chaque section : ouvre Explorer avec exactement le filtre de la section (vérifier
+  que le store et l'API de l'app gèrent `period` et `recommended`), sans garder d'anciens filtres.
+- **Critères d'acceptation** : comportement ci-dessus ; kit et jetons uniquement (0 avertissement de la
+  règle de lint dans les fichiers touchés) ; AA clair et sombre, 48 dp, 200 %, TalkBack ; build release
+  vérifié.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
@@ -397,4 +427,4 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    UI-02, B-02 (connexion Google native) et B-05.
 3. **Lot 3 — contraste et 200 %** : UI-04 (fusionné). Puis F-01 quand le backend renverra le `user_id`.
 4. **Lot 4 — système de design** : UI-06 fusionné (PR #7, 2026-10-29).
-5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend ; PR #9 fusionnée 2026-10-30), UI-10 Compte, Publier.
+5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend ; PR #9 fusionnée 2026-10-30), UI-10 Compte (PR #10 fusionnée 2026-10-30), UI-11 Accueil par catégories, puis Publier.

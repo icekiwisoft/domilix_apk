@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useKeyboardReveal } from '@/components/auth/use-keyboard-reveal';
-import { Spacing, type ColorToken } from '@/constants/theme';
+import { Sizes, Spacing, type ColorToken } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useThemeColors } from '@/hooks/use-theme-color';
 
@@ -70,7 +70,8 @@ export interface ScreenProps
   footer?: ReactNode;
   /**
    * Bottom safe-area padding (gesture bar). Tab screens pass false: the tab
-   * bar already sits above the gesture bar.
+   * bar already sits above the gesture bar, but its raised Publier button
+   * overlaps the screen, so the content ends above it instead (QA-16).
    */
   bottomInset?: boolean;
   /** false: plain View filling the screen (lists, maps) instead of a ScrollView; see above. */
@@ -121,7 +122,7 @@ export function Screen({
   const bg = C[background];
   // With the keyboard open the footer sits on the keyboard, not on the gesture bar.
   const keyboardShown = useKeyboardShown(keyboard && !!footer);
-  const bottom = bottomInset ? insets.bottom : 0;
+  const bottom = bottomInset ? insets.bottom : Sizes.tabBarOverhang;
   const hero = heroHeight != null && !header;
   const { scrollRef, targetRef, onScroll: trackScroll, onLayout: revealOnLayout, revealOnFocus, pastBanner } =
     useKeyboardReveal(hero ? heroHeight : 0);

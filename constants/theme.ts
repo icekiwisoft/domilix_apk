@@ -414,9 +414,11 @@ export const Sizes = {
   // UI-07: listing cards, tab bar, search bar
   listingThumb: 112, // photo of a compact listing card (explore list, map preview)
   listingCardWidth: 264, // vertical card in a horizontal row (home)
+  chipSkeletonWidth: 104, // placeholder of a home city chip while GET /cities loads (UI-11)
   tabPillWidth: 56, // active-tab indicator behind the icon (Material 3 navigation bar)
   tabPillHeight: 32,
   publishButton: 60, // raised round "Publier" button of the tab bar
+  tabBarOverhang: Spacing.lg, // how far the Publier button rises above the tab bar, over the screen (QA-16)
   countBadge: 22, // number badge on the filter button
   dot: 10, // unread dot on the notification bell
   // UI-08: listing detail and announcer profile
