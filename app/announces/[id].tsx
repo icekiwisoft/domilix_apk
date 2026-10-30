@@ -1,128 +1,191 @@
-import { useState } from 'react';
-import {
-  Image,
-  Linking,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Button, IconButton } from 'react-native-paper';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Linking, Share, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ListingGallery } from '@/components/listing/listing-gallery';
 import { AnnouncerCard } from '@/components/announcer/announcer-card';
+import { announcePlace, announceTitle, categoryLabel } from '@/components/listing/announce-card';
 import { AnnounceDetailSkeleton } from '@/components/listing/announce-detail-skeleton';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ListingGallery } from '@/components/listing/listing-gallery';
 import {
-  useAnnounce,
-  useToggleLike,
-  useAnnounces,
-} from '@/hooks/queries/use-announces';
+  AppText,
+  Badge,
+  Button,
+  EmptyState,
+  ErrorState,
+  IconButton,
+  PriceTag,
+  Screen,
+  ScreenHeader,
+  type IconName,
+} from '@/components/ui';
+import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
+import { useAnnounce, useToggleLike } from '@/hooks/queries/use-announces';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import { useAuthStore } from '@/stores/auth.store';
-import type { Announce } from '@/types/announce';
+import type { Announce, Standing } from '@/types/announce';
 
-// ─── Amenities ────────────────────────────────────────────────────────────────
+// Labels of the website (domilix.com messages/fr.json, adForm.fields.amenities).
 const AMENITIES: {
   key: keyof Pick<
     Announce,
     'wifi' | 'pool' | 'air_conditioning' | 'security_24h' | 'gate' | 'smart_tv' | 'equipped_kitchen'
   >;
-  icon: React.ComponentProps<typeof MaterialIcons>['name'];
+  icon: IconName;
   label: string;
 }[] = [
-  { key: 'wifi', icon: 'wifi', label: 'Wifi haut débit' },
-  { key: 'pool', icon: 'pool', label: 'Piscine privée' },
+  { key: 'wifi', icon: 'wifi', label: 'WiFi inclus' },
+  { key: 'pool', icon: 'pool', label: 'Piscine' },
   { key: 'air_conditioning', icon: 'ac-unit', label: 'Climatisation' },
-  { key: 'security_24h', icon: 'security', label: 'Gardiennage 24h/7j' },
+  { key: 'security_24h', icon: 'security', label: 'Sécurité 24h/24' },
   { key: 'gate', icon: 'door-sliding', label: 'Portail sécurisé' },
   { key: 'smart_tv', icon: 'tv', label: 'Smart TV' },
   { key: 'equipped_kitchen', icon: 'kitchen', label: 'Cuisine équipée' },
 ];
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
+const STANDING_LABELS: Record<Standing, string> = {
+  standard: 'Standard',
+  confort: 'Confort',
+  haut_standing: 'Haut standing',
+};
+
+/** Descriptions longer than this are folded to a few lines with "Lire la suite". */
+const LONG_DESCRIPTION = 180;
+const FOLDED_LINES = 4;
+/** The full text stays readable in the Description section below. */
+const TITLE_LINES = 3;
+
+type Fact = { icon: IconName; value: string; label: string };
+
+function facts(a: Announce): Fact[] {
+  const list: (Fact | null)[] = [
+    a.bedrooms != null
+      ? { icon: 'bed', value: String(a.bedrooms), label: a.bedrooms > 1 ? 'Chambres' : 'Chambre' }
+      : null,
+    a.size != null ? { icon: 'square-foot', value: `${a.size} m²`, label: 'Superficie' } : null,
+    a.standing ? { icon: 'star-outline', value: STANDING_LABELS[a.standing] ?? a.standing, label: 'Standing' } : null,
+    { icon: 'favorite-border', value: String(a.likes_count ?? 0), label: 'Favoris' },
+  ];
+  return list.filter((f): f is Fact => f !== null);
+}
+
+function FactTile({ fact, wide }: { fact: Fact; wide: boolean }) {
+  const C = useThemeColors();
+  return (
+    <View
+      accessible
+      accessibilityLabel={`${fact.label} : ${fact.value}`}
+      style={{
+        flexGrow: 1,
+        flexBasis: wide ? '40%' : 0,
+        alignItems: 'center',
+        gap: Spacing.xxs,
+        paddingVertical: Spacing.ms,
+        paddingHorizontal: Spacing.xs,
+        borderRadius: Radii.control,
+        borderWidth: Borders.thin,
+        borderColor: C.outlineVariant,
+        backgroundColor: C.surfaceContainerLowest,
+      }}
+    >
+      <MaterialIcons name={fact.icon} size={Sizes.icon} color={C.onSurfaceVariant} />
+      <AppText variant="bodyStrong" style={{ textAlign: 'center' }}>
+        {fact.value}
+      </AppText>
+      <AppText variant="caption" color="onSurfaceVariant" style={{ textAlign: 'center' }}>
+        {fact.label}
+      </AppText>
+    </View>
+  );
+}
+
+function AmenityPill({ icon, label }: { icon: IconName; label: string }) {
+  const C = useThemeColors();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.xs,
+        minHeight: Sizes.avatarSm,
+        paddingHorizontal: Spacing.ms,
+        paddingVertical: Spacing.xs,
+        borderRadius: Radii.full,
+        backgroundColor: C.primaryFixed,
+      }}
+    >
+      <MaterialIcons name={icon} size={Sizes.iconSm} color={C.onPrimaryFixed} />
+      <AppText variant="label" color="onPrimaryFixed" style={{ flexShrink: 1 }}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
+function SectionTitle({ children }: { children: string }) {
+  return (
+    <AppText variant="headline" accessibilityRole="header">
+      {children}
+    </AppText>
+  );
+}
+
 export default function AnnounceDetailScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const { data: announce, isLoading, isFetching, refetch } = useAnnounce(id ?? '');
-  const { data: announcerListingsData } = useAnnounces(
-    announce?.announcer?.id ? { AnnouncerId: announce.announcer.id } : {}
-  );
+  const { data: announce, isLoading, isError, isFetching, refetch } = useAnnounce(id ?? '');
   const toggleLike = useToggleLike();
   const accessToken = useAuthStore((s) => s.accessToken);
   const [expanded, setExpanded] = useState(false);
-  const [showAllAmenities, setShowAllAmenities] = useState(false);
-
-  const GALLERY_H = insets.top + 320;
 
   if (isLoading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: C.background }}>
-        <AnnounceDetailSkeleton onBack={() => router.back()} />
-      </View>
-    );
+    return <AnnounceDetailSkeleton onBack={() => router.back()} />;
   }
 
   if (!announce) {
     return (
-      <View style={{ flex: 1, backgroundColor: C.background, paddingTop: insets.top }}>
-        <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, padding: Spacing.lg }]}>
-          Annonce introuvable.
-        </Text>
-      </View>
+      <Screen header={<ScreenHeader title="Annonce" />}>
+        {isError ? (
+          <ErrorState title="Impossible de charger cette annonce" onRetry={() => refetch()} />
+        ) : (
+          <EmptyState
+            icon="search-off"
+            title="Annonce introuvable"
+            description="Cette annonce n'existe pas ou n'est plus disponible."
+            actionLabel="Retour"
+            onAction={() => router.back()}
+          />
+        )}
+      </Screen>
     );
   }
 
-  function truncateWords(text: string, max = 10): string {
-    const words = text.trim().split(/\s+/);
-    if (words.length <= max) return text;
-    return words.slice(0, max).join(' ') + '…';
-  }
-
-  const announcerListingsCount = (announcerListingsData?.data ?? []).filter(
-    (a) => a.id !== announce.id
-  ).length;
-  const activeAmenities = AMENITIES.filter((a) => announce[a.key]);
-  const visibleAmenities = showAllAmenities ? activeAmenities : activeAmenities.slice(0, 5);
-  const displayName =
-    announce.announcer?.company_name ?? announce.announcer?.name ?? 'Annonceur';
-
-  // Subtitle parts
-  const locationLine = [announce.category?.name, announce.city, announce.country]
-    .filter(Boolean)
-    .join(', ');
-  const statsLine = [
-    announce.bedrooms != null ? `${announce.bedrooms} chambre${announce.bedrooms > 1 ? 's' : ''}` : null,
-    announce.size != null ? `${announce.size} m²` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const a = announce;
+  const rent = a.ad_type === 'location';
+  const galleryHeight = insets.top + Sizes.detailGallery;
+  const activeAmenities = a.type === 'realestate' ? AMENITIES.filter((m) => a[m.key]) : [];
+  const factList = facts(a);
+  const longDescription = a.description.length > LONG_DESCRIPTION;
+  const address = [a.address, a.state].filter(Boolean).join(', ');
 
   function handleUnlock() {
-    if (announce!.unlocked) {
-      const phone =
-        announce!.contact_phone ??
-        announce!.announcer?.professional_phone ??
-        announce!.announcer?.contact;
+    if (a.unlocked) {
+      const phone = a.contact_phone ?? a.announcer?.professional_phone ?? a.announcer?.contact;
       if (phone) Linking.openURL(`tel:${phone}`);
     } else if (!accessToken) {
       router.push({
         pathname: '/(auth)/login',
-        params: { redirect: `/announces/${announce!.id}` },
+        params: { redirect: `/announces/${a.id}` },
       });
     } else {
       router.push({
         pathname: '/(modals)/unlock-confirm',
-        params: { announceId: announce!.id },
+        params: { announceId: a.id },
       });
     }
   }
@@ -131,7 +194,6 @@ export default function AnnounceDetailScreen() {
   // src/views/Ad/Ad.tsx + src/utils/adPath.ts). Android ignores `url`, so the
   // link goes inside `message`.
   function handleShare() {
-    const a = announce!;
     const path = a.type === 'furniture' ? 'furnitures' : 'houses';
     const url = `https://domilix.com/fr/${path}/${a.id}`;
     const title = `${a.category?.name || 'Annonce'} · ${a.city || a.address || 'Localisation'}`;
@@ -141,536 +203,173 @@ export default function AnnounceDetailScreen() {
     Share.share({ title, message }).catch(() => {});
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: C.background }}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 96 + insets.bottom }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isFetching && !isLoading}
-            onRefresh={refetch}
-            tintColor={C.primary}
-            colors={[C.primary]}
-          />
-        }
-      >
-        {/* ── Gallery ── */}
-        <View style={{ height: GALLERY_H, position: 'relative' }}>
-          <ListingGallery
-            medias={announce.medias}
-            height={GALLERY_H}
-            announceId={announce.id}
-          />
-
-          {/* Back — white pill button */}
-          <IconButton
-            icon="arrow-left"
-            accessibilityLabel="Retour"
-            onPress={() => router.back()}
-            iconColor="#222"
-            containerColor="rgba(255,255,255,0.95)"
-            size={20}
-            style={[styles.backBtn, { top: insets.top + 10 }]}
-          />
-
-          {/* Share + Heart — plain icons, no background */}
-          <View style={[styles.topActions, { top: insets.top + 10 }]}>
-            <IconButton
-              icon="share-variant-outline"
-              accessibilityLabel="Partager l'annonce"
-              onPress={handleShare}
-              iconColor="#222"
-              containerColor="rgba(255,255,255,0.95)"
-              size={20}
-              style={styles.iconBtn}
-            />
-            <IconButton
-              icon={announce.liked ? 'heart' : 'heart-outline'}
-              accessibilityLabel={announce.liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-              accessibilityState={{ selected: announce.liked }}
-              onPress={() => toggleLike.mutate(id ?? '')}
-              iconColor={announce.liked ? '#e53935' : '#222'}
-              containerColor="rgba(255,255,255,0.95)"
-              size={20}
-              style={styles.iconBtn}
-            />
-          </View>
-        </View>
-
-        {/* ── Content card ── */}
-        <View style={[styles.card, { backgroundColor: C.surface }]}>
-          {/* Title */}
-          <View style={styles.titleRow}>
-            <MaterialIcons name="home-work" size={22} color={C.onSurface} style={{ marginTop: 2 }} />
-            <Text style={[styles.title, { color: C.onSurface }]}>
-              {truncateWords(announce.description.split('.')[0])}
-            </Text>
-          </View>
-
-          {/* Subtitles — centered gray */}
-          {locationLine ? (
-            <Text style={[styles.subtitle, { color: C.onSurfaceVariant }]}>{locationLine}</Text>
-          ) : null}
-          {statsLine ? (
-            <Text style={[styles.subtitle, { color: C.onSurfaceVariant }]}>{statsLine}</Text>
-          ) : null}
-
-          {/* ── 3-column stats (Airbnb style) ── */}
-          <View style={[styles.statsBox, { borderColor: C.outlineVariant }]}>
-            {/* Col 1 — Price */}
-            <View style={styles.statsCol}>
-              <Text style={[styles.statsNum, { color: C.onSurface }]}>
-                {announce.price.toLocaleString('fr-FR')}
-              </Text>
-              <Text style={[styles.statsSub, { color: C.onSurfaceVariant }]}>
-                {announce.devise}{announce.ad_type === 'location' ? ' /mois' : ''}
-              </Text>
-            </View>
-
-            <View style={[styles.statsLine, { backgroundColor: C.outlineVariant }]} />
-
-            {/* Col 2 — Type */}
-            <View style={styles.statsCol}>
-              <MaterialIcons
-                name={announce.ad_type === 'location' ? 'vpn-key' : 'sell'}
-                size={22}
-                color={C.primary}
-              />
-              <Text style={[styles.statsSub, styles.statsBold, { color: C.onSurface }]}>
-                {announce.ad_type === 'location' ? 'Location' : 'Vente'}
-              </Text>
-            </View>
-
-            <View style={[styles.statsLine, { backgroundColor: C.outlineVariant }]} />
-
-            {/* Col 3 — Likes */}
-            <View style={styles.statsCol}>
-              <Text style={[styles.statsNum, { color: C.onSurface }]}>{announce.likes_count ?? 0}</Text>
-              <Text style={[styles.statsSub, { color: C.onSurfaceVariant }]}>favoris</Text>
-            </View>
-          </View>
-
-          {/* ── Divider ── */}
-          <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
-
-          {/* ── Host row (Airbnb "Stay with Rosa") ── */}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Voir le profil de ${displayName}`}
-            onPress={() => router.push(`/announcers/${announce.announcer?.id}`)}
-            style={styles.hostRow}
-          >
-            {/* Avatar */}
-            <View style={[styles.hostAvatar, { borderColor: C.outlineVariant }]}>
-              {announce.announcer?.avatar ? (
-                <Image
-                  source={{ uri: announce.announcer.avatar }}
-                  style={styles.hostAvatarImg}
-                />
-              ) : (
-                <View
-                  style={[
-                    styles.hostAvatarImg,
-                    { backgroundColor: C.primaryFixed, alignItems: 'center', justifyContent: 'center' },
-                  ]}
-                >
-                  <MaterialIcons name="person" size={24} color={C.onPrimaryFixed} />
-                </View>
-              )}
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.hostName, { color: C.onSurface }]}>Annoncé par {displayName}</Text>
-              <Text style={[styles.hostSub, { color: C.onSurfaceVariant }]}>
-                Certifié{announcerListingsCount > 0 ? ` · ${announcerListingsCount} annonce${announcerListingsCount > 1 ? 's' : ''}` : ''}
-              </Text>
-            </View>
-          </Pressable>
-
-          {/* ── Divider ── */}
-          <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
-
-          {/* ── Feature highlights ── */}
-          <View style={styles.feature}>
-            <MaterialIcons name="verified-user" size={28} color={C.onSurface} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.featureTitle, { color: C.onSurface }]}>Contact sécurisé</Text>
-              <Text style={[styles.featureSub, { color: C.onSurfaceVariant }]}>
-                {announce.unlocked
-                  ? "Vous avez accès aux coordonnées de l'annonceur."
-                  : "Débloquez pour accéder aux coordonnées de l'annonceur."}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.feature}>
-            <MaterialIcons name="location-on" size={28} color={C.onSurface} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.featureTitle, { color: C.onSurface }]}>{announce.city}</Text>
-              <Text style={[styles.featureSub, { color: C.onSurfaceVariant }]}>
-                {announce.address}
-                {announce.state ? `, ${announce.state}` : ''}
-              </Text>
-            </View>
-          </View>
-
-          {/* ── Banner ── */}
-          <View style={[styles.banner, { backgroundColor: C.surfaceContainer }]}>
-            <MaterialIcons name="diamond" size={16} color={C.onSurfaceVariant} />
-            <Text style={[styles.bannerText, { color: C.onSurfaceVariant }]}>
-              {announce.ad_type === 'location'
-                ? 'Bien disponible à la location'
-                : 'Bien disponible à la vente'}
-            </Text>
-          </View>
-
-          {/* ── Divider ── */}
-          <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
-
-          {/* ── Description ── */}
-          <View style={styles.section}>
-            <Text style={[styles.descText, { color: C.onSurface }]} numberOfLines={expanded ? undefined : 3}>
-              {announce.description}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded }}
-              hitSlop={8}
-              onPress={() => setExpanded((v) => !v)}
-              style={styles.expandRow}
-            >
-              <Text style={[styles.expandLink, { color: C.onSurface }]}>
-                {expanded ? 'Afficher moins' : 'Afficher plus'}
-              </Text>
-              <MaterialIcons
-                name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-                size={18}
-                color={C.onSurface}
-              />
-            </Pressable>
-          </View>
-
-          {/* ── Amenities ── */}
-          {announce.type === 'realestate' && activeAmenities.length > 0 && (
-            <>
-              <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: C.onSurface }]}>Ce que propose ce bien</Text>
-                {visibleAmenities.map((a) => (
-                  <View key={a.key} style={styles.amenityRow}>
-                    <MaterialIcons name={a.icon} size={22} color={C.onSurface} />
-                    <Text style={[styles.amenityLabel, { color: C.onSurface }]}>{a.label}</Text>
-                  </View>
-                ))}
-                {activeAmenities.length > 5 && (
-                  <Button
-                    mode="outlined"
-                    onPress={() => setShowAllAmenities((v) => !v)}
-                    style={styles.showAllBtn}
-                    textColor={C.onSurface}
-                  >
-                    {showAllAmenities
-                      ? 'Afficher moins'
-                      : `Afficher les ${activeAmenities.length} équipements`}
-                  </Button>
-                )}
-              </View>
-            </>
-          )}
-
-          {/* ── Announcer card ── */}
-          <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: C.onSurface }]}>{"L'annonceur"}</Text>
-            <AnnouncerCard
-              announcer={announce.announcer}
-              announcesCount={announcerListingsCount}
-              onPress={() => router.push(`/announcers/${announce.announcer?.id}`)}
-            />
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* ── Bottom bar (Airbnb style) ── */}
-      <View
-        style={[
-          styles.bottomBar,
-          { borderTopColor: C.outlineVariant, backgroundColor: C.surface, paddingBottom: insets.bottom + 12 },
-        ]}
-      >
-        {/* Left — price underlined + period */}
-        <View style={styles.bottomLeft}>
-          <Text
-            style={[styles.bottomPrice, { color: C.onSurface }]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.7}
-          >
-            {`${announce.price.toLocaleString('fr-FR')} ${announce.devise}`.replace(/[\s\u202f]/g, '\u00a0')}
-          </Text>
-          <Text style={[styles.bottomPeriod, { color: C.onSurfaceVariant }]}>
-            {announce.ad_type === 'location' ? 'par mois' : 'prix de vente'}
-          </Text>
-        </View>
-
-        {/* Right — pill CTA */}
-        <Button
-          mode="contained"
-          accessibilityLabel={announce.unlocked ? "Contacter l'annonceur" : 'Débloquer les coordonnées'}
-          onPress={handleUnlock}
-          style={styles.ctaPill}
-          contentStyle={styles.ctaContent}
-          labelStyle={styles.ctaText}
-        >
-          {announce.unlocked ? 'Contacter' : 'Débloquer'}
-        </Button>
+  const footer = (
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: Spacing.ms,
+        paddingHorizontal: Spacing.marginMobile,
+        paddingTop: Spacing.ms,
+        paddingBottom: Spacing.ms,
+        borderTopWidth: Borders.thin,
+        borderTopColor: C.outlineVariant,
+        backgroundColor: C.surfaceContainerLowest,
+      }}
+    >
+      {/* At large font sizes the button drops under the price instead of squeezing it. */}
+      <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: '40%' }}>
+        <PriceTag amount={a.price} currency={a.devise} period={rent ? (a.period ?? 'month') : null} color="onSurface" />
+        <AppText variant="caption" color="onSurfaceVariant">
+          {rent ? 'Location' : 'Prix de vente'}
+        </AppText>
       </View>
+      <Button
+        size="lg"
+        icon={a.unlocked ? 'call' : 'lock-open'}
+        label={a.unlocked ? 'Contacter' : 'Débloquer le contact'}
+        accessibilityLabel={a.unlocked ? "Contacter l'annonceur" : 'Débloquer les coordonnées'}
+        onPress={handleUnlock}
+        style={{ flexGrow: 1 }}
+      />
     </View>
   );
+
+  return (
+    <Screen
+      heroHeight={galleryHeight}
+      footer={footer}
+      onRefresh={refetch}
+      refreshing={isFetching && !isLoading}
+      showsVerticalScrollIndicator={false}
+      contentStyle={{ gap: 0 }}
+    >
+      <View>
+        <ListingGallery medias={a.medias} height={galleryHeight} announceId={a.id} bottomInset={Spacing.lg} />
+        <View
+          style={{
+            position: 'absolute',
+            top: insets.top + Spacing.sm,
+            left: Spacing.ms,
+            right: Spacing.ms,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}
+        >
+          <IconButton icon="arrow-back" label="Retour" overlay onPress={() => router.back()} />
+          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+            <IconButton icon="share" label="Partager l'annonce" overlay onPress={handleShare} />
+            <IconButton
+              icon="favorite-border"
+              selectedIcon="favorite"
+              selected={a.liked}
+              label={a.liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              overlay
+              onPress={() => toggleLike.mutate(id ?? '')}
+            />
+          </View>
+        </View>
+      </View>
+
+      <View
+        style={{
+          marginTop: -Spacing.lg,
+          borderTopLeftRadius: Radii.card,
+          borderTopRightRadius: Radii.card,
+          backgroundColor: C.background,
+          paddingHorizontal: Spacing.marginMobile,
+          paddingTop: Spacing.marginMobile,
+          gap: Spacing.lg,
+        }}
+      >
+        {/* Title */}
+        <View style={{ gap: Spacing.sm }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.sm }}>
+            <Badge label={rent ? 'À louer' : 'À vendre'} variant={rent ? 'primary' : 'tertiary'} />
+            {a.category?.name ? (
+              <AppText variant="caption" color="onSurfaceVariant" style={{ flexShrink: 1 }}>
+                {categoryLabel(a.category.name)}
+              </AppText>
+            ) : null}
+          </View>
+          {/* The API has no title: the first sentence can be the whole description (no full stop). */}
+          <AppText variant="title" accessibilityRole="header" numberOfLines={TITLE_LINES}>
+            {announceTitle(a)}
+          </AppText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
+            <MaterialIcons name="location-on" size={Sizes.iconSm} color={C.onSurfaceVariant} />
+            <AppText color="onSurfaceVariant" style={{ flex: 1 }}>
+              {announcePlace(a)}
+            </AppText>
+          </View>
+        </View>
+
+        {/* Key facts */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+          {factList.map((f) => (
+            <FactTile key={f.label} fact={f} wide={fontScale >= 1.3 || factList.length > 3} />
+          ))}
+        </View>
+
+        {/* Description */}
+        <View style={{ gap: Spacing.sm }}>
+          <SectionTitle>Description</SectionTitle>
+          <AppText numberOfLines={longDescription && !expanded ? FOLDED_LINES : undefined}>{a.description}</AppText>
+          {longDescription ? (
+            <Button
+              variant="text"
+              label={expanded ? 'Afficher moins' : 'Lire la suite'}
+              accessibilityState={{ expanded }}
+              onPress={() => setExpanded((v) => !v)}
+              style={{ alignSelf: 'flex-start', marginLeft: -Spacing.ms }}
+            />
+          ) : null}
+        </View>
+
+        {/* Amenities */}
+        {activeAmenities.length > 0 ? (
+          <View style={{ gap: Spacing.ms }}>
+            <SectionTitle>Équipements & services</SectionTitle>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+              {activeAmenities.map((m) => (
+                <AmenityPill key={m.key} icon={m.icon} label={m.label} />
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {/* Location */}
+        <View style={{ gap: Spacing.sm }}>
+          <SectionTitle>Localisation</SectionTitle>
+          <View style={{ flexDirection: 'row', gap: Spacing.ms }}>
+            <MaterialIcons name="location-on" size={Sizes.iconLg} color={C.onSurfaceVariant} />
+            <View style={{ flex: 1, gap: Spacing.xxs }}>
+              <AppText variant="bodyStrong">{a.city}</AppText>
+              {address ? <AppText color="onSurfaceVariant">{address}</AppText> : null}
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: Spacing.ms }}>
+            <MaterialIcons
+              name={a.unlocked ? 'lock-open' : 'verified-user'}
+              size={Sizes.iconLg}
+              color={C.onSurfaceVariant}
+            />
+            <AppText color="onSurfaceVariant" style={{ flex: 1 }}>
+              {a.unlocked
+                ? "Annonce débloquée : vous avez accès aux coordonnées de l'annonceur."
+                : "Contact sécurisé : débloquez l'annonce pour accéder aux coordonnées de l'annonceur."}
+            </AppText>
+          </View>
+        </View>
+
+        {/* Announcer */}
+        {/* Anonymised by the backend on every listing, as on the website: no profile link (QA-01). */}
+        <View style={{ gap: Spacing.ms }}>
+          <SectionTitle>{"L'annonceur"}</SectionTitle>
+          <AnnouncerCard verified={!!a.announcer?.verified} />
+        </View>
+      </View>
+    </Screen>
+  );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  // Gallery buttons
-  backBtn: {
-    position: 'absolute',
-    left: 16,
-    margin: 0,
-  },
-  topActions: {
-    position: 'absolute',
-    right: 16,
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-  },
-  iconBtn: {
-    margin: 0,
-  },
-
-  // Content card
-  card: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -24,
-    paddingTop: 28,
-  },
-
-  // Title area
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    paddingHorizontal: Spacing.marginMobile,
-    marginBottom: 8,
-  },
-  title: {
-    flex: 1,
-    fontFamily: Fonts.bold,
-    fontSize: 22,
-    lineHeight: 28,
-  },
-  subtitle: {
-    fontFamily: Fonts.regular,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-    paddingHorizontal: Spacing.marginMobile,
-    marginBottom: 2,
-  },
-
-  // Stats box (3-col bordered)
-  statsBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: Spacing.marginMobile,
-    marginTop: 20,
-    marginBottom: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  statsCol: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 14,
-    gap: 4,
-  },
-  statsLine: {
-    width: 1,
-    height: 44,
-  },
-  statsNum: {
-    fontFamily: Fonts.bold,
-    fontSize: 18,
-    lineHeight: 22,
-  },
-  statsSub: {
-    fontFamily: Fonts.regular,
-    fontSize: 11,
-    lineHeight: 14,
-    textAlign: 'center',
-  },
-  statsBold: {
-    fontFamily: Fonts.bold,
-    fontSize: 12,
-  },
-
-  // Divider
-  divider: {
-    height: 1,
-    marginVertical: 8,
-  },
-
-  // Host row
-  hostRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: 16,
-  },
-  hostAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    overflow: 'hidden',
-    flexShrink: 0,
-    borderWidth: 1.5,
-  },
-  hostAvatarImg: { width: '100%', height: '100%' },
-  hostName: {
-    fontFamily: Fonts.bold,
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  hostSub: {
-    fontFamily: Fonts.regular,
-    fontSize: 13,
-    marginTop: 2,
-  },
-
-  // Features (Airbnb "Great check-in experience")
-  feature: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 16,
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: 14,
-  },
-  featureTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  featureSub: {
-    fontFamily: Fonts.regular,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 3,
-  },
-
-  // Banner
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: 12,
-  },
-  bannerText: {
-    fontFamily: Fonts.medium,
-    fontSize: 13,
-  },
-
-  // Sections
-  section: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  sectionTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: 18,
-    lineHeight: 24,
-    marginBottom: 4,
-  },
-
-  // Description
-  descText: {
-    fontFamily: Fonts.regular,
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  expandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    marginTop: 4,
-  },
-  expandLink: {
-    fontFamily: Fonts.bold,
-    fontSize: 14,
-    textDecorationLine: 'underline',
-  },
-
-  // Amenities
-  amenityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  amenityLabel: {
-    fontFamily: Fonts.regular,
-    fontSize: 15,
-  },
-  showAllBtn: {
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    borderRadius: 10,
-  },
-
-  // Bottom bar
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    // At large font scales the CTA drops below the price instead of squeezing it.
-    flexWrap: 'wrap',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    gap: 12,
-  },
-  bottomLeft: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 150,
-    gap: 2,
-  },
-  bottomPrice: {
-    fontFamily: Fonts.bold,
-    fontSize: 20,
-    textDecorationLine: 'underline',
-  },
-  bottomPeriod: {
-    fontFamily: Fonts.regular,
-    fontSize: 13,
-  },
-  ctaPill: {
-    borderRadius: Radius.full,
-    flexShrink: 0,
-  },
-  ctaContent: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  ctaText: {
-    fontFamily: Fonts.bold,
-    fontSize: 15,
-  },
-});

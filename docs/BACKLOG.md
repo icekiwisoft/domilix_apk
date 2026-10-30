@@ -322,6 +322,46 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 - Annonces sans photo : image aléatoire (picsum) en repli ; remplacer par une illustration Domilix neutre.
 - `handleCategory` sur l'accueil garde d'anciens filtres et la recherche.
 
+### UI-08 — Migration Annonce vers le kit (P1)
+
+- **Décision (2026-10-30)** : suite de la migration par zone validée par l'utilisateur
+  (« fusionne la PR et commence la migration »), maquettes du canvas, rangée « Annonce »
+  (`Detail`, `Deblocage`, `Annonceur`, copies dans le vault `10_Projects/Domilix/Maquettes/`).
+- **Périmètre** : `app/announces/[id].tsx` (détail immobilier et mobilier),
+  `app/(modals)/unlock-confirm.tsx` (déblocage), `app/announcers/[id].tsx` (profil annonceur, qui passe
+  sur le nouveau `ListingCard`), et les composants qu'ils utilisent (`components/listing`, galerie,
+  contact, partage).
+- **Critères d'acceptation** : écrans conformes aux maquettes ; uniquement le kit et les jetons
+  (0 avertissement de la règle de lint dans les fichiers migrés) ; plus de React Native Paper dans ces
+  écrans ; comportement inchangé (requêtes, favoris, partage avec lien B-03, déblocage, garde
+  d'authentification, retour Android) ; aucun déblocage réel sur l'API de production en QA (arrêt avant
+  la confirmation) ; AA clair et sombre, 48 dp, 200 %, TalkBack ; build release vérifié.
+
+### B-09 — Changer la taille de police avec l'app ouverte renvoie l'invité à la connexion (P2)
+
+- QA UI-08 (QA-08, QA-09, 2026-10-30) : Android recrée l'activité quand la taille de police change ;
+  l'invité retombe sur l'écran de connexion (mode invité non conservé) et cet écran garde les
+  hauteurs de texte de l'ancienne échelle jusqu'au prochain lancement. Retour après un deep link
+  annonceur à froid mène aussi à la connexion.
+- Pistes : ajouter `fontScale` aux `configChanges` de l'activité (plugin de config) pour éviter la
+  recréation, et/ou conserver le mode invité ; vérifier que l'écran de connexion passe par `AppText`
+  (contournement du cache de mesure de texte, commit 03ebb7b).
+- Probablement antérieur à UI-08 (non comparé faute de build antérieur). Décision de l'utilisateur :
+  lot à part, UI-08 publié avec cette limite connue.
+
+### UI-09 — Accessibilité et reprise réseau hors lot UI-08 (P3)
+
+- Onglet Profil : le nom accessible de « Se connecter » et des lignes du menu commence par un glyphe
+  d'icône ; tuiles de l'onglet Médias du profil annonceur sans libellé (QA-06).
+- Médias du profil annonceur : après une erreur réseau, pas de nouvel essai automatique au retour du
+  réseau (QA-07) ; brancher `onlineManager` de React Query sur NetInfo.
+- Profil annonceur : lien « Voir les packs Domicoin » quand le solde est insuffisant et bouton de
+  partage (présents dans les maquettes) ; onglets « À louer / À vendre » de la maquette non faits.
+- Composants orphelins à supprimer : `announcer-hero`, `announcer-stats`, `announcer-contact`,
+  `listing-actions-bar`, `listing-amenities`, `listing-stats-row`.
+- `fontVariant: tabular-nums` (PriceTag) dessine les chiffres dans une police de repli au lieu de
+  Mona Sans.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
@@ -329,4 +369,4 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    UI-02, B-02 (connexion Google native) et B-05.
 3. **Lot 3 — contraste et 200 %** : UI-04 (fusionné). Puis F-01 quand le backend renverra le `user_id`.
 4. **Lot 4 — système de design** : UI-06 fusionné (PR #7, 2026-10-29).
-5. **Lot 5 — migration** : UI-07 Accueil et Explorer, puis Annonce, Compte, Publier.
+5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend), puis Compte, Publier.

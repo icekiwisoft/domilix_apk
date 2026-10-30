@@ -90,6 +90,13 @@ export const Colors = {
     promoSurface: '#2c1600',
     onPromo: '#feeee1',
     onPromoVariant: '#ffdcbb',
+    // Photo counter over a listing photo and the full-screen photo viewer
+    // (UI-08), same in both themes. onPhotoBadge on photoBadge: 7.57:1 over a
+    // white photo (worst case), 18.4:1 over black; onViewer on viewer 21:1.
+    photoBadge: 'rgba(33,26,18,0.75)',
+    onPhotoBadge: '#ffffff',
+    viewer: '#000000',
+    onViewer: '#ffffff',
   },
   dark: {
     // Surfaces
@@ -168,6 +175,13 @@ export const Colors = {
     promoSurface: '#2c1600',
     onPromo: '#feeee1',
     onPromoVariant: '#ffdcbb',
+    // Photo counter over a listing photo and the full-screen photo viewer
+    // (UI-08), same in both themes. onPhotoBadge on photoBadge: 7.57:1 over a
+    // white photo (worst case), 18.4:1 over black; onViewer on viewer 21:1.
+    photoBadge: 'rgba(33,26,18,0.75)',
+    onPhotoBadge: '#ffffff',
+    viewer: '#000000',
+    onViewer: '#ffffff',
   },
 } as const;
 
@@ -403,6 +417,8 @@ export const Sizes = {
   publishButton: 60, // raised round "Publier" button of the tab bar
   countBadge: 22, // number badge on the filter button
   dot: 10, // unread dot on the notification bell
+  // UI-08: listing detail and announcer profile
+  detailGallery: 320, // photo gallery at the top of a listing, under the status bar
 } as const;
 
 // Border widths of the shared components (UI-06). `focus` is the focus and
