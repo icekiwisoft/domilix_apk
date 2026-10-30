@@ -4,12 +4,12 @@ import { FlatList, RefreshControl, View } from 'react-native';
 
 import { ExploreHeader } from '@/components/search/explore-header';
 import { AnnounceCard } from '@/components/listing/announce-card';
-import { activeFilters } from '@/components/search/active-filters';
+import { activeFilters, cityLabel } from '@/components/search/active-filters';
 import { AppText, Button, EmptyState, ErrorState, ListingCardSkeleton, Screen } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 import { useThemeColors } from '@/hooks/use-theme-color';
-import { useFilterStore } from '@/stores/filter.store';
+import { toAnnounceQuery, useFilterStore } from '@/stores/filter.store';
 
 function ResultsCount({ count, query, city }: { count: number; query?: string; city?: string }) {
   const noun = `${count} ${query ? 'résultat' : 'annonce'}${count !== 1 ? 's' : ''}`;
@@ -31,12 +31,7 @@ export default function ExploreScreen() {
   const search = filters.search ?? '';
   const setSearch = (text: string) => setFilters({ search: text || undefined });
   const toggleLike = useToggleLike();
-  const query = {
-    ...filters,
-    type: filters.type ?? 'realestate',
-    ad_type: filters.ad_type ?? 'location',
-    search: search.trim() || undefined,
-  };
+  const query = toAnnounceQuery(filters);
 
   // Back to page 1 whenever the search or a filter changes.
   const queryKey = JSON.stringify(query);
@@ -114,7 +109,7 @@ export default function ExploreScreen() {
         ListHeaderComponent={
           !isLoading && !isError && announces.length > 0 ? (
             <View style={{ paddingBottom: Spacing.xs }}>
-              <ResultsCount count={total} query={search.trim() || undefined} city={filters.city} />
+              <ResultsCount count={total} query={search.trim() || undefined} city={filters.city ? cityLabel(filters.city) : undefined} />
             </View>
           ) : null
         }

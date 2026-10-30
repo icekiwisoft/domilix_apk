@@ -85,6 +85,9 @@ export interface Announce {
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
 
+/** Rental periods accepted by the API (backend `AD_PERIODS`). */
+export type AdPeriod = 'hour' | 'day' | 'night' | 'month' | 'year';
+
 export interface AnnounceFilters {
   type?: AnnounceType;
   ad_type?: AdType;
@@ -97,6 +100,10 @@ export interface AnnounceFilters {
   bedroom_min?: number;
   bedroom_max?: number;
   amenities?: string[];
+  /** Rental period, e.g. `night` for the home row "Séjours à la nuit" (backend AD_PERIODS). */
+  period?: AdPeriod;
+  /** `1`: recommended listings only (backend: listings with at least one photo). */
+  recommended?: 1;
   search?: string;
   orderBy?: string;
   AnnouncerId?: string;

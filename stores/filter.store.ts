@@ -1,14 +1,23 @@
 import { create } from 'zustand';
-import type { AnnounceFilters } from '@/types/announce';
+import type { AdType, AnnounceFilters } from '@/types/announce';
+
+/**
+ * Explore criteria. Unset `type` and `ad_type` mean the defaults (Immobilier,
+ * À louer); `ad_type: 'all'` lists rentals and sales together (home rows
+ * "Nos recommandations" and "Dernières annonces", UI-11).
+ */
+export type ExploreFilters = Omit<AnnounceFilters, 'ad_type'> & { ad_type?: AdType | 'all' };
 
 interface FilterState {
-  filters: AnnounceFilters;
-  setFilter: <K extends keyof AnnounceFilters>(key: K, value: AnnounceFilters[K] | undefined) => void;
-  setFilters: (patch: Partial<AnnounceFilters>) => void;
+  filters: ExploreFilters;
+  setFilter: <K extends keyof ExploreFilters>(key: K, value: ExploreFilters[K] | undefined) => void;
+  setFilters: (patch: Partial<ExploreFilters>) => void;
+  /** Replaces every criterion: the list shows exactly these (home "Tout voir", city chips). */
+  replaceFilters: (filters: ExploreFilters) => void;
   clearFilters: () => void;
 }
 
-const DEFAULT_FILTERS: AnnounceFilters = {};
+const DEFAULT_FILTERS: ExploreFilters = {};
 
 export const useFilterStore = create<FilterState>((set) => ({
   filters: DEFAULT_FILTERS,
@@ -23,16 +32,29 @@ export const useFilterStore = create<FilterState>((set) => ({
       filters: { ...state.filters, ...patch, page: undefined },
     })),
 
+  replaceFilters: (filters) => set({ filters: { ...filters, page: undefined } }),
+
   clearFilters: () => set({ filters: DEFAULT_FILTERS }),
 }));
 
+/** API query of the explore list and map: defaults applied, `all` sent as no ad_type. */
+export function toAnnounceQuery(f: ExploreFilters): AnnounceFilters {
+  const { ad_type, search, ...rest } = f;
+  return {
+    ...rest,
+    type: f.type ?? 'realestate',
+    ad_type: ad_type === 'all' ? undefined : (ad_type ?? 'location'),
+    search: search?.trim() || undefined,
+  };
+}
+
 // Selector: counts active filters (excludes page and orderBy from the count)
-const EXCLUDED_FROM_COUNT: (keyof AnnounceFilters)[] = ['page', 'orderBy'];
+const EXCLUDED_FROM_COUNT: (keyof ExploreFilters)[] = ['page', 'orderBy'];
 
 export function selectActiveFiltersCount(state: FilterState): number {
   return Object.entries(state.filters)
     .filter(([key, value]) => {
-      if (EXCLUDED_FROM_COUNT.includes(key as keyof AnnounceFilters)) return false;
+      if (EXCLUDED_FROM_COUNT.includes(key as keyof ExploreFilters)) return false;
       if (value === undefined || value === null || value === '') return false;
       if (Array.isArray(value)) return value.length > 0;
       return true;

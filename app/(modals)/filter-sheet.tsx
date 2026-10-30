@@ -15,8 +15,8 @@ import {
 } from '@/components/ui';
 import { Borders, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
-import { useFilterStore } from '@/stores/filter.store';
-import type { AdType, AnnounceFilters, AnnounceType, Standing } from '@/types/announce';
+import { useFilterStore, type ExploreFilters } from '@/stores/filter.store';
+import type { AdType, AnnounceType, Standing } from '@/types/announce';
 
 const TYPE_OPTIONS = [
   { value: 'realestate' as const, label: 'Immobilier' },
@@ -26,6 +26,8 @@ const TYPE_OPTIONS = [
 const AD_TYPE_OPTIONS = [
   { value: 'location' as const, label: 'À louer' },
   { value: 'sale' as const, label: 'À vendre' },
+  // Set by the home rows "Nos recommandations" and "Dernières annonces" (UI-11).
+  { value: 'all' as const, label: 'Tout' },
 ];
 
 const BEDROOM_OPTIONS = [0, 1, 2, 3, 4, 5].map((n) => ({
@@ -59,7 +61,7 @@ export default function FilterSheetScreen() {
   const budgetField = { flexGrow: 1, flexBasis: fontScale >= 1.5 ? ('100%' as const) : 0 };
 
   const [type, setType] = useState<AnnounceType>(filters.type ?? 'realestate');
-  const [adType, setAdType] = useState<AdType>(filters.ad_type ?? 'location');
+  const [adType, setAdType] = useState<AdType | 'all'>(filters.ad_type ?? 'location');
   const [budgetMin, setBudgetMin] = useState(filters.budget_min ? String(filters.budget_min) : '');
   const [budgetMax, setBudgetMax] = useState(filters.budget_max ? String(filters.budget_max) : '');
   const [bedroomMin, setBedroomMin] = useState(filters.bedroom_min ?? 0);
@@ -88,7 +90,7 @@ export default function FilterSheetScreen() {
   }
 
   function handleApply() {
-    const patch: Partial<AnnounceFilters> = {
+    const patch: Partial<ExploreFilters> = {
       // Defaults (Immobilier, À louer) are stored as "not set": they are not active filters.
       type: type === 'realestate' ? undefined : type,
       ad_type: adType === 'location' ? undefined : adType,
