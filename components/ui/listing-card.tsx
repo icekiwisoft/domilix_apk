@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import type { ReactNode } from 'react';
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Borders, Radii, Shadows, Sizes, Spacing, TextVariants } from '@/constants/theme';
@@ -33,6 +34,11 @@ export interface ListingCardProps {
   onToggleFavorite?: () => void;
   /** vertical: photo on top (home, grids); compact: thumbnail on the left (lists, map preview). */
   variant?: 'vertical' | 'compact';
+  /**
+   * Content under the card, inside its surface, outside the card button
+   * (owner actions of Mes annonces): its own TalkBack stops.
+   */
+  footer?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -67,6 +73,7 @@ export function ListingCard(props: ListingCardProps) {
     favorite = false,
     onToggleFavorite,
     variant = 'vertical',
+    footer,
     style,
   } = props;
   const C = useThemeColors();
@@ -154,6 +161,11 @@ export function ListingCard(props: ListingCardProps) {
         {photo}
         {info}
       </Pressable>
+      {footer ? (
+        <View style={{ paddingHorizontal: compact ? Spacing.sm : Spacing.md, paddingBottom: compact ? Spacing.sm : Spacing.md }}>
+          {footer}
+        </View>
+      ) : null}
       {onToggleFavorite ? (
         <IconButton
           icon="favorite-border"

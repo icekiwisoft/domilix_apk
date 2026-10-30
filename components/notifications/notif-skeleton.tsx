@@ -1,34 +1,31 @@
-import { StyleSheet, View } from 'react-native';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Colors, Radius, Spacing } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { View } from 'react-native';
 
+import { Skeleton } from '@/components/ui';
+import { Borders, Radii, Sizes, Spacing, TextVariants } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
+
+/** Loading placeholder with the shape of a NotifItem. */
 export function NotifSkeleton() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
+  const line = TextVariants.body.fontSize;
   return (
-    <View style={[styles.row, { borderBottomColor: C.outlineVariant }]}>
-      <Skeleton width={40} height={40} radius={Radius.full} />
-      <View style={styles.body}>
-        <Skeleton width="78%" height={14} />
-        <Skeleton width="52%" height={12} style={{ marginTop: 5 }} />
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: Spacing.ms,
+        paddingHorizontal: Spacing.marginMobile,
+        paddingVertical: Spacing.ms,
+        borderBottomWidth: Borders.thin,
+        borderBottomColor: C.outlineVariant,
+      }}
+    >
+      <Skeleton width={Sizes.avatarMd} height={Sizes.avatarMd} radius={Radii.full} />
+      <View style={{ flex: 1, gap: Spacing.sm }}>
+        <Skeleton width="70%" height={line} />
+        <Skeleton width="90%" height={line} />
+        <Skeleton width="25%" height={line} />
       </View>
-      <Skeleton width={32} height={11} radius={Radius.sm} />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  body: {
-    flex: 1,
-    gap: 5,
-  },
-});

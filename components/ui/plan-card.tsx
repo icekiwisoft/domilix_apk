@@ -1,199 +1,117 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { View } from 'react-native';
 
-import { pressedStyle } from './pressed';
+import { Borders, Sizes, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
-interface PlanCardProps {
+import { AppText } from './app-text';
+import { Badge } from './badge';
+import { Button } from './button';
+import { Card } from './card';
+import { Divider } from './divider';
+import { PriceTag } from './price-tag';
+
+export interface PlanCardProps {
   title: string;
   tagline?: string;
+  /** Price in FCFA, or null for a free plan. */
   price: number | null;
-  period?: string;
   credits?: number;
   validityLabel?: string;
   features: string[];
+  /** Website "Recommandé" pack: badge, link-coloured ring and a filled button. */
   recommended?: boolean;
-  current?: boolean;
   ctaLabel?: string;
   onPress?: () => void;
 }
 
+/**
+ * Domicoin pack card (website Subscriptions view): title, benefit, credits
+ * and validity, one-off price, features and the buy button. A pack is not a
+ * recurring plan (several can be active at once), so there is no "current
+ * plan" state (B-06): the active packs are listed above the cards instead.
+ */
 export function PlanCard({
   title,
   tagline,
   price,
-  period = '/mois',
   credits,
   validityLabel,
   features,
-  recommended,
-  current,
-  ctaLabel = 'Choisir ce plan',
+  recommended = false,
+  ctaLabel = 'Acheter ce pack',
   onPress,
 }: PlanCardProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-
-  const filled = !!recommended && !current;
-  const borderColor = current ? C.primary : recommended ? C.primary : C.outlineVariant;
-  const bg = current
-    ? C.primaryContainer + '22'
-    : recommended
-    ? C.primaryContainer + '1A'
-    : C.surface;
-
+  const C = useThemeColors();
   return (
-    <View style={[styles.card, { backgroundColor: bg, borderColor, borderWidth: current || recommended ? 2 : 1 }]}>
-      {recommended && !current && (
-        <View style={[styles.badge, { backgroundColor: C.primary }]}>
-          <Text style={[Typography.caption, { color: C.onPrimary, fontFamily: Fonts.bold, letterSpacing: 0.8, textTransform: 'uppercase' }]}>
-            Recommandé
-          </Text>
-        </View>
-      )}
+    <Card
+      outlined
+      style={[
+        { padding: Spacing.lg, gap: Spacing.md },
+        recommended ? { borderWidth: Borders.focus, borderColor: C.link } : null,
+      ]}
+    >
+      {recommended ? <Badge label="Recommandé" variant="primary" icon="star" status /> : null}
 
-      <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>
-        {title}
-      </Text>
-
-      {tagline ? (
-        <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: 2, lineHeight: 18 }]}>
-          {tagline}
-        </Text>
-      ) : null}
-
-      {(credits != null || validityLabel) && (
-        <View style={styles.metaCol}>
-          {credits != null && (
-            <View style={styles.metaRow}>
-              <MaterialIcons name="toll" size={18} color={C.primary} />
-              <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: Fonts.bold }]}>
-                {credits} Domicoins
-              </Text>
-            </View>
-          )}
-          {validityLabel && (
-            <View style={styles.metaRow}>
-              <MaterialIcons name="schedule" size={18} color={C.onSurfaceVariant} />
-              <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
-                {validityLabel}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
-
-      <View style={styles.priceRow}>
-        {price === null ? (
-          <Text style={[Typography.headlineLg, { color: C.link, fontFamily: Fonts.bold, fontSize: 28 }]}>
-            Gratuit
-          </Text>
-        ) : (
-          <>
-            <Text style={[Typography.headlineLg, { color: C.link, fontFamily: Fonts.bold, fontSize: 28 }]}>
-              {price.toLocaleString('fr-FR')}
-            </Text>
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
-              {' FCFA'}{period}
-            </Text>
-          </>
-        )}
+      <View style={{ gap: Spacing.xs }}>
+        <AppText variant="headline" accessibilityRole="header">
+          {title}
+        </AppText>
+        {tagline ? <AppText color="onSurfaceVariant">{tagline}</AppText> : null}
       </View>
 
-      <View style={[styles.divider, { backgroundColor: C.outlineVariant + '4D' }]} />
+      {credits != null || validityLabel ? (
+        <View style={{ gap: Spacing.xs }}>
+          {credits != null ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <MaterialIcons name="toll" size={Sizes.icon} color={C.link} />
+              <AppText variant="bodyStrong" style={{ flexShrink: 1 }}>
+                {credits} Domicoins
+              </AppText>
+            </View>
+          ) : null}
+          {validityLabel ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <MaterialIcons name="schedule" size={Sizes.icon} color={C.onSurfaceVariant} />
+              <AppText color="onSurfaceVariant" style={{ flexShrink: 1 }}>
+                {validityLabel}
+              </AppText>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
 
-      <View style={styles.features}>
-        {features.map((f, i) => (
-          <View key={i} style={styles.featureRow}>
-            <MaterialIcons name="check-circle" size={16} color={current ? C.primary : C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1, lineHeight: 20 }]}>
-              {f}
-            </Text>
+      {price === null ? (
+        <AppText variant="price" color="link">
+          Gratuit
+        </AppText>
+      ) : (
+        <PriceTag amount={price} />
+      )}
+
+      <Divider />
+
+      <View style={{ gap: Spacing.sm }}>
+        {features.map((f) => (
+          <View key={f} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm }}>
+            <MaterialIcons
+              name="check-circle"
+              size={Sizes.icon}
+              color={C.success}
+              style={{ marginTop: Spacing.xxs }}
+            />
+            <AppText style={{ flex: 1 }}>{f}</AppText>
           </View>
         ))}
       </View>
 
-      {/* Not a Paper Button: its label is forced to one line, which truncated
-          "Débloquer mes contacts" at 200 % font size (QA-05). This one wraps. */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !!current }}
-        disabled={current}
+      <Button
+        label={ctaLabel}
+        variant={recommended ? 'primary' : 'secondary'}
+        fullWidth
+        accessibilityLabel={`${ctaLabel}, ${title}`}
         onPress={onPress}
-        style={({ pressed }) => [
-          styles.cta,
-          filled
-            ? { backgroundColor: C.primary }
-            : { borderWidth: 1, borderColor: current ? C.primary : C.outline },
-          pressedStyle(pressed),
-        ]}
-      >
-        {current && <MaterialIcons name="check-circle" size={18} color={C.link} />}
-        <Text
-          style={[
-            Typography.labelMd,
-            styles.ctaLabel,
-            { color: filled ? C.onPrimary : C.link, fontFamily: Fonts.semiBold },
-          ]}
-        >
-          {current ? 'Plan actuel' : ctaLabel}
-        </Text>
-      </Pressable>
-    </View>
+      />
+    </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    overflow: 'hidden',
-    gap: Spacing.md,
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    columnGap: 2,
-  },
-  metaCol: {
-    gap: Spacing.xs,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  divider: {
-    height: 1,
-  },
-  features: {
-    gap: Spacing.sm,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-  },
-  cta: {
-    borderRadius: Radius.md,
-    minHeight: 48,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-  },
-  ctaLabel: {
-    flexShrink: 1,
-    textAlign: 'center',
-  },
-});

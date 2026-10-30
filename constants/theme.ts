@@ -310,6 +310,8 @@ export const TextVariants = {
     lineHeight: 24,
   },
   body: Typography.bodyMd,
+  // Secondary text of a list row (notification text), UI-10.
+  bodySm: Typography.bodySm,
   bodyStrong: {
     ...Typography.bodyMd,
     fontFamily: Fonts.semiBold,
