@@ -69,11 +69,13 @@ export default function FilterSheetScreen() {
   const [standing, setStanding] = useState<Standing | undefined>(filters.standing);
 
   function handleReset() {
-    // Reset only the criteria shown in this sheet: the city (chosen from home) and the
-    // search text are not in the sheet, so they stay.
+    // Reset the sheet's criteria and those a home row's "Tout voir" sets (recommended,
+    // period), which the sheet does not show. The city and the search text stay (UI-07).
     setFilters({
       type: undefined,
       ad_type: undefined,
+      recommended: undefined,
+      period: undefined,
       budget_min: undefined,
       budget_max: undefined,
       bedroom_min: undefined,
