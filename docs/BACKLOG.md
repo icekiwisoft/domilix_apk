@@ -169,6 +169,9 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    l'existant. `recommended=1` = « a au moins une photo » : prévoir un vrai critère (choix admin,
    annonceur vérifié ou plus vues), sinon la rangée « Nos recommandations » double « Dernières annonces »
    (UI-11).
+10. `/cities` applique `take: limit` (max 50) sur une liste alphabétique *avant* le tri par nombre
+    d'annonces : au-delà de 50 groupes de villes, de grandes villes peuvent manquer ; une ville est
+    aussi renvoyée une fois par pays (UI-11).
 
 ## Améliorations demandées par l'utilisateur
 
