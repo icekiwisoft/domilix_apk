@@ -4,10 +4,11 @@ import { RefreshControl, SectionList, View } from 'react-native';
 import { NotifGroup } from '@/components/notifications/notif-group';
 import { NotifItem } from '@/components/notifications/notif-item';
 import { NotifSkeleton } from '@/components/notifications/notif-skeleton';
-import { Button, EmptyState, ErrorState, LoginGate, Screen, ScreenHeader } from '@/components/ui';
+import { Button, EmptyState, ErrorState, LoginGate, OfflineState, Screen, ScreenHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useDeleteNotification, useMarkAllRead, useMarkAsRead, useNotifications } from '@/hooks/queries/use-notifications';
 import { useThemeColors } from '@/hooks/use-theme-color';
+import { isNetworkError } from '@/lib/network-error';
 import { useAuthStore } from '@/stores/auth.store';
 import type { Notification } from '@/types/notification';
 
@@ -40,7 +41,7 @@ export default function NotificationsScreen() {
   const C = useThemeColors();
   const accessToken = useAuthStore((s) => s.accessToken);
 
-  const { data, isLoading, isError, refetch } = useNotifications();
+  const { data, isLoading, isError, error, refetch } = useNotifications();
   const markAllRead = useMarkAllRead();
   const markAsRead = useMarkAsRead();
   const deleteNotif = useDeleteNotification();
@@ -96,6 +97,8 @@ export default function NotificationsScreen() {
         ))}
       </View>
     );
+  } else if (isError && isNetworkError(error)) {
+    empty = <OfflineState onRetry={() => refetch()} />;
   } else if (isError) {
     empty = <ErrorState title="Impossible de charger vos notifications" onRetry={() => refetch()} />;
   } else {

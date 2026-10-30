@@ -8,12 +8,14 @@ import {
   ErrorState,
   ListingCardSkeleton,
   LoginGate,
+  OfflineState,
   Screen,
   ScreenHeader,
 } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useInfiniteAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
 import { useThemeColors } from '@/hooks/use-theme-color';
+import { isNetworkError } from '@/lib/network-error';
 import { useAuthStore } from '@/stores/auth.store';
 
 const TITLE = 'Mes favoris';
@@ -22,7 +24,7 @@ export default function FavoritesScreen() {
   const C = useThemeColors();
   const router = useRouter();
   const accessToken = useAuthStore((s) => s.accessToken);
-  const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteAnnounces({ liked: true }, { enabled: !!accessToken });
   const favorites = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
   const toggleLike = useToggleLike();
@@ -60,6 +62,8 @@ export default function FavoritesScreen() {
         ))}
       </View>
     );
+  } else if (isError && isNetworkError(error)) {
+    empty = <OfflineState onRetry={() => refetch()} />;
   } else if (isError) {
     empty = <ErrorState title="Impossible de charger vos favoris" onRetry={() => refetch()} />;
   } else {

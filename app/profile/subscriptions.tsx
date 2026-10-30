@@ -11,6 +11,7 @@ import {
   Field,
   ListRow,
   LoadingState,
+  OfflineState,
   PlanCard,
   Screen,
   ScreenHeader,
@@ -23,6 +24,7 @@ import {
 import { Sizes, Spacing } from '@/constants/theme';
 import { useCreateSubscription, usePlans, useSubscriptions } from '@/hooks/queries/use-subscriptions';
 import { useThemeColors } from '@/hooks/use-theme-color';
+import { isNetworkError } from '@/lib/network-error';
 import { isPackUsable } from '@/lib/subscription-helpers';
 import type { Subscription, SubscriptionPlan, SubscriptionPlanName } from '@/types/notification';
 
@@ -231,7 +233,7 @@ export default function SubscriptionsScreen() {
   const toast = useToast();
 
   const { data: subs = [] } = useSubscriptions();
-  const { data: plans = [], isLoading: plansLoading, isError: plansError, refetch: refetchPlans } = usePlans();
+  const { data: plans = [], isLoading: plansLoading, isError: plansError, error: plansErrorValue, refetch: refetchPlans } = usePlans();
   const createSub = useCreateSubscription();
 
   const activePacks = useMemo(() => subs.filter(isPackUsable), [subs]);
@@ -275,6 +277,8 @@ export default function SubscriptionsScreen() {
   let plansBlock;
   if (plansLoading) {
     plansBlock = <LoadingState label="Chargement des packs…" media={false} count={2} />;
+  } else if (plansError && isNetworkError(plansErrorValue)) {
+    plansBlock = <OfflineState onRetry={() => refetchPlans()} />;
   } else if (plansError) {
     plansBlock = <ErrorState title="Impossible de charger les packs" onRetry={() => refetchPlans()} />;
   } else if (orderedPlans.length === 0) {
