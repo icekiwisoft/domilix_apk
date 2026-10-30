@@ -102,6 +102,9 @@ export default function FilterSheetScreen() {
       amenities: amenities.length > 0 ? amenities : undefined,
       standing,
     };
+    // A rental period ("À la nuit" from the home row) never matches a sale: drop it
+    // rather than show a list that is always empty.
+    if (adType === 'sale') patch.period = undefined;
     setFilters(patch);
     router.back();
   }
