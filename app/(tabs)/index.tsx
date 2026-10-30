@@ -19,7 +19,7 @@ import {
   SearchBar,
 } from '@/components/ui';
 import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
-import { useAnnouncesList, useCities, useToggleLike } from '@/hooks/queries/use-announces';
+import { useCities, useHomeRows, useToggleLike } from '@/hooks/queries/use-announces';
 import { useBroadcasts } from '@/hooks/queries/use-broadcasts';
 import { useUnreadCount } from '@/hooks/queries/use-notifications';
 import { useThemeColors } from '@/hooks/use-theme-color';
@@ -257,8 +257,8 @@ export default function HomeScreen() {
     limit: CITIES_LIMIT,
   });
   // One cached query per row, under the same ['announces', …] key as the explore list so
-  // favourites toggled anywhere update the cards here too.
-  const rowQueries = useAnnouncesList(
+  // favourites toggled anywhere update the cards here too (without refetching the rows).
+  const rowQueries = useHomeRows(
     ROWS.map((row, i) => ({ ...toAnnounceQuery(row.filters), page: 1, per_page: ROW_SIZE * (i + 1) })),
   );
   const toggleLike = useToggleLike();
