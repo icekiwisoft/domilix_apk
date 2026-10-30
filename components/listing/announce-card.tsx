@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import { ListingCard } from '@/components/ui';
@@ -8,6 +9,8 @@ export interface AnnounceCardProps {
   onPress: () => void;
   onToggleFavorite?: (id: string) => void;
   variant?: 'vertical' | 'compact';
+  /** Content under the card, inside its surface (owner actions). */
+  footer?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -47,7 +50,7 @@ export function announcePlace(a: Announce) {
 }
 
 /** Announce → kit ListingCard (UI-07). */
-export function AnnounceCard({ announce: a, onPress, onToggleFavorite, variant, style }: AnnounceCardProps) {
+export function AnnounceCard({ announce: a, onPress, onToggleFavorite, variant, footer, style }: AnnounceCardProps) {
   const rent = a.ad_type === 'location';
   const thumb = a.medias[0]?.thumbnail ?? a.medias[0]?.file ?? `https://picsum.photos/seed/${a.id}/800/600`;
   return (
@@ -66,6 +69,7 @@ export function AnnounceCard({ announce: a, onPress, onToggleFavorite, variant, 
       onPress={onPress}
       favorite={a.liked}
       onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(a.id) : undefined}
+      footer={footer}
       style={style}
     />
   );

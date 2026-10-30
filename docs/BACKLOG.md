@@ -258,6 +258,10 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 
 - **Source** : revue du lot 3. `app/profile/subscriptions.tsx:396` ne passe jamais `current` à
   `PlanCard` : l'état « Plan actuel » est du code mort. Le brancher sur l'abonnement actif ou le retirer.
+- **Résolu par suppression (UI-10, 2026-10-30)** : un pack Domicoin est un achat ponctuel, plusieurs
+  peuvent être actifs en même temps, et ni le site ni le backend (`subscriptions` : liste des achats,
+  aucun « plan courant ») n'ont cette notion. L'état `current` est retiré de `PlanCard` ; les packs
+  actifs restent listés au-dessus des cartes.
 
 ### UI-06 — Système de design : échelles, garde-fous et composants partagés (P1)
 
@@ -362,6 +366,30 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 - `fontVariant: tabular-nums` (PriceTag) dessine les chiffres dans une police de repli au lieu de
   Mona Sans.
 
+### UI-10 — Migration Compte vers le kit (P1)
+
+- **Décision (2026-10-30)** : suite de la migration par zone (« fusionne la PR et commence la
+  migration »), maquettes du canvas `Favoris`, `Notifications`, `Profil`, `Packs`, `MesAnnonces`
+  (copies dans le vault `10_Projects/Domilix/Maquettes/`).
+- **Périmètre** : `app/(tabs)/favorites.tsx`, `app/(tabs)/notifications.tsx`,
+  `app/(tabs)/profile/index.tsx`, `app/profile/settings.tsx`, `app/profile/subscriptions.tsx` (packs),
+  `app/profile/my-listings.tsx`, et leurs composants. Les formulaires (`profile/edit`,
+  `announcer-profile`) restent pour le lot Publier.
+- **Inclus** : B-06 (« Plan actuel » jamais affiché) ; UI-09 QA-06 (libellés TalkBack du menu Profil
+  sans glyphe d'icône) ; suppression de l'ancien `ListingCard` / `ListingSkeleton` une fois plus
+  importés.
+- **Critères d'acceptation** : écrans conformes aux maquettes ; uniquement le kit et les jetons
+  (0 avertissement de la règle de lint dans les fichiers migrés) ; plus de React Native Paper dans ces
+  écrans ; comportement inchangé (favoris, notifications, déconnexion, thème, achat de pack jusqu'à la
+  confirmation exclue) ; aucune écriture sur l'API de production en QA sans accord ; AA clair et
+  sombre, 48 dp, 200 %, TalkBack ; build release vérifié.
+- Suites de UI-10 (2026-10-30) : `components/ui/empty-state.tsx` orphelin à supprimer ; non vérifié faute
+  de compte adapté : liste de favoris, pack actif, Mes annonces (compte annonceur avec favoris et pack).
+- Fonctions des maquettes Compte non faites, **à valider par l'utilisateur avant tout développement** :
+  onglet « Annonces débloquées » dans Favoris ; filtre et badges de statut (« En ligne », « En attente »)
+  dans Mes annonces ; choix du pack et du moyen de paiement sur un seul écran avec « Payer » ; ligne
+  « Contacts débloqués » dans Profil.
+
 ## Lots proposés
 
 1. **Lot 1 — bugs signalés** : B-03, B-04, B-01 développés, revus, QA émulateur OK (2026-10-28).
@@ -369,4 +397,4 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
    UI-02, B-02 (connexion Google native) et B-05.
 3. **Lot 3 — contraste et 200 %** : UI-04 (fusionné). Puis F-01 quand le backend renverra le `user_id`.
 4. **Lot 4 — système de design** : UI-06 fusionné (PR #7, 2026-10-29).
-5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend), puis Compte, Publier.
+5. **Lot 5 — migration** : UI-07 Accueil et Explorer (PR #8 fusionnée 2026-10-30), UI-08 Annonce (annonceur anonyme sur les annonces, comme le site : `serializePublicAnnouncer` ne renvoie que `verified`, voulu côté backend depuis 2026-07-18, aucune demande backend ; PR #9 fusionnée 2026-10-30), UI-10 Compte, Publier.

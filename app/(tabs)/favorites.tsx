@@ -1,128 +1,131 @@
-import { useMemo } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { ActivityIndicator, Button } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { ListingCard } from '@/components/listing/listing-card';
-import { ListingSkeleton } from '@/components/listing/listing-skeleton';
-import { Colors, Fonts, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native';
+
+import { AnnounceCard } from '@/components/listing/announce-card';
+import {
+  EmptyState,
+  ErrorState,
+  ListingCardSkeleton,
+  LoginGate,
+  OfflineState,
+  Screen,
+  ScreenHeader,
+} from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useInfiniteAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
+import { useThemeColors } from '@/hooks/use-theme-color';
+import { isNetworkError } from '@/lib/network-error';
 import { useAuthStore } from '@/stores/auth.store';
-import { LoginGate } from '@/components/ui/login-gate';
+
+const TITLE = 'Mes favoris';
 
 export default function FavoritesScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
+  const router = useRouter();
   const accessToken = useAuthStore((s) => s.accessToken);
-  const {
-    data,
-    isLoading,
-    isFetching,
-    refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteAnnounces({ liked: true }, { enabled: !!accessToken });
+  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteAnnounces({ liked: true }, { enabled: !!accessToken });
   const favorites = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
   const toggleLike = useToggleLike();
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }
 
   if (!accessToken) {
     return (
-      <SafeAreaView style={[{ flex: 1 }, { backgroundColor: C.background }]}>
-        <View style={[styles.header, { borderBottomColor: C.outlineVariant }]}>
-          <Text style={[Typography.headlineMd, styles.title, { color: C.onSurface }]}>Mes Favoris</Text>
-        </View>
+      <Screen bottomInset={false} header={<ScreenHeader title={TITLE} onBack={false} />}>
         <LoginGate
-          title="Accédez à vos favoris"
-          subtitle={"Connectez-vous pour retrouver toutes les annonces que vous avez sauvegardées."}
+          redirect="/(tabs)/favorites"
+          title="Connectez-vous pour voir vos favoris"
+          subtitle="Sauvegardez vos annonces préférées et retrouvez-les en vous connectant à votre compte."
         />
-      </SafeAreaView>
+      </Screen>
+    );
+  }
+
+  let empty = null;
+  if (isLoading) {
+    empty = (
+      <View
+        accessible
+        accessibilityLabel="Chargement des favoris…"
+        accessibilityState={{ busy: true }}
+        style={{ gap: Spacing.ms }}
+      >
+        {[1, 2, 3].map((k) => (
+          <ListingCardSkeleton key={k} variant="compact" />
+        ))}
+      </View>
+    );
+  } else if (isError && isNetworkError(error)) {
+    empty = <OfflineState onRetry={() => refetch()} />;
+  } else if (isError) {
+    empty = <ErrorState title="Impossible de charger vos favoris" onRetry={() => refetch()} />;
+  } else {
+    empty = (
+      <EmptyState
+        icon="favorite-border"
+        title="Aucun favori pour le moment"
+        description="Touchez le cœur d'une annonce pour la retrouver ici."
+        actionLabel="Parcourir les annonces"
+        onAction={() => router.push('/(tabs)/explore')}
+      />
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: C.outlineVariant }]}>
-        <Text style={[Typography.headlineMd, styles.title, { color: C.onSurface }]}>
-          Mes Favoris
-        </Text>
-      </View>
-
-      {isLoading ? (
-        <View style={[styles.list, { gap: Spacing.md }]}>
-          {[1, 2, 3].map((k) => <ListingSkeleton key={k} />)}
-        </View>
-      ) : favorites.length === 0 ? (
-        <View style={styles.empty}>
-          <MaterialIcons name="favorite-border" size={56} color={C.outlineVariant} />
-          <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20, marginTop: Spacing.lg, textAlign: 'center' }]}>
-            Aucun favori
-          </Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center', marginTop: Spacing.sm, maxWidth: 280 }]}>
-            Enregistrez vos annonces préférées en appuyant sur le cœur pour les retrouver ici.
-          </Text>
-          <Button
-            mode="contained"
-            onPress={() => router.push('/(tabs)/explore')}
-            style={{ marginTop: Spacing.xl }}
-          >
-            Explorer les annonces
-          </Button>
-        </View>
-      ) : (
-        <FlatList
-          data={favorites}
-          keyExtractor={(a) => a.id}
-          renderItem={({ item }) => (
-            <ListingCard
-              announce={item}
-              onPress={() => router.push(`/announces/${item.id}`)}
-              onLike={(id) => toggleLike.mutate(id)}
-              imageHeight={200}
+    <Screen
+      scroll={false}
+      bottomInset={false}
+      header={<ScreenHeader title={TITLE} onBack={false} />}
+      contentStyle={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}
+    >
+      <FlatList
+        data={isLoading || isError ? [] : favorites}
+        keyExtractor={(a) => String(a.id)}
+        renderItem={({ item }) => (
+          <AnnounceCard
+            variant="compact"
+            announce={item}
+            onPress={() => router.push(`/announces/${item.id}`)}
+            onToggleFavorite={(id) => toggleLike.mutate(id)}
+          />
+        )}
+        ListEmptyComponent={empty}
+        ItemSeparatorComponent={() => <View style={{ height: Spacing.ms }} />}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <ActivityIndicator
+              color={C.primaryContainer}
+              accessibilityLabel="Chargement de la suite…"
+              style={{ marginTop: Spacing.md }}
             />
-          )}
-          ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
-          ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={styles.paginationLoader} /> : null}
-          onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
-          onEndReachedThreshold={0.5}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isFetching && !isLoading}
-              onRefresh={refetch}
-              tintColor={C.primary}
-              colors={[C.primary]}
-            />
-          }
-        />
-      )}
-    </SafeAreaView>
+          ) : null
+        }
+        onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
+        onEndReachedThreshold={0.5}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: Spacing.marginMobile,
+          paddingTop: Spacing.sm,
+          paddingBottom: Spacing.xl,
+        }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[C.primaryContainer]}
+            progressBackgroundColor={C.surfaceContainerLowest}
+            tintColor={C.primaryContainer}
+          />
+        }
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  title: { fontSize: 24, fontFamily: Fonts.bold },
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingBottom: Spacing.sectionGap,
-  },
-  list: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-  },
-  paginationLoader: { marginTop: Spacing.md },
-});
