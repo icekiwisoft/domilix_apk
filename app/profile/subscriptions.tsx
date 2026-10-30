@@ -102,7 +102,9 @@ function ActivePackCard({ sub }: { sub: Subscription }) {
         Pack actif
       </AppText>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', columnGap: Spacing.ms }}>
-        <AppText variant="headline">{sub.plan_name}</AppText>
+        <AppText variant="headline">
+          {PLAN_DISPLAY[sub.plan_name as SubscriptionPlanName]?.title ?? sub.plan_name}
+        </AppText>
         <AppText variant="bodyStrong">{sub.credits} Domicoins restants</AppText>
       </View>
       {expiry ? <AppText color="onSurfaceVariant">Valable jusqu&apos;au {formatExpiry(expiry)}</AppText> : null}
