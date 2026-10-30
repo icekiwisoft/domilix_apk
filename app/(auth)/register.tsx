@@ -170,6 +170,8 @@ export default function RegisterScreen() {
                 submitBehavior="submit"
                 onSubmitEditing={() => emailRef.current?.focus()}
                 accessibilityLabel="Numéro de téléphone, après l'indicatif +237"
+                // Room between the +237 prefix and the number, as in UI-02.
+                style={{ paddingLeft: Spacing.md }}
                 error={errors.phone?.message ?? serverErrors.phone}
                 prefix={
                   <>
