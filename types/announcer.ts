@@ -1,10 +1,10 @@
 export interface Announcer {
   id: string;
+  /** Structure / agency name (saved through `company_name`). */
   name: string;
-  company_name?: string;
   bio?: string | null;
+  /** Professional phone (saved through `professional_phone`). */
   contact?: string;
-  professional_phone?: string;
   email?: string;
   avatar?: string;
   avatar_media_id?: string;

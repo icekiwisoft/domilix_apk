@@ -176,7 +176,7 @@ export default function AnnounceDetailScreen() {
 
   function handleUnlock() {
     if (a.unlocked) {
-      const phone = a.contact_phone ?? a.announcer?.professional_phone ?? a.announcer?.contact;
+      const phone = a.contact_phone ?? a.announcer?.contact;
       if (phone) Linking.openURL(`tel:${phone}`);
     } else if (!accessToken) {
       router.push({

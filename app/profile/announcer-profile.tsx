@@ -109,7 +109,7 @@ export default function AnnouncerProfileEditScreen() {
           accessibilityLabel="Changer le logo ou la photo de profil"
           style={({ pressed }) => [{ padding: Spacing.xs, borderRadius: Radii.full }, pressedStyle(pressed)]}
         >
-          <Avatar size="lg" name={announcer?.company_name} uri={avatar} />
+          <Avatar size="lg" name={announcer?.name} uri={avatar} />
           <View
             style={{
               position: 'absolute',
@@ -136,9 +136,11 @@ export default function AnnouncerProfileEditScreen() {
         // picks up the fetched values (its defaultValues are only read once).
         key={announcer?.id ?? 'loading'}
         defaultValues={{
-          company_name: announcer?.company_name,
+          // GET /announcers/:id returns the saved company_name as `name` and
+          // professional_phone as `contact` (backend AuthService.updateAnnouncerProfile).
+          company_name: announcer?.name,
           bio: announcer?.bio ?? undefined,
-          professional_phone: announcer?.professional_phone,
+          professional_phone: announcer?.contact,
         }}
         onSubmit={handleSave}
         loading={updateAnnouncerProfile.isPending}
