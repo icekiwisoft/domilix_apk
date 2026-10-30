@@ -71,18 +71,22 @@ export default function AnnouncerProfileScreen() {
     refetch: refetchListings,
   } = useInfiniteAnnounces({ AnnouncerId: id ?? '' }, { enabled: !!id });
   const toggleLike = useToggleLike();
+  // Opened by a deep link (or after the activity is recreated, e.g. a font
+  // size change) there may be no screen to go back to: the arrow then opens
+  // the home screen instead of disappearing (QA-02).
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   // Before any early return: hooks must run in the same order on every render.
   const listings = useMemo(() => listingsPages?.pages.flatMap((p) => p.data) ?? [], [listingsPages]);
   const allMedias = useMemo(() => listings.flatMap((a) => a.medias), [listings]);
 
   if (isLoading) {
-    return <AnnouncerDetailSkeleton onBack={() => router.back()} />;
+    return <AnnouncerDetailSkeleton onBack={goBack} />;
   }
 
   if (!announcer) {
     return (
-      <Screen header={<ScreenHeader title="Annonceur" />}>
+      <Screen header={<ScreenHeader title="Annonceur" onBack={goBack} />}>
         {isError && !notFound ? (
           // Offline or a server error: the profile may well exist.
           <ErrorState title="Impossible de charger ce profil" onRetry={() => refetch()} />
@@ -92,7 +96,7 @@ export default function AnnouncerProfileScreen() {
             title="Profil introuvable"
             description="Ce profil n'existe pas ou n'est plus disponible."
             actionLabel="Retour"
-            onAction={() => router.back()}
+            onAction={goBack}
           />
         )}
       </Screen>
@@ -297,7 +301,7 @@ export default function AnnouncerProfileScreen() {
 
   return (
     <Screen
-      header={<ScreenHeader title="Annonceur" />}
+      header={<ScreenHeader title="Annonceur" onBack={goBack} />}
       onRefresh={handleRefresh}
       refreshing={isFetching && !isLoading}
       onScroll={handleScroll}
