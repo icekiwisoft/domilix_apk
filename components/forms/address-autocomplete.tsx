@@ -41,17 +41,20 @@ export function AddressAutocomplete({
 }: AddressAutocompleteProps) {
   const C = useThemeColors();
   const [open, setOpen] = useState(false);
+  // Search only once the text changed since the field got focus: focusing a
+  // field that already holds an address must not spend a Geoapify request.
+  const [typed, setTyped] = useState(false);
   const isCity = kind === 'city';
   const keyboard = useScreenKeyboard();
   const listRef = useRef<View>(null);
 
   const { data: suggestions = [], isFetching, isError, error: searchError } = useAddressSearch(
     value,
-    open,
+    open && typed,
     isCity ? 'city' : undefined,
   );
 
-  const shown = open && suggestions.length > 0;
+  const shown = open && typed && suggestions.length > 0;
   // Inside <Screen keyboard>, the list would open under the keyboard.
   useEffect(() => {
     if (shown) keyboard?.revealNode(listRef.current);
@@ -71,7 +74,7 @@ export function AddressAutocomplete({
       ? searchError.message
       : 'Suggestions indisponibles.'
     : undefined;
-  const searching = open && value.trim().length >= 3 && isFetching && suggestions.length === 0;
+  const searching = open && typed && value.trim().length >= 3 && isFetching && suggestions.length === 0;
 
   return (
     <View style={{ gap: Spacing.xs }}>
@@ -81,9 +84,13 @@ export function AddressAutocomplete({
         value={value}
         onChangeText={(t) => {
           onChange(t);
+          setTyped(true);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          setTyped(false);
+          setOpen(true);
+        }}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         placeholder={isCity ? 'Ex. Douala' : 'Ex. Bonamoussadi, près du carrefour Maetur'}
         error={error ?? searchMessage}
