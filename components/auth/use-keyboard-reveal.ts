@@ -32,6 +32,9 @@ export function useKeyboardReveal(bannerBottom: number) {
   const scrollRef = useRef<ScrollView>(null);
   const targetRef = useRef<View>(null);
   const scrollY = useRef(0);
+  // Height of a bar fixed under the scroll view that rides on the keyboard
+  // (Screen footer): it hides that much more of the content (QA-21).
+  const footerHeight = useRef(0);
   const [pastBanner, setPastBanner] = useState(false);
 
   // Top of the open keyboard in window coordinates, null when it is closed.
@@ -44,11 +47,12 @@ export function useKeyboardReveal(bannerBottom: number) {
     const focused = TextInput.State.currentlyFocusedInput() as unknown as View | null;
     const [viewport, target, field] = await Promise.all([
       measure(scroll as unknown as View),
-      measure(node ?? targetRef.current),
+      // Without a main button to keep in view, the focused field itself.
+      measure(node ?? targetRef.current ?? focused),
       measure(focused),
     ]);
     if (!viewport || !target || keyboardTop.current == null) return;
-    const visibleBottom = Math.min(viewport.y + viewport.height, keyboardTop.current);
+    const visibleBottom = Math.min(viewport.y + viewport.height, keyboardTop.current - footerHeight.current);
     let delta = target.y + target.height + Spacing.md - visibleBottom;
     if (field) delta = Math.min(delta, field.y - viewport.y - Spacing.md);
     if (delta > 0) scroll.scrollTo({ y: scrollY.current + delta, animated: true });
@@ -103,5 +107,5 @@ export function useKeyboardReveal(bannerBottom: number) {
     if (past !== pastBanner) setPastBanner(past);
   }
 
-  return { scrollRef, targetRef, onScroll, onLayout, revealOnFocus, revealNode, pastBanner };
+  return { scrollRef, targetRef, footerHeight, onScroll, onLayout, revealOnFocus, revealNode, pastBanner };
 }
