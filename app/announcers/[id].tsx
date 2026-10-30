@@ -1,110 +1,60 @@
+import { Image } from 'expo-image';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import {
-  Image,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { ActivityIndicator, Button, IconButton, SegmentedButtons } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { ListingCard } from '@/components/listing/listing-card';
-import { ListingSkeleton } from '@/components/listing/listing-skeleton';
-import { Skeleton } from '@/components/ui/skeleton';
-import { SearchBar } from '@/components/search/search-bar';
+import { View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+
 import { AnnouncerDetailSkeleton } from '@/components/announcer/announcer-detail-skeleton';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAnnouncer } from '@/hooks/queries/use-announcers';
+import { AnnounceCard } from '@/components/listing/announce-card';
+import {
+  AppText,
+  Avatar,
+  Badge,
+  Card,
+  Divider,
+  EmptyState,
+  ListingCardSkeleton,
+  ListRow,
+  Screen,
+  ScreenHeader,
+  SearchBar,
+  Section,
+  SegmentedControl,
+  Skeleton,
+} from '@/components/ui';
+import { Radii, Spacing } from '@/constants/theme';
 import { useInfiniteAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
+import { useAnnouncer } from '@/hooks/queries/use-announcers';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
 const PAGINATION_THRESHOLD = 400;
+/** fontScale from which the cards and photos go one per row. */
+const ONE_COLUMN_SCALE = 1.3;
 
 type TabName = 'annonces' | 'medias' | 'about';
 
-const COVER_H = 180;
-const AVATAR_SIZE = 84;
-const AVATAR_BORDER = 3;
-const CARD_RADIUS = 28;
-const CARD_OVERLAP = 32;
+const TABS = [
+  { value: 'annonces' as const, label: 'Annonces' },
+  { value: 'medias' as const, label: 'Médias' },
+  { value: 'about' as const, label: 'À propos' },
+];
 
-// ── StatPill ──────────────────────────────────────────────────────────────────
-
-function StatPill({ value, label }: { value: number; label: string }) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <View style={statS.col}>
-      <Text style={[statS.value, { color: C.link }]}>{value}</Text>
-      <Text style={[statS.label, { color: C.onSurfaceVariant }]}>{label}</Text>
+    <View accessible accessibilityLabel={`${value} ${label}`} style={{ flex: 1, alignItems: 'center' }}>
+      <AppText variant="headline" style={{ fontVariant: ['tabular-nums'] }}>
+        {value}
+      </AppText>
+      <AppText variant="caption" color="onSurfaceVariant" style={{ textAlign: 'center' }}>
+        {label}
+      </AppText>
     </View>
   );
 }
-const statS = StyleSheet.create({
-  col: { flex: 1, alignItems: 'center', gap: 2 },
-  value: { fontFamily: Fonts.bold, fontSize: 22, lineHeight: 28 },
-  label: { fontFamily: Fonts.medium, fontSize: 11, lineHeight: 16 },
-});
-
-// ── ContactInfoCard ───────────────────────────────────────────────────────────
-
-function ContactInfoCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentProps<typeof MaterialIcons>['name'];
-  label: string;
-  value: string;
-}) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  return (
-    <View style={[ctS.card, { backgroundColor: C.surfaceContainerLow }]}>
-      <View style={[ctS.icon, { backgroundColor: C.primaryContainer }]}>
-        <MaterialIcons name={icon} size={18} color={C.primary} />
-      </View>
-      <View style={ctS.text}>
-        <Text style={[ctS.label, { color: C.onSurfaceVariant }]}>{label}</Text>
-        <Text style={[ctS.value, { color: C.onSurface }]} numberOfLines={1}>
-          {value}
-        </Text>
-      </View>
-    </View>
-  );
-}
-const ctS = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    padding: Spacing.md,
-    borderRadius: Radius.lg,
-  },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  text: { flex: 1, minWidth: 0 },
-  label: { fontFamily: Fonts.regular, fontSize: 11, lineHeight: 16, marginBottom: 2 },
-  value: { fontFamily: Fonts.semiBold, fontSize: 14, lineHeight: 20 },
-});
-
-// ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function AnnouncerProfileScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const insets = useSafeAreaInsets();
+  const C = useThemeColors();
+  const router = useRouter();
+  const { width, fontScale } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabName>('annonces');
   const [search, setSearch] = useState('');
@@ -120,59 +70,42 @@ export default function AnnouncerProfileScreen() {
   } = useInfiniteAnnounces({ AnnouncerId: id ?? '' }, { enabled: !!id });
   const toggleLike = useToggleLike();
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  // Before any early return: hooks must run in the same order on every render.
+  const listings = useMemo(() => listingsPages?.pages.flatMap((p) => p.data) ?? [], [listingsPages]);
+  const allMedias = useMemo(() => listings.flatMap((a) => a.medias), [listings]);
+
   if (isLoading) {
     return <AnnouncerDetailSkeleton onBack={() => router.back()} />;
   }
 
-  // ── Error ──────────────────────────────────────────────────────────────────
   if (!announcer) {
     return (
-      <View style={[s.root, { backgroundColor: C.background }]}>
-        <IconButton
-          icon="arrow-left"
-          accessibilityLabel="Retour"
-          onPress={() => router.back()}
-          iconColor={C.onSurface}
-          containerColor={C.surface + 'CC'}
-          size={22}
-          style={[s.backFloating, { top: insets.top + 8 }]}
+      <Screen header={<ScreenHeader title="Annonceur" />}>
+        <EmptyState
+          icon="person-off"
+          title="Profil introuvable"
+          description="Ce profil n'existe pas ou n'est plus disponible."
+          actionLabel="Retour"
+          onAction={() => router.back()}
         />
-        <View style={s.errorBody}>
-          <MaterialIcons name="person-off" size={52} color={C.onSurfaceVariant + '88'} />
-          <Text style={[s.errorTitle, { color: C.onSurface }]}>Profil introuvable</Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}>
-            Ce profil n'existe pas ou n'est plus disponible.
-          </Text>
-          <Button mode="contained" icon="arrow-left" onPress={() => router.back()} style={s.errorBtn}>
-            Retour
-          </Button>
-        </View>
-      </View>
+      </Screen>
     );
   }
 
-  // ── Data ───────────────────────────────────────────────────────────────────
-  const listings = useMemo(
-    () => listingsPages?.pages.flatMap((p) => p.data) ?? [],
-    [listingsPages],
-  );
   const totalListings =
-    (listingsPages?.pages[0]?.meta.total ?? ((announcer.houses ?? 0) + (announcer.furnitures ?? 0))) ||
+    (listingsPages?.pages[0]?.meta.total ?? (announcer.houses ?? 0) + (announcer.furnitures ?? 0)) ||
     listings.length;
-  const allMedias = useMemo(() => listings.flatMap((a) => a.medias), [listings]);
-  const filteredListings = search.trim()
-    ? listings.filter(
-        (a) =>
-          a.description?.toLowerCase().includes(search.toLowerCase()) ||
-          a.city?.toLowerCase().includes(search.toLowerCase()),
-      )
+  const query = search.trim().toLowerCase();
+  const filteredListings = query
+    ? listings.filter((a) => a.description?.toLowerCase().includes(query) || a.city?.toLowerCase().includes(query))
     : listings;
 
   const displayName = announcer.company_name ?? announcer.name;
-  const memberYear = announcer.creation_date
-    ? new Date(announcer.creation_date).getFullYear()
-    : null;
+  const memberYear = announcer.creation_date ? new Date(announcer.creation_date).getFullYear() : null;
+
+  // Two columns on the page gutter, one at large font sizes.
+  const columns = fontScale >= ONE_COLUMN_SCALE ? 1 : 2;
+  const tileWidth = (width - Spacing.marginMobile * 2 - Spacing.ms * (columns - 1)) / columns;
 
   function handleRefresh() {
     refetch();
@@ -188,411 +121,208 @@ export default function AnnouncerProfileScreen() {
     }
   }
 
-  return (
-    <View style={[s.root, { backgroundColor: C.background }]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={200}
-        refreshControl={
-          <RefreshControl
-            refreshing={isFetching && !isLoading}
-            onRefresh={handleRefresh}
-            tintColor={C.primary}
-            colors={[C.primary]}
-          />
-        }
-      >
-        {/* ── Cover ─────────────────────────────────────────────────────────── */}
-        <View style={[s.cover, { backgroundColor: C.primary }]}>
-          <View style={[s.coverOverlay, { backgroundColor: '#00000022' }]} />
-          <IconButton
-            icon="arrow-left"
-            accessibilityLabel="Retour"
-            onPress={() => router.back()}
-            iconColor="#fff"
-            containerColor="#00000033"
-            size={22}
-            style={[s.backFloating, { top: insets.top + 8 }]}
-          />
-        </View>
-
-        {/* ── Profile card ──────────────────────────────────────────────────── */}
-        <View style={[s.profileCard, { backgroundColor: C.surface }]}>
-          {/* Avatar + identity */}
-          <View style={s.avatarRow}>
-            <View style={[s.avatarWrap, { borderColor: C.surface }]}>
-              {announcer.avatar ? (
-                <Image
-                  source={{ uri: announcer.avatar }}
-                  style={s.avatarImg}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View
-                  style={[s.avatarImg, s.avatarFallback, { backgroundColor: C.surfaceContainerLow }]}
-                >
-                  <MaterialIcons name="person" size={40} color={C.onSurfaceVariant} />
-                </View>
-              )}
-            </View>
-
-            <View style={s.identityCol}>
-              <View style={s.nameRow}>
-                <Text style={[s.name, { color: C.onSurface }]} numberOfLines={2}>
-                  {displayName}
-                </Text>
-                {announcer.verified && (
-                  <MaterialIcons name="verified" size={18} color={C.primary} />
-                )}
-              </View>
-              {!!memberYear && (
-                <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-                  Membre depuis {memberYear}
-                </Text>
-              )}
-              {announcer.verified && (
-                <View style={s.verifiedRow}>
-                  <View style={s.verifiedDot} />
-                  <Text style={[Typography.caption, { color: '#16a34a' }]}>Vérifié</Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Bio preview */}
-          {!!announcer.bio && (
-            <Text style={[s.bioPreview, { color: C.onSurfaceVariant }]} numberOfLines={2}>
-              {announcer.bio}
-            </Text>
-          )}
-
-          {/* Stats */}
-          <View style={[s.statsRow, { borderTopColor: C.outlineVariant }]}>
-            <StatPill value={announcer.furnitures ?? 0} label="Meubles" />
-            <View style={[s.statSep, { backgroundColor: C.outlineVariant }]} />
-            <StatPill value={announcer.houses ?? 0} label="Maisons" />
-            <View style={[s.statSep, { backgroundColor: C.outlineVariant }]} />
-            <StatPill value={totalListings} label="Annonces" />
-          </View>
-
-        </View>
-
-        {/* ── Tabs ──────────────────────────────────────────────────────────── */}
-        <View
-          style={[
-            s.tabsWrap,
-            { backgroundColor: C.surface, borderBottomColor: C.outlineVariant },
-          ]}
-        >
-          <SegmentedButtons
-            style={s.tabPills}
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as TabName)}
-            theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
-            buttons={[
-              { value: 'annonces', label: 'Annonces' },
-              { value: 'medias', label: 'Médias' },
-              { value: 'about', label: 'À propos' },
-            ]}
-          />
-        </View>
-
-        {/* ── Content ───────────────────────────────────────────────────────── */}
-        <View style={[s.content, { paddingHorizontal: Spacing.marginMobile }]}>
-
-          {/* Annonces */}
-          {activeTab === 'annonces' && (
-            <>
-              <View style={s.searchBarWrap}>
-                <SearchBar
-                  value={search}
-                  onChangeText={setSearch}
-                  placeholder="Rechercher une annonce..."
-                />
-              </View>
-
-              {listingsLoading ? (
-                <View style={s.listingsCol}>
-                  {[1, 2, 3].map((k) => <ListingSkeleton key={k} />)}
-                </View>
-              ) : filteredListings.length === 0 ? (
-                <View style={s.emptyState}>
-                  <MaterialIcons name="home-work" size={40} color={C.onSurfaceVariant + '66'} />
-                  <Text style={[s.emptyTitle, { color: C.onSurface }]}>
-                    {search ? 'Aucun résultat' : 'Aucune annonce'}
-                  </Text>
-                  <Text
-                    style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}
-                  >
-                    {search
-                      ? 'Essayez avec un autre mot-clé.'
-                      : "Cet annonceur n'a pas encore publié d'annonce."}
-                  </Text>
-                </View>
-              ) : (
-                <View style={s.listingsCol}>
-                  {filteredListings.map((a) => (
-                    <ListingCard
-                      key={a.id}
-                      announce={a}
-                      onPress={() => router.push(`/announces/${a.id}`)}
-                      onLike={(id) => toggleLike.mutate(id)}
-                      imageHeight={200}
-                    />
-                  ))}
-                  {isFetchingNextPage && <ActivityIndicator style={s.paginationLoader} />}
-                </View>
-              )}
-            </>
-          )}
-
-          {/* Médias */}
-          {activeTab === 'medias' && (
-            <>
-              <View style={s.sectionHeader}>
-                <Text style={[s.sectionTag, { color: C.link }]}>GALERIE ANNONCEUR</Text>
-                <Text style={[s.sectionTitle, { color: C.onSurface }]}>Médias publiés</Text>
-                <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-                  {allMedias.length} média{allMedias.length !== 1 ? 's' : ''}
-                </Text>
-              </View>
-
-              {listingsLoading ? (
-                <View style={s.mediaGrid}>
-                  {[1, 2, 3, 4].map((k) => (
-                    <View key={k} style={[s.mediaThumb, { backgroundColor: C.surfaceContainerLow }]}>
-                      <Skeleton style={StyleSheet.absoluteFillObject} radius={0} />
-                    </View>
-                  ))}
-                </View>
-              ) : allMedias.length === 0 ? (
-                <View style={s.emptyState}>
-                  <MaterialIcons
-                    name="photo-library"
-                    size={40}
-                    color={C.onSurfaceVariant + '66'}
-                  />
-                  <Text style={[s.emptyTitle, { color: C.onSurface }]}>Aucun média</Text>
-                  <Text
-                    style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}
-                  >
-                    Les photos des annonces apparaîtront ici.
-                  </Text>
-                </View>
-              ) : (
-                <>
-                  <View style={s.mediaGrid}>
-                    {allMedias.map((m, idx) => (
-                      <View
-                        key={m.id ?? String(idx)}
-                        style={[s.mediaThumb, { backgroundColor: C.surfaceContainerLow }]}
-                      >
-                        <Image
-                          source={{ uri: m.thumbnail ?? m.file }}
-                          style={s.mediaImg}
-                          resizeMode="cover"
-                        />
-                      </View>
-                    ))}
-                  </View>
-                  {isFetchingNextPage && <ActivityIndicator style={s.paginationLoader} />}
-                </>
-              )}
-            </>
-          )}
-
-          {/* À propos */}
-          {activeTab === 'about' && (
-            <View style={s.aboutSection}>
-              <View
-                style={[
-                  s.aboutCard,
-                  { backgroundColor: C.surfaceContainerLowest, borderColor: C.outlineVariant },
-                ]}
-              >
-                <Text style={[s.aboutCardTitle, { color: C.onSurface }]}>Biographie</Text>
-                <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, lineHeight: 22 }]}>
-                  {announcer.bio || 'Aucune biographie disponible pour cet annonceur.'}
-                </Text>
-              </View>
-
-              <View
-                style={[
-                  s.aboutCard,
-                  { backgroundColor: C.surfaceContainerLowest, borderColor: C.outlineVariant },
-                ]}
-              >
-                <Text style={[s.aboutCardTitle, { color: C.onSurface }]}>
-                  Informations du profil
-                </Text>
-                <View style={s.contactCards}>
-                  <ContactInfoCard
-                    icon={announcer.verified ? 'verified' : 'radio-button-unchecked'}
-                    label="Statut"
-                    value={announcer.verified ? 'Compte vérifié' : 'Non vérifié'}
-                  />
-                  {!!memberYear && (
-                    <ContactInfoCard
-                      icon="calendar-today"
-                      label="Membre depuis"
-                      value={new Date(announcer.creation_date).toLocaleDateString('fr-FR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    />
-                  )}
-                </View>
-              </View>
-            </View>
-          )}
-
-          <View style={{ height: Spacing.xxl + (insets.bottom || 0) }} />
-        </View>
-      </ScrollView>
+  const nextPageSkeleton = isFetchingNextPage ? (
+    <View
+      accessible
+      accessibilityLabel="Chargement de la suite…"
+      accessibilityState={{ busy: true }}
+      style={{ flexDirection: 'row', gap: Spacing.ms }}
+    >
+      {Array.from({ length: columns }, (_, k) => (
+        <ListingCardSkeleton key={k} style={{ width: tileWidth }} />
+      ))}
     </View>
+  ) : null;
+
+  let tabContent;
+  if (activeTab === 'annonces') {
+    let list;
+    if (listingsLoading) {
+      list = (
+        <View
+          accessible
+          accessibilityLabel="Chargement des annonces…"
+          accessibilityState={{ busy: true }}
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.ms }}
+        >
+          {[1, 2, 3, 4].map((k) => (
+            <ListingCardSkeleton key={k} style={{ width: tileWidth }} />
+          ))}
+        </View>
+      );
+    } else if (filteredListings.length === 0) {
+      list = (
+        <EmptyState
+          icon={search ? 'search-off' : 'home-work'}
+          title={search ? 'Aucun résultat' : 'Aucune annonce'}
+          description={search ? 'Essayez avec un autre mot-clé.' : "Cet annonceur n'a pas encore publié d'annonce."}
+        />
+      );
+    } else {
+      list = (
+        <>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.ms }}>
+            {filteredListings.map((a) => (
+              <AnnounceCard
+                key={a.id}
+                announce={a}
+                onPress={() => router.push(`/announces/${a.id}`)}
+                onToggleFavorite={(likeId) => toggleLike.mutate(likeId)}
+                style={{ width: tileWidth }}
+              />
+            ))}
+          </View>
+          {nextPageSkeleton}
+        </>
+      );
+    }
+    tabContent = (
+      <>
+        <SearchBar
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Rechercher une annonce…"
+          label="Rechercher dans les annonces de cet annonceur"
+        />
+        {list}
+      </>
+    );
+  } else if (activeTab === 'medias') {
+    let grid;
+    if (listingsLoading) {
+      grid = (
+        <View
+          accessible
+          accessibilityLabel="Chargement des médias…"
+          accessibilityState={{ busy: true }}
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.ms }}
+        >
+          {[1, 2, 3, 4].map((k) => (
+            <Skeleton key={k} width={tileWidth} height={tileWidth} radius={Radii.control} />
+          ))}
+        </View>
+      );
+    } else if (allMedias.length === 0) {
+      grid = (
+        <EmptyState
+          icon="photo-library"
+          title="Aucun média"
+          description="Les photos des annonces apparaîtront ici."
+        />
+      );
+    } else {
+      grid = (
+        <>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.ms }}>
+            {allMedias.map((m, idx) => (
+              <Image
+                key={m.id ?? String(idx)}
+                source={{ uri: m.thumbnail ?? m.file }}
+                style={{
+                  width: tileWidth,
+                  height: tileWidth,
+                  borderRadius: Radii.control,
+                  backgroundColor: C.surfaceContainerHigh,
+                }}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                accessible={false}
+              />
+            ))}
+          </View>
+          {isFetchingNextPage ? (
+            <View accessible accessibilityLabel="Chargement de la suite…" accessibilityState={{ busy: true }}>
+              <Skeleton width={tileWidth} height={tileWidth} radius={Radii.control} />
+            </View>
+          ) : null}
+        </>
+      );
+    }
+    tabContent = (
+      <>
+        <View style={{ gap: Spacing.xxs }}>
+          <AppText variant="headline" accessibilityRole="header">
+            Médias publiés
+          </AppText>
+          <AppText variant="caption" color="onSurfaceVariant">
+            {allMedias.length} média{allMedias.length !== 1 ? 's' : ''}
+          </AppText>
+        </View>
+        {grid}
+      </>
+    );
+  } else {
+    tabContent = (
+      <>
+        <Card>
+          <AppText variant="headline" accessibilityRole="header">
+            Biographie
+          </AppText>
+          <AppText color="onSurfaceVariant">
+            {announcer.bio || 'Aucune biographie disponible pour cet annonceur.'}
+          </AppText>
+        </Card>
+        <Section title="Informations du profil">
+          <ListRow
+            icon={announcer.verified ? 'verified' : 'radio-button-unchecked'}
+            title="Statut"
+            subtitle={announcer.verified ? 'Compte vérifié' : 'Non vérifié'}
+          />
+          {memberYear ? (
+            <ListRow
+              icon="calendar-today"
+              title="Membre depuis"
+              subtitle={new Date(announcer.creation_date).toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            />
+          ) : null}
+        </Section>
+      </>
+    );
+  }
+
+  return (
+    <Screen
+      header={<ScreenHeader title="Annonceur" />}
+      onRefresh={handleRefresh}
+      refreshing={isFetching && !isLoading}
+      onScroll={handleScroll}
+      showsVerticalScrollIndicator={false}
+      contentStyle={{ gap: Spacing.lg }}
+    >
+      {/* Profile */}
+      <Card style={{ alignItems: 'center', padding: Spacing.marginMobile }}>
+        <Avatar name={displayName} uri={announcer.avatar} size="lg" />
+        <AppText variant="title" accessibilityRole="header" style={{ textAlign: 'center' }}>
+          {displayName}
+        </AppText>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: Spacing.sm }}>
+          {announcer.verified ? <Badge label="Vérifié" variant="success" icon="verified" status /> : null}
+          {memberYear ? (
+            <AppText variant="caption" color="onSurfaceVariant">
+              Membre depuis {memberYear}
+            </AppText>
+          ) : null}
+        </View>
+        {announcer.bio ? (
+          <AppText color="onSurfaceVariant" numberOfLines={2} style={{ textAlign: 'center' }}>
+            {announcer.bio}
+          </AppText>
+        ) : null}
+        <Divider style={{ marginTop: Spacing.sm }} />
+        <View style={{ flexDirection: 'row', alignSelf: 'stretch', paddingTop: Spacing.xs }}>
+          <Stat value={announcer.furnitures ?? 0} label="Meubles" />
+          <Stat value={announcer.houses ?? 0} label="Maisons" />
+          <Stat value={totalListings} label="Annonces" />
+        </View>
+      </Card>
+
+      <SegmentedControl label="Contenu du profil" options={TABS} value={activeTab} onChange={setActiveTab} />
+
+      {tabContent}
+    </Screen>
   );
 }
-
-const s = StyleSheet.create({
-  root: { flex: 1 },
-
-  // ── Error ──
-  errorBody: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  errorTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: 18,
-    lineHeight: 24,
-    textAlign: 'center',
-    marginTop: Spacing.md,
-  },
-  errorBtn: {
-    marginTop: Spacing.lg,
-  },
-
-  // ── Back button ──
-  backFloating: {
-    position: 'absolute',
-    left: Spacing.marginMobile,
-    margin: 0,
-    zIndex: 10,
-  },
-
-  // ── Cover ──
-  cover: { height: COVER_H, overflow: 'hidden' },
-  coverOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-
-  // ── Profile card ──
-  profileCard: {
-    marginTop: -CARD_OVERLAP,
-    borderTopLeftRadius: CARD_RADIUS,
-    borderTopRightRadius: CARD_RADIUS,
-    paddingHorizontal: Spacing.marginMobile,
-    paddingBottom: Spacing.lg,
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.md,
-    marginTop: -(AVATAR_SIZE / 2 + AVATAR_BORDER),
-    marginBottom: Spacing.md,
-  },
-  avatarWrap: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: AVATAR_SIZE / 2,
-    borderWidth: AVATAR_BORDER,
-    overflow: 'hidden',
-    flexShrink: 0,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-  },
-  avatarImg: { width: '100%', height: '100%' },
-  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
-  identityCol: { flex: 1, paddingBottom: 4, gap: 2 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  name: { fontFamily: Fonts.bold, fontSize: 18, lineHeight: 24, flexShrink: 1 },
-  verifiedRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  verifiedDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#22c55e' },
-  bioPreview: {
-    fontFamily: Fonts.regular,
-    fontSize: 14,
-    lineHeight: 21,
-    marginBottom: Spacing.md,
-  },
-
-  // ── Stats ──
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    paddingTop: Spacing.md,
-    marginTop: Spacing.sm,
-  },
-  statSep: { width: 1, height: 32 },
-
-  // ── CTA ──
-
-  // ── Tabs ──
-  tabsWrap: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  tabPills: {
-    alignSelf: 'flex-start',
-  },
-
-  // ── Content ──
-  content: { paddingTop: Spacing.lg },
-
-  // Search
-  searchBarWrap: { marginBottom: Spacing.lg },
-
-  // Empty state
-  emptyState: { alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xxl },
-  emptyTitle: { fontFamily: Fonts.bold, fontSize: 18, lineHeight: 24 },
-
-  // Listings
-  listingsCol: { gap: Spacing.md },
-  paginationLoader: { marginTop: Spacing.lg },
-
-  // Media gallery
-  sectionHeader: { marginBottom: Spacing.md, gap: 3 },
-  sectionTag: {
-    fontFamily: Fonts.bold,
-    fontSize: 10,
-    letterSpacing: 2.2,
-    textTransform: 'uppercase',
-  },
-  sectionTitle: { fontFamily: Fonts.bold, fontSize: 22, lineHeight: 28 },
-  mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  mediaThumb: {
-    width: '48%',
-    aspectRatio: 1,
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-  },
-  mediaImg: { width: '100%', height: '100%' },
-
-  // About
-  aboutSection: { gap: Spacing.lg },
-  aboutCard: {
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    padding: Spacing.lg,
-    gap: Spacing.md,
-  },
-  aboutCardTitle: { fontFamily: Fonts.bold, fontSize: 16, lineHeight: 22 },
-  contactCards: { gap: Spacing.sm },
-});
