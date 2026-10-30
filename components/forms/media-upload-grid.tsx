@@ -68,32 +68,36 @@ export function PhotoTile({ uri, label, badge, onRemove }: PhotoTileProps) {
 /** Dashed "Ajouter des photos" tile that opens the system photo picker. */
 export function AddPhotoTile({ label, onPress }: { label: string; onPress: () => void }) {
   const C = useThemeColors();
+  // The square comes from a plain View: aspectRatio on the Pressable itself
+  // left the tile shorter than its row on Android (seen on the emulator).
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel="Ajouter des photos"
-      style={({ pressed }) => [
-        TILE,
-        {
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: Spacing.xs,
-          padding: Spacing.sm,
-          borderRadius: Radii.control,
-          borderWidth: Borders.focus,
-          borderStyle: 'dashed',
-          borderColor: C.outline,
-          backgroundColor: C.surfaceContainerLow,
-        },
-        pressedStyle(pressed),
-      ]}
-    >
-      <MaterialIcons name="add-photo-alternate" size={Sizes.iconLg} color={C.link} />
-      <AppText variant="label" color="link" style={{ textAlign: 'center' }}>
-        {label}
-      </AppText>
-    </Pressable>
+    <View style={TILE}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel="Ajouter des photos"
+        style={({ pressed }) => [
+          {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: Spacing.xs,
+            padding: Spacing.sm,
+            borderRadius: Radii.control,
+            borderWidth: Borders.focus,
+            borderStyle: 'dashed',
+            borderColor: C.outline,
+            backgroundColor: C.surfaceContainerLow,
+          },
+          pressedStyle(pressed),
+        ]}
+      >
+        <MaterialIcons name="add-photo-alternate" size={Sizes.iconLg} color={C.link} />
+        <AppText variant="label" color="link" style={{ textAlign: 'center' }}>
+          {label}
+        </AppText>
+      </Pressable>
+    </View>
   );
 }
 
