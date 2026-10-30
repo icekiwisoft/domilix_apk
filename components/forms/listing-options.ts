@@ -25,15 +25,17 @@ export const STANDING_OPTIONS: readonly { value: Standing; label: string }[] = [
   { value: 'haut_standing', label: 'Haut standing' },
 ];
 
+// `spoken`: full name read by TalkBack (website adForm.fields.amenities) where
+// the chip label is the form's short one ("Clim", "Cuisine éq.").
 export const AMENITY_OPTIONS = [
-  { key: 'wifi', label: 'Wifi', icon: 'wifi' },
-  { key: 'pool', label: 'Piscine', icon: 'pool' },
-  { key: 'air_conditioning', label: 'Clim', icon: 'ac-unit' },
-  { key: 'security_24h', label: 'Gardiennage', icon: 'security' },
-  { key: 'gate', label: 'Portail', icon: 'lock' },
-  { key: 'equipped_kitchen', label: 'Cuisine éq.', icon: 'kitchen' },
-  { key: 'smart_tv', label: 'Smart TV', icon: 'tv' },
-] as const satisfies readonly { key: string; label: string; icon: IconName }[];
+  { key: 'wifi', label: 'Wifi', spoken: 'Wifi', icon: 'wifi' },
+  { key: 'pool', label: 'Piscine', spoken: 'Piscine', icon: 'pool' },
+  { key: 'air_conditioning', label: 'Clim', spoken: 'Climatisation', icon: 'ac-unit' },
+  { key: 'security_24h', label: 'Gardiennage', spoken: 'Gardiennage', icon: 'security' },
+  { key: 'gate', label: 'Portail', spoken: 'Portail', icon: 'lock' },
+  { key: 'equipped_kitchen', label: 'Cuisine éq.', spoken: 'Cuisine équipée', icon: 'kitchen' },
+  { key: 'smart_tv', label: 'Smart TV', spoken: 'Smart TV', icon: 'tv' },
+] as const satisfies readonly { key: string; label: string; spoken: string; icon: IconName }[];
 
 export type AmenityKey = (typeof AMENITY_OPTIONS)[number]['key'];
 
