@@ -1,181 +1,115 @@
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, Image, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ActivityIndicator, Button, Card, Dialog, IconButton, Portal } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useFocusEffect } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAuthStore } from '@/stores/auth.store';
+import { ActivityIndicator, FlatList, RefreshControl, View } from 'react-native';
+
+import { AnnounceCard, announceTitle } from '@/components/listing/announce-card';
+import {
+  AppText,
+  Button,
+  Card,
+  Dialog,
+  EmptyState,
+  ErrorState,
+  IconButton,
+  ListingCardSkeleton,
+  Screen,
+  ScreenHeader,
+  useToast,
+} from '@/components/ui';
+import { Borders, Spacing, type ColorToken } from '@/constants/theme';
 import { useMe } from '@/hooks/queries/use-auth-queries';
 import { useAnnounces, useDeleteAnnounce, useInfiniteAnnounces } from '@/hooks/queries/use-announces';
-import { useToast } from '@/components/ui/toast';
-import { EmptyState } from '@/components/ui/empty-state';
-import { ManageCardSkeleton } from '@/components/listing/listing-skeleton';
+import { useThemeColors } from '@/hooks/use-theme-color';
+import { useAuthStore } from '@/stores/auth.store';
 import type { Announce } from '@/types/announce';
 
-const THUMB_SIZE = 104;
-const STAGGER_MS = 40;
-const STAGGER_CAP = 8;
-
-function formatPrice(price: number): string {
-  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(1).replace('.0', '')}M`;
-  if (price >= 1_000) return `${Math.round(price / 1_000)}k`;
-  return price.toLocaleString('fr-FR');
+function formatDate(value?: string): string | null {
+  if (!value) return null;
+  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));
 }
 
-function formatDate(value?: string): string {
-  if (!value) return 'Date indisponible';
-  return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }).format(
-    new Date(value)
-  );
-}
-
-function getTitle(announce: Announce): string {
-  return announce.description?.split('.')[0]?.trim() || announce.category?.name || 'Annonce sans titre';
-}
-
-function getCurrency(announce: Announce): string {
-  return announce.devise === 'XAF' ? 'FCFA' : announce.devise;
-}
-
-function getPeriodSuffix(announce: Announce): string {
-  if (announce.period === 'month') return '/mois';
-  if (announce.period === 'year') return '/an';
-  if (announce.period === 'day') return '/jour';
-  return '';
-}
-
-interface ManageCardProps {
+interface OwnerActionsProps {
   announce: Announce;
-  index: number;
-  deleting?: boolean;
+  deleting: boolean;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-function ManageCard({ announce, index, deleting, onView, onEdit, onDelete }: ManageCardProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-
-  const thumb =
-    announce.medias?.[0]?.thumbnail ??
-    announce.medias?.[0]?.file ??
-    `https://picsum.photos/seed/${announce.id}/400/400`;
-
-  const isLocation = announce.ad_type === 'location';
-  const isFurniture = announce.type === 'furniture';
-  const locationText = [announce.neighborhood, announce.city].filter(Boolean).join(', ') || announce.address;
-  const likesCount = announce.likes_count ?? 0;
-  const title = getTitle(announce);
-
+/** Under each of the announcer's cards: favourites, date, then Modifier / Voir / Supprimer. */
+function OwnerActions({ announce, deleting, onView, onEdit, onDelete }: OwnerActionsProps) {
+  const C = useThemeColors();
+  const title = announceTitle(announce);
+  const likes = announce.likes_count ?? 0;
+  const date = formatDate(announce.creation_date);
+  const meta = [
+    `${announce.type === 'furniture' ? 'Mobilier' : 'Immobilier'}`,
+    `${likes} favori${likes > 1 ? 's' : ''}`,
+    date ? `publiée le ${date}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   return (
-    <Animated.View entering={FadeInDown.delay(Math.min(index, STAGGER_CAP) * STAGGER_MS).duration(260)}>
-      <Card
-        mode="elevated"
-        style={[styles.card, { backgroundColor: C.surfaceContainerLowest }]}
-        onPress={onView}
-        accessibilityLabel={`Voir l'annonce ${title}`}
-      >
-        <View style={styles.cardBody}>
-          <View style={[styles.thumbBox, { backgroundColor: C.surfaceContainerLow }]}>
-            <Image source={{ uri: thumb }} style={styles.thumbImg} resizeMode="cover" />
-            <View style={[styles.photoBadge, { backgroundColor: 'rgba(34, 26, 18, 0.72)' }]}>
-              <MaterialIcons name="photo-camera" size={11} color="#fff" />
-              <Text style={styles.photoBadgeText}>{announce.medias?.length ?? 0}</Text>
-            </View>
-          </View>
+    <View
+      style={{
+        gap: Spacing.sm,
+        paddingTop: Spacing.sm,
+        borderTopWidth: Borders.thin,
+        borderTopColor: C.outlineVariant,
+      }}
+    >
+      <AppText variant="caption" color="onSurfaceVariant">
+        {meta}
+      </AppText>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.sm }}>
+        <Button
+          label="Modifier"
+          icon="edit"
+          variant="secondary"
+          accessibilityLabel={`Modifier ${title}`}
+          onPress={onEdit}
+          style={{ flexGrow: 1 }}
+        />
+        <Button
+          label="Voir"
+          icon="visibility"
+          variant="secondary"
+          accessibilityLabel={`Voir ${title}`}
+          onPress={onView}
+          style={{ flexGrow: 1 }}
+        />
+        <IconButton
+          icon="delete-outline"
+          label={`Supprimer ${title}`}
+          color="error"
+          disabled={deleting}
+          onPress={onDelete}
+        />
+      </View>
+    </View>
+  );
+}
 
-          <View style={styles.infoCol}>
-            <View style={styles.badgeRow}>
-              <View style={[styles.statusBadge, { backgroundColor: isLocation ? C.tertiaryContainer : C.primaryFixed }]}>
-                <Text style={[styles.statusBadgeText, { color: isLocation ? C.onTertiaryContainer : C.primaryContainer }]}>
-                  {isLocation ? 'Location' : 'Vente'}
-                </Text>
-              </View>
-              <View style={[styles.typeBadge, { backgroundColor: C.surfaceContainerHigh }]}>
-                <MaterialIcons
-                  name={isFurniture ? 'chair' : 'apartment'}
-                  size={12}
-                  color={C.onSurfaceVariant}
-                />
-                <Text style={[styles.typeBadgeText, { color: C.onSurfaceVariant }]}>
-                  {isFurniture ? 'Mobilier' : 'Immobilier'}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={[styles.cardTitle, { color: C.onSurface }]} numberOfLines={2}>
-              {title}
-            </Text>
-
-            <View style={styles.locationRow}>
-              <MaterialIcons name="location-on" size={13} color={C.secondary} />
-              <Text style={[styles.locationText, { color: C.onSurfaceVariant }]} numberOfLines={1}>
-                {locationText}
-              </Text>
-            </View>
-
-            <View style={styles.priceRow}>
-              <Text style={[styles.price, { color: C.link }]}>
-                {formatPrice(announce.price)}
-              </Text>
-              <Text style={[styles.currency, { color: C.onSurfaceVariant }]}>
-                {getCurrency(announce)}{getPeriodSuffix(announce)}
-              </Text>
-            </View>
-
-            <View style={styles.metaRow}>
-              <View style={[styles.metaPill, { backgroundColor: C.surfaceContainerLow }]}>
-                <MaterialIcons name="favorite-border" size={12} color={C.onSurfaceVariant} />
-                <Text style={[styles.metaText, { color: C.onSurfaceVariant }]}>
-                  {likesCount}
-                </Text>
-              </View>
-              <View style={[styles.metaPill, { backgroundColor: C.surfaceContainerLow }]}>
-                <MaterialIcons name="event" size={12} color={C.onSurfaceVariant} />
-                <Text style={[styles.metaText, { color: C.onSurfaceVariant }]}>
-                  {formatDate(announce.creation_date)}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <Card.Actions style={[styles.actionBar, { borderTopColor: C.outlineVariant + '66' }]}>
-          <Button mode="text" icon="eye-outline" compact onPress={onView} textColor={C.onSurfaceVariant} style={styles.actionBtn} labelStyle={styles.actionLabel}>
-            Voir
-          </Button>
-          <Button mode="text" icon="pencil-outline" compact onPress={onEdit} textColor={C.link} style={styles.actionBtn} labelStyle={styles.actionLabel}>
-            Modifier
-          </Button>
-          <Button
-            mode="text"
-            icon="delete-outline"
-            compact
-            disabled={deleting}
-            onPress={onDelete}
-            textColor={C.error}
-            style={styles.actionBtn}
-            labelStyle={styles.actionLabel}
-          >
-            {deleting ? 'Suppression' : 'Supprimer'}
-          </Button>
-        </Card.Actions>
-      </Card>
-    </Animated.View>
+function SummaryItem({ value, label, color }: { value: number; label: string; color: ColorToken }) {
+  return (
+    <View accessible accessibilityLabel={`${value} ${label}`} style={{ flex: 1, alignItems: 'center', gap: Spacing.xxs }}>
+      <AppText variant="headline" color={color}>
+        {value}
+      </AppText>
+      <AppText variant="caption" color="onSurfaceVariant" style={{ textAlign: 'center' }}>
+        {label}
+      </AppText>
+    </View>
   );
 }
 
 export default function MyListingsScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
+  const router = useRouter();
   const toast = useToast();
 
-  const hydrated = useAuthStore(s => s.hydrated);
-  const storeUser = useAuthStore(s => s.user);
+  const hydrated = useAuthStore((s) => s.hydrated);
+  const storeUser = useAuthStore((s) => s.user);
 
   const { data: meData } = useMe();
   // Prefer React Query data (most up-to-date), fall back to Zustand store user
@@ -187,7 +121,7 @@ export default function MyListingsScreen() {
   const {
     data: pages,
     isLoading: isListingsLoading,
-    isFetching,
+    isError,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
@@ -212,7 +146,6 @@ export default function MyListingsScreen() {
   // We have nothing useful to show until auth has hydrated, we know which
   // announcer we are, and that announcer's listings have loaded at least once.
   const isPageLoading = !hydrated || !hasAnnouncerId || isListingsLoading;
-  const showEmptyState = !isPageLoading && listings.length === 0;
 
   // Belt-and-suspenders: force a fetch the moment the announcer id becomes
   // available, instead of only trusting the query's own `enabled` transition.
@@ -234,6 +167,13 @@ export default function MyListingsScreen() {
     }, [hasAnnouncerId])
   );
 
+  const [refreshing, setRefreshing] = useState(false);
+  async function onRefresh() {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }
+
   const [deleteTarget, setDeleteTarget] = useState<Announce | null>(null);
 
   function handleDeleteConfirmed() {
@@ -246,328 +186,110 @@ export default function MyListingsScreen() {
     });
   }
 
-  return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant + '77' }]}>
-        <IconButton
-          icon="arrow-left"
-          accessibilityLabel="Retour"
-          onPress={() => router.back()}
-          iconColor={C.onSurface}
-          style={styles.backBtn}
-        />
+  const publish = () => router.push('/announces/create/step-1');
 
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: C.onSurface }]}>Mes annonces</Text>
-          {!isPageLoading && total > 0 && (
-            <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-              {total} publication{total > 1 ? 's' : ''}
-            </Text>
-          )}
-        </View>
-
-        <IconButton
-          icon="plus"
-          accessibilityLabel="Publier une annonce"
-          onPress={() => router.push('/announces/create/step-1')}
-          iconColor={C.onPrimary}
-          containerColor={C.primary}
-          style={styles.addBtn}
-        />
+  let empty = null;
+  if (isPageLoading) {
+    empty = (
+      <View accessible accessibilityLabel="Chargement de vos annonces…" accessibilityState={{ busy: true }} style={{ gap: Spacing.ms }}>
+        {[1, 2, 3].map((k) => (
+          <ListingCardSkeleton key={k} variant="compact" />
+        ))}
       </View>
+    );
+  } else if (isError) {
+    empty = <ErrorState title="Impossible de charger vos annonces" onRetry={() => refetch()} />;
+  } else {
+    empty = (
+      <EmptyState
+        icon="add-home"
+        title="Aucune annonce"
+        description="Vous n'avez pas encore publié d'annonce. Commencez dès maintenant."
+        actionLabel="Publier une annonce"
+        onAction={publish}
+      />
+    );
+  }
 
+  return (
+    <Screen
+      scroll={false}
+      header={
+        <ScreenHeader
+          title="Mes annonces"
+          actions={<Button label="Publier" icon="add" accessibilityLabel="Publier une annonce" onPress={publish} />}
+        />
+      }
+      contentStyle={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}
+    >
       <FlatList
-        data={isPageLoading ? [] : listings}
-        keyExtractor={(a) => a.id}
-        refreshControl={
-          <RefreshControl
-            refreshing={isFetching && !isPageLoading}
-            onRefresh={refetch}
-            tintColor={C.primary}
-            colors={[C.primary]}
-          />
-        }
-        contentContainerStyle={styles.flatContent}
-        showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
-        onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={styles.paginationLoader} /> : null}
-        renderItem={({ item, index }) => (
-          <ManageCard
+        data={isPageLoading || isError ? [] : listings}
+        keyExtractor={(a) => String(a.id)}
+        renderItem={({ item }) => (
+          <AnnounceCard
+            variant="compact"
             announce={item}
-            index={index}
-            deleting={deleteAnnounce.isPending}
-            onView={() => router.push(`/announces/${item.id}`)}
-            onEdit={() => router.push(`/announces/edit/${item.id}`)}
-            onDelete={() => setDeleteTarget(item)}
+            onPress={() => router.push(`/announces/${item.id}`)}
+            footer={
+              <OwnerActions
+                announce={item}
+                deleting={deleteAnnounce.isPending}
+                onView={() => router.push(`/announces/${item.id}`)}
+                onEdit={() => router.push(`/announces/edit/${item.id}`)}
+                onDelete={() => setDeleteTarget(item)}
+              />
+            }
           />
         )}
         ListHeaderComponent={
-          isPageLoading ? (
-            <View style={{ gap: Spacing.md }}>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <ManageCardSkeleton key={i} />
-              ))}
-            </View>
-          ) : listings.length > 0 ? (
-            <View style={[styles.summary, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant + '66' }]}>
-              <SummaryItem value={total} label="Total" color={C.link} mutedColor={C.onSurfaceVariant} />
-              <View style={[styles.summarySep, { backgroundColor: C.outlineVariant }]} />
-              <SummaryItem value={locationCount} label="Locations" color={C.tertiary} mutedColor={C.onSurfaceVariant} />
-              <View style={[styles.summarySep, { backgroundColor: C.outlineVariant }]} />
-              <SummaryItem value={saleCount} label="Ventes" color={C.secondary} mutedColor={C.onSurfaceVariant} />
-            </View>
+          !isPageLoading && !isError && listings.length > 0 ? (
+            <Card style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: Spacing.ms }}>
+              <SummaryItem value={total} label={`publication${total > 1 ? 's' : ''}`} color="link" />
+              <SummaryItem value={locationCount} label={`location${locationCount > 1 ? 's' : ''}`} color="tertiary" />
+              <SummaryItem value={saleCount} label={`vente${saleCount > 1 ? 's' : ''}`} color="secondary" />
+            </Card>
           ) : null
         }
-        ListEmptyComponent={
-          showEmptyState ? (
-            <EmptyState
-              title="Aucune annonce"
-              description="Vous n'avez pas encore publié d'annonce. Commencez dès maintenant."
-              ctaLabel="Publier une annonce"
-              onCta={() => router.push('/announces/create/step-1')}
-              icon={<MaterialIcons name="add-home" size={36} color={C.onPrimaryFixed} />}
+        ListEmptyComponent={empty}
+        ItemSeparatorComponent={() => <View style={{ height: Spacing.ms }} />}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <ActivityIndicator
+              color={C.primaryContainer}
+              accessibilityLabel="Chargement de la suite…"
+              style={{ marginTop: Spacing.md }}
             />
           ) : null
         }
+        onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
+        onEndReachedThreshold={0.5}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: Spacing.marginMobile,
+          paddingTop: Spacing.sm,
+          paddingBottom: Spacing.xl,
+        }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[C.primaryContainer]}
+            progressBackgroundColor={C.surfaceContainerLowest}
+            tintColor={C.primaryContainer}
+          />
+        }
       />
 
-      <Portal>
-        <Dialog visible={!!deleteTarget} onDismiss={() => setDeleteTarget(null)}>
-          <Dialog.Title>Supprimer cette annonce ?</Dialog.Title>
-          <Dialog.Content>
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
-              Cette action est irréversible.
-            </Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button mode="text" onPress={() => setDeleteTarget(null)}>Annuler</Button>
-            <Button mode="text" textColor={C.error} onPress={handleDeleteConfirmed}>Supprimer</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-    </SafeAreaView>
+      <Dialog
+        visible={!!deleteTarget}
+        title="Supprimer cette annonce ?"
+        message="Cette action est irréversible."
+        confirmLabel="Supprimer"
+        danger
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </Screen>
   );
 }
-
-function SummaryItem({
-  value,
-  label,
-  color,
-  mutedColor,
-}: {
-  value: number;
-  label: string;
-  color: string;
-  mutedColor: string;
-}) {
-  return (
-    <View style={styles.summaryItem}>
-      <Text style={[styles.summaryValue, { color }]}>{value}</Text>
-      <Text style={[styles.summaryLabel, { color: mutedColor }]}>{label}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.sm + 4,
-    borderBottomWidth: 1,
-    gap: Spacing.sm,
-  },
-  backBtn: {
-    margin: 0,
-    flexShrink: 0,
-  },
-  headerCenter: {
-    flex: 1,
-    gap: 1,
-  },
-  headerTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: 18,
-    lineHeight: 24,
-  },
-  addBtn: {
-    margin: 0,
-    flexShrink: 0,
-  },
-  flatContent: {
-    flexGrow: 1,
-    padding: Spacing.marginMobile,
-    paddingBottom: Spacing.xl,
-  },
-  paginationLoader: { marginTop: Spacing.md },
-  summary: {
-    borderWidth: 1,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    marginBottom: Spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  summaryItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-  },
-  summaryValue: {
-    fontFamily: Fonts.bold,
-    fontSize: 20,
-    lineHeight: 26,
-    fontVariant: ['tabular-nums'],
-  },
-  summaryLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: 11,
-    lineHeight: 15,
-  },
-  summarySep: {
-    width: 1,
-    height: 26,
-    opacity: 0.8,
-  },
-  card: {
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-  },
-  cardBody: {
-    flexDirection: 'row',
-    padding: Spacing.sm,
-    gap: Spacing.sm + 2,
-  },
-  thumbBox: {
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: Radius.md,
-    overflow: 'hidden',
-    flexShrink: 0,
-  },
-  thumbImg: {
-    width: '100%',
-    height: '100%',
-  },
-  photoBadge: {
-    position: 'absolute',
-    left: 7,
-    bottom: 7,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-  },
-  photoBadgeText: {
-    color: '#fff',
-    fontFamily: Fonts.bold,
-    fontSize: 10,
-    lineHeight: 12,
-  },
-  infoCol: {
-    flex: 1,
-    minWidth: 0,
-    gap: 5,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    flexWrap: 'wrap',
-  },
-  statusBadge: {
-    borderRadius: Radius.full,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  statusBadgeText: {
-    fontFamily: Fonts.bold,
-    fontSize: 10,
-    lineHeight: 13,
-    textTransform: 'uppercase',
-  },
-  typeBadge: {
-    borderRadius: Radius.full,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  typeBadgeText: {
-    fontFamily: Fonts.semiBold,
-    fontSize: 10,
-    lineHeight: 13,
-  },
-  cardTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: 14,
-    lineHeight: 19,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  locationText: {
-    fontFamily: Fonts.regular,
-    fontSize: 12,
-    lineHeight: 16,
-    flex: 1,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    gap: Spacing.xs,
-  },
-  price: {
-    fontFamily: Fonts.bold,
-    fontSize: 18,
-    lineHeight: 23,
-  },
-  currency: {
-    fontFamily: Fonts.medium,
-    fontSize: 11,
-    lineHeight: 15,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    flexWrap: 'wrap',
-  },
-  metaPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    borderRadius: Radius.full,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-  },
-  metaText: {
-    fontFamily: Fonts.medium,
-    fontSize: 10,
-    lineHeight: 13,
-    fontVariant: ['tabular-nums'],
-  },
-  actionBar: {
-    borderTopWidth: 1,
-    justifyContent: 'space-around',
-    paddingHorizontal: Spacing.xs,
-  },
-  actionBtn: {
-    flex: 1,
-  },
-  actionLabel: {
-    fontFamily: Fonts.bold,
-    fontSize: 11,
-    lineHeight: 15,
-  },
-});
