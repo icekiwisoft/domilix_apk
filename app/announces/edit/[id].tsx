@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { usePreventRemove } from '@react-navigation/native';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { View, type TextInput } from 'react-native';
 
@@ -21,6 +22,7 @@ import {
   AppText,
   Banner,
   ChipGroup,
+  Dialog,
   ErrorState,
   Field,
   LoadingState,
@@ -41,6 +43,23 @@ import type { AdType, AnnounceType, Media, Standing } from '@/types/announce';
 const CITIES = ['Douala', 'Yaoundé', 'Bafoussam', 'Kribi', 'Limbé'];
 const CITY_OPTIONS = CITIES.map((c) => ({ value: c, label: c }));
 const TITLE = "Modifier l'annonce";
+
+/** What the screen edits, compared with the loaded listing to detect unsaved changes. */
+interface EditableValues {
+  adType: AdType;
+  categoryId: string;
+  price: string;
+  devise: string;
+  description: string;
+  address: string;
+  city: string;
+  bedrooms: number;
+  size: string;
+  standing: Standing | undefined;
+  amenities: Record<AmenityKey, boolean>;
+  newMediaUris: string[];
+  removedMediaIds: string[];
+}
 
 function Heading({ children }: { children: string }) {
   return (
@@ -86,29 +105,46 @@ export default function EditAnnounceScreen() {
 
   // Pre-populate once announce loads
   const initialized = useRef(false);
+  const [initialSnapshot, setInitialSnapshot] = useState<string | null>(null);
   useEffect(() => {
     if (!announce || initialized.current) return;
     initialized.current = true;
+    const initial: EditableValues = {
+      adType: announce.ad_type,
+      categoryId: announce.category_id ?? '',
+      price: String(announce.price ?? ''),
+      devise: announce.devise ?? 'XAF',
+      description: announce.description ?? '',
+      address: announce.address ?? '',
+      city: announce.city ?? 'Douala',
+      bedrooms: announce.bedrooms ?? 0,
+      size: announce.size != null ? String(announce.size) : '',
+      standing: announce.standing,
+      amenities: {
+        wifi: !!announce.wifi,
+        pool: !!announce.pool,
+        air_conditioning: !!announce.air_conditioning,
+        security_24h: !!announce.security_24h,
+        gate: !!announce.gate,
+        equipped_kitchen: !!announce.equipped_kitchen,
+        smart_tv: !!announce.smart_tv,
+      },
+      newMediaUris: [],
+      removedMediaIds: [],
+    };
     setType(announce.type);
-    setAdType(announce.ad_type);
-    setCategoryId(announce.category_id ?? '');
-    setPrice(String(announce.price ?? ''));
-    setDevise(announce.devise ?? 'XAF');
-    setDescription(announce.description ?? '');
-    setAddress(announce.address ?? '');
-    setCity(announce.city ?? 'Douala');
-    setBedrooms(announce.bedrooms ?? 0);
-    setSize(announce.size != null ? String(announce.size) : '');
-    setStanding(announce.standing);
-    setAmenities({
-      wifi: !!announce.wifi,
-      pool: !!announce.pool,
-      air_conditioning: !!announce.air_conditioning,
-      security_24h: !!announce.security_24h,
-      gate: !!announce.gate,
-      equipped_kitchen: !!announce.equipped_kitchen,
-      smart_tv: !!announce.smart_tv,
-    });
+    setAdType(initial.adType);
+    setCategoryId(initial.categoryId);
+    setPrice(initial.price);
+    setDevise(initial.devise);
+    setDescription(initial.description);
+    setAddress(initial.address);
+    setCity(initial.city);
+    setBedrooms(initial.bedrooms);
+    setSize(initial.size);
+    setStanding(initial.standing);
+    setAmenities(initial.amenities);
+    setInitialSnapshot(JSON.stringify(initial));
   }, [announce]);
 
   // ── Derived ─────────────────────────────────────────────────────────────────
@@ -117,7 +153,23 @@ export default function EditAnnounceScreen() {
   const allExistingMedias: Media[] = announce?.medias ?? [];
   const existingMedias = allExistingMedias.filter((m) => !removedMediaIds.includes(m.id));
   const totalPhotos = existingMedias.length + newMediaUris.length;
-  const canSave = !!price && !!description && !!address && !!city;
+  // At least one photo, as the backend requires (media_ids may not be empty).
+  const canSave = !!price && !!description && !!address && !!city && totalPhotos > 0;
+
+  const current: EditableValues = {
+    adType, categoryId, price, devise, description, address, city, bedrooms, size, standing, amenities,
+    newMediaUris, removedMediaIds,
+  };
+  const dirty = initialSnapshot !== null && JSON.stringify(current) !== initialSnapshot;
+
+  // Back arrow, Android back or swipe with unsaved changes: ask first.
+  const navigation = useNavigation();
+  const allowLeave = useRef(false);
+  const [pendingLeave, setPendingLeave] = useState<Parameters<typeof navigation.dispatch>[0] | null>(null);
+  usePreventRemove(dirty, ({ data }) => {
+    if (allowLeave.current) navigation.dispatch(data.action);
+    else setPendingLeave(data.action);
+  });
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   function toggleAmenity(key: AmenityKey) {
@@ -181,6 +233,7 @@ export default function EditAnnounceScreen() {
       {
         onSuccess: () => {
           toast.show('Annonce mise à jour.', 'success');
+          allowLeave.current = true;
           router.back();
         },
         onError: () => {
@@ -224,7 +277,7 @@ export default function EditAnnounceScreen() {
           onNext={handleSave}
           disabled={!canSave}
           loading={updateAnnounce.isPending}
-          hint="Indiquez le prix, la description, l'adresse et la ville pour enregistrer."
+          hint="Indiquez le prix, la description, l'adresse, la ville et au moins une photo pour enregistrer."
         />
       }
       contentStyle={{ gap: Spacing.lg }}
@@ -336,6 +389,21 @@ export default function EditAnnounceScreen() {
         devise={devise}
         address={address}
         city={city}
+      />
+      <Dialog
+        visible={pendingLeave !== null}
+        title="Quitter sans enregistrer ?"
+        message="Vos modifications de l'annonce seront perdues."
+        confirmLabel="Quitter"
+        cancelLabel="Continuer la modification"
+        danger
+        onConfirm={() => {
+          const action = pendingLeave;
+          setPendingLeave(null);
+          allowLeave.current = true;
+          if (action) navigation.dispatch(action);
+        }}
+        onCancel={() => setPendingLeave(null)}
       />
     </Screen>
   );
