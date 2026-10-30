@@ -172,6 +172,14 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 10. `/cities` applique `take: limit` (max 50) sur une liste alphabétique *avant* le tri par nombre
     d'annonces : au-delà de 50 groupes de villes, de grandes villes peuvent manquer ; une ville est
     aussi renvoyée une fois par pays (UI-11).
+11. **Sécurité** : `prisma.service.ts` crée au démarrage deux comptes avec des mots de passe écrits en
+    clair dans le code (dont une adresse personnelle réelle) ; vérifier si la production les a et les
+    retirer (UI-12, constaté sur une copie locale).
+12. `POST /announces` n'est pas atomique : si le stockage échoue (500), une annonce sans photo reste en
+    base (UI-12).
+13. `PUT /announces/:id` n'accepte pas le multipart (pas de FilesInterceptor) et ignore
+    `remove_media_ids[]` ; l'app suit désormais le site (upload `/uploads` puis JSON avec `media_ids`).
+    Le code postal est reçu en `zip` mais renvoyé en `postal_code` (UI-12).
 
 ## Améliorations demandées par l'utilisateur
 
@@ -439,6 +447,15 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   modification identiques, garde annonceur) ; **aucune annonce créée, modifiée ou supprimée sur l'API de
   production en QA** (arrêt avant l'envoi final) ; AA clair et sombre, 48 dp, 200 %, TalkBack, clavier
   qui ne masque pas les champs ; build release vérifié.
+- Suites de UI-12 (2026-10-30) : React Native Paper reste utilisé par les écrans de connexion,
+  d'inscription et de mot de passe (`app/(auth)/*`, `google-signin-button`) ; à migrer dans un lot
+  dédié puis retirer le paquet, le `PaperProvider` et `constants/paper-theme.ts`. À 200 %, la liste du
+  sélecteur de devise recouvre le champ Prix (un tap change la devise par erreur). Non vérifié : avatar
+  sans nom (QA-20), lecture TalkBack réelle.
+- **Méthode** : backend local de QA (copie du backend dans le scratchpad de session, MySQL et S3 local
+  en conteneurs `domilix-qa-mysql` / `domilix-qa-s3`, APK pointé sur `http://10.0.2.2:3000` avec
+  `usesCleartextTraffic` temporaire) : a trouvé QA-17 (la modification effaçait chambres et catégorie)
+  et le bug de devise (`FCFA` non reconnu, enregistré en XOF).
 
 ## Lots proposés
 
