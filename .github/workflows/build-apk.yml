@@ -1,4 +1,4 @@
-name: Build and Release APK and AAB
+name: Build and Release APK
 
 on:
   push:
@@ -98,21 +98,15 @@ jobs:
           EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || 'https://api.domilix.com' }}
           EXPO_PUBLIC_GEOAPIFY_API_KEY: ${{ secrets.EXPO_PUBLIC_GEOAPIFY_API_KEY }}
 
-      - name: 🚀 Build AAB
-        run: eas build --platform android --profile production --non-interactive --local --output domilix-v${{ github.run_number }}.aab
-        env:
-          # An unset secret expands to "": default to the production API so the
-          # bundle always carries a real URL.
-          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || 'https://api.domilix.com' }}
-          EXPO_PUBLIC_GEOAPIFY_API_KEY: ${{ secrets.EXPO_PUBLIC_GEOAPIFY_API_KEY }}
+      # No AAB here: the production profile auto-increments the remote versionCode on EAS, so
+      # building it on every push to main burned a number before each Play release. The signed
+      # AAB is built and uploaded only by release-play.yml, on a vX.Y.Z tag.
 
-      - name: 📥 Upload APK and AAB artifacts
+      - name: 📥 Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: domilix-android
-          path: |
-            domilix-v${{ github.run_number }}.apk
-            domilix-v${{ github.run_number }}.aab
+          path: domilix-v${{ github.run_number }}.apk
           if-no-files-found: error
 
       - name: 🚀 Create GitHub Release
@@ -120,9 +114,7 @@ jobs:
         with:
           tag_name: v${{ github.run_number }}
           name: Domilix v${{ github.run_number }}
-          files: |
-            domilix-v${{ github.run_number }}.apk
-            domilix-v${{ github.run_number }}.aab
+          files: domilix-v${{ github.run_number }}.apk
           fail_on_unmatched_files: true
           generate_release_notes: true
           draft: false
