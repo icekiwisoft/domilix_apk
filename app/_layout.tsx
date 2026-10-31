@@ -80,6 +80,9 @@ export default function RootLayout() {
                 <Stack.Screen name="profile/my-listings" options={{ headerShown: false }} />
                 <Stack.Screen name="profile/subscriptions" options={{ headerShown: false }} />
                 <Stack.Screen name="profile/announcer-profile" options={{ headerShown: false }} />
+                <Stack.Screen name="profile/alerts" options={{ headerShown: false }} />
+                <Stack.Screen name="profile/become-announcer" options={{ headerShown: false }} />
+                <Stack.Screen name="profile/student-verification" options={{ headerShown: false }} />
               </Stack>
               {/* Resolved scheme, not "auto" (which follows the system): light icons on dark. */}
               <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
