@@ -105,6 +105,12 @@ const DEFAULT_DRAFT: CreateListingDraft = {
   contact_email: '',
 };
 
+/** True while nothing was entered since the last reset (the flow can start fresh silently). */
+export function isDraftEmpty(draft: CreateListingDraft) {
+  // Step 1 selects the first category by itself: that alone is not a draft.
+  return JSON.stringify({ ...draft, category_id: '' }) === JSON.stringify(DEFAULT_DRAFT);
+}
+
 interface CreateListingStore {
   draft: CreateListingDraft;
   setDraft: (patch: Partial<CreateListingDraft>) => void;

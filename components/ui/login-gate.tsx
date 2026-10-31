@@ -1,93 +1,65 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
-import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useRouter } from 'expo-router';
+import { View } from 'react-native';
+
+import { Radii, Sizes, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
+
+import { AppText } from './app-text';
+import { Button } from './button';
 
 interface LoginGateProps {
   title: string;
   subtitle: string;
+  /** Route to return to after signing in (goAfterAuth); Home when omitted. */
+  redirect?: string;
 }
 
-export function LoginGate({ title, subtitle }: LoginGateProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-
+/**
+ * Guest placeholder of the account screens (favourites, notifications,
+ * profile): lock icon, why to sign in, and the two ways in. Kit buttons give
+ * TalkBack the bare label, without the icon glyph Paper's button read first
+ * (QA-06, UI-09).
+ */
+export function LoginGate({ title, subtitle, redirect }: LoginGateProps) {
+  const C = useThemeColors();
+  const router = useRouter();
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
-      {/* Icon with layered circles for depth */}
-      <View style={styles.iconStack}>
-        <View style={[styles.iconOuter, { backgroundColor: C.primaryFixed + '55' }]} />
-        <View style={[styles.iconInner, { backgroundColor: C.primaryFixed }]}>
-          <MaterialIcons name="lock-outline" size={36} color={C.primary} />
-        </View>
+    <View style={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg, gap: Spacing.lg }}>
+      <View
+        importantForAccessibility="no-hide-descendants"
+        style={{
+          width: Sizes.stateIcon,
+          height: Sizes.stateIcon,
+          borderRadius: Radii.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: C.primaryFixed,
+        }}
+      >
+        <MaterialIcons name="lock-outline" size={Sizes.stateIcon / 2} color={C.onPrimaryFixed} />
       </View>
-
-      <View style={styles.textBlock}>
-        <Text style={[Typography.headlineMd, styles.title, { color: C.onSurface }]}>
+      <View style={{ alignItems: 'center', gap: Spacing.sm }}>
+        <AppText variant="headline" accessibilityRole="header" style={{ textAlign: 'center' }}>
           {title}
-        </Text>
-        <Text style={[Typography.bodyMd, styles.subtitle, { color: C.onSurfaceVariant }]}>
+        </AppText>
+        <AppText color="onSurfaceVariant" style={{ textAlign: 'center' }}>
           {subtitle}
-        </Text>
+        </AppText>
       </View>
-
-      <View style={styles.actions}>
-        <Button mode="contained" icon="login" onPress={() => router.push('/(auth)/login')}>
-          Se connecter
-        </Button>
-        <Button mode="outlined" onPress={() => router.push('/(auth)/register')}>
-          Créer un compte
-        </Button>
+      <View style={{ alignSelf: 'stretch', gap: Spacing.ms }}>
+        <Button label="Se connecter" icon="login" size="lg" fullWidth onPress={() =>
+            router.push(redirect ? { pathname: '/(auth)/login', params: { redirect } } : '/(auth)/login')
+          }
+        />
+        <Button
+          label="Créer un compte"
+          variant="secondary"
+          size="lg"
+          fullWidth
+          onPress={() => router.push('/(auth)/register')}
+        />
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.marginMobile,
-    gap: Spacing.xl,
-  },
-  iconStack: {
-    width: 96,
-    height: 96,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconOuter: {
-    position: 'absolute',
-    width: 96,
-    height: 96,
-    borderRadius: Radius.full,
-  },
-  iconInner: {
-    width: 72,
-    height: 72,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.md,
-  },
-  textBlock: {
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: 22,
-  },
-  subtitle: {
-    textAlign: 'center',
-    lineHeight: 24,
-    maxWidth: 300,
-  },
-  actions: {
-    width: '100%',
-    gap: Spacing.md,
-  },
-});

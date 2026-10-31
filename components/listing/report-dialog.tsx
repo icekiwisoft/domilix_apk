@@ -1,12 +1,8 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button, Dialog, Portal } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View } from 'react-native';
 
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/toast';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppText, Dialog, Field, RadioRow, useToast } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useReportAnnounce } from '@/hooks/queries/use-announces';
 import { getApiErrorMessage } from '@/lib/api-error';
 
@@ -25,9 +21,8 @@ interface ReportDialogProps {
   onDismiss: () => void;
 }
 
+/** "Signaler l'annonce": a reason (required, 3 to 255 characters server-side) and optional details. */
 export function ReportDialog({ visible, announceId, onDismiss }: ReportDialogProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
   const toast = useToast();
   const report = useReportAnnounce();
   const [reason, setReason] = useState<string | null>(null);
@@ -40,7 +35,10 @@ export function ReportDialog({ visible, announceId, onDismiss }: ReportDialogPro
   }
 
   function submit() {
-    if (!reason) return;
+    if (!reason) {
+      toast.show('Choisissez un motif de signalement.', 'error');
+      return;
+    }
     report.mutate(
       { id: announceId, reason, details: details.trim() || undefined },
       {
@@ -54,73 +52,34 @@ export function ReportDialog({ visible, announceId, onDismiss }: ReportDialogPro
   }
 
   return (
-    <Portal>
-      <Dialog visible={visible} onDismiss={close}>
-        <Dialog.Title>Signaler l&apos;annonce</Dialog.Title>
-        <Dialog.Content style={{ gap: Spacing.md }}>
-          <Text style={[Typography.labelSm, { color: C.onSurfaceVariant }]}>Motif du signalement</Text>
-          <View style={styles.reasons}>
-            {REASONS.map((item) => {
-              const selected = reason === item;
-              return (
-                <Pressable
-                  key={item}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  onPress={() => setReason(item)}
-                  style={[
-                    styles.reason,
-                    {
-                      borderColor: selected ? C.primary : C.outlineVariant,
-                      backgroundColor: selected ? C.primaryFixed + '55' : 'transparent',
-                    },
-                  ]}
-                >
-                  <MaterialIcons
-                    name={selected ? 'radio-button-checked' : 'radio-button-unchecked'}
-                    size={20}
-                    color={selected ? C.primary : C.onSurfaceVariant}
-                  />
-                  <Text style={[Typography.bodyMd, { color: C.onSurface }]}>{item}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Input
-            label="Détails supplémentaires"
-            value={details}
-            onChangeText={setDetails}
-            multiline
-            maxLength={2000}
-            placeholder="Décrivez le problème..."
-          />
-        </Dialog.Content>
-        <Dialog.Actions>
-          <Button mode="text" onPress={close} disabled={report.isPending}>Annuler</Button>
-          <Button
-            mode="text"
-            textColor={C.error}
-            onPress={submit}
-            loading={report.isPending}
-            disabled={!reason || report.isPending}
-          >
-            Signaler
-          </Button>
-        </Dialog.Actions>
-      </Dialog>
-    </Portal>
+    <Dialog
+      visible={visible}
+      title="Signaler l'annonce"
+      confirmLabel="Signaler"
+      danger
+      loading={report.isPending}
+      onConfirm={submit}
+      onCancel={close}
+    >
+      <View style={{ gap: Spacing.sm }}>
+        <AppText variant="label" color="onSurfaceVariant">
+          Motif du signalement
+        </AppText>
+        <View accessibilityRole="radiogroup" accessibilityLabel="Motif du signalement" style={{ gap: Spacing.xs }}>
+          {REASONS.map((item) => (
+            <RadioRow key={item} title={item} selected={reason === item} onPress={() => setReason(item)} />
+          ))}
+        </View>
+        <Field
+          label="Détails supplémentaires"
+          labelHint="(facultatif)"
+          value={details}
+          onChangeText={setDetails}
+          multiline
+          maxLength={2000}
+          placeholder="Décrivez le problème..."
+        />
+      </View>
+    </Dialog>
   );
 }
-
-const styles = StyleSheet.create({
-  reasons: { gap: Spacing.xs },
-  reason: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-});

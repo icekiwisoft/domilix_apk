@@ -1,148 +1,100 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, type PressableProps, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { MaterialIcons } from '@expo/vector-icons';
+import { ActivityIndicator, Pressable, View, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 
-export type ButtonVariant = 'primary' | 'cta' | 'ghost' | 'icon' | 'outline';
+import { GoogleLogo } from '@/components/auth/google-logo';
+import { Borders, Opacity, Radii, Sizes, Spacing, type ColorToken } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
-interface ButtonProps extends Omit<PressableProps, 'style'> {
+import { AppText } from './app-text';
+import type { IconName } from './icon-button';
+import { pressedStyle } from './pressed';
+
+export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'google';
+export type ButtonSize = 'md' | 'lg';
+
+// Contrast (AA): onCta on cta 8.5:1 (light) and 10.1:1 (dark); onSurface on
+// the page 16:1; link 6.1:1; onError on error 6.5:1; Google's pairs 14:1+. The
+// secondary outline (`outline`) reaches 4.3:1 against the page (3:1 needed).
+const PALETTE: Record<ButtonVariant, { bg: ColorToken | null; fg: ColorToken; border: ColorToken | null }> = {
+  primary: { bg: 'cta', fg: 'onCta', border: null },
+  secondary: { bg: null, fg: 'onSurface', border: 'outline' },
+  text: { bg: null, fg: 'link', border: null },
+  danger: { bg: 'error', fg: 'onError', border: null },
+  google: { bg: 'googleSurface', fg: 'onGoogleSurface', border: 'googleOutline' },
+};
+
+export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
+  label: string;
   variant?: ButtonVariant;
-  label?: string;
-  icon?: React.ReactNode;
+  /** md: 48 dp minimum; lg: 52 dp, the full-width buttons of forms. */
+  size?: ButtonSize;
+  /** MaterialIcons name shown before the label (the Google logo for `google`). */
+  icon?: IconName;
   loading?: boolean;
   fullWidth?: boolean;
-  style?: ViewStyle;
-  size?: 'sm' | 'md' | 'lg';
+  style?: StyleProp<ViewStyle>;
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
+/**
+ * Pill button of the app. The label wraps instead of being cut at 200 %
+ * font size, and the button grows with it. While `loading` it stays the same
+ * size, is disabled and reports itself busy to TalkBack.
+ */
 export function Button({
-  variant = 'primary',
   label,
+  variant = 'primary',
+  size = 'md',
   icon,
   loading = false,
   fullWidth = false,
   disabled,
   style,
-  size = 'md',
-  onPressIn,
-  onPressOut,
+  accessibilityLabel,
   ...rest
 }: ButtonProps) {
-  const primary = useThemeColor({}, 'primary');
-  const onPrimary = useThemeColor({}, 'onPrimary');
-  const primaryContainer = useThemeColor({}, 'primaryContainer');
-  const outlineVariant = useThemeColor({}, 'outlineVariant');
-  const onSurface = useThemeColor({}, 'onSurface');
-  const surface = useThemeColor({}, 'surface');
+  const C = useThemeColors();
+  const p = PALETTE[variant];
+  const inactive = !!disabled || loading;
+  const fg = C[p.fg];
 
-  const scale = useSharedValue(1);
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  function handlePressIn(e: Parameters<NonNullable<PressableProps['onPressIn']>>[0]) {
-    scale.value = withTiming(0.96, { duration: 100 });
-    onPressIn?.(e);
-  }
-  function handlePressOut(e: Parameters<NonNullable<PressableProps['onPressOut']>>[0]) {
-    scale.value = withTiming(1, { duration: 150 });
-    onPressOut?.(e);
-  }
-
-  const bgColor =
-    variant === 'primary' ? primary :
-    variant === 'cta' ? primaryContainer :
-    variant === 'outline' ? 'transparent' :
-    variant === 'ghost' ? 'transparent' :
-    'transparent';
-
-  const textColor =
-    variant === 'ghost' || variant === 'outline' ? onSurface :
-    onPrimary;
-
-  const borderColor =
-    variant === 'outline' ? outlineVariant :
-    variant === 'ghost' ? outlineVariant :
-    'transparent';
-
-  const isDisabled = disabled || loading;
-
-  const paddingVertical =
-    size === 'sm' ? 10 :
-    size === 'lg' ? 18 :
-    14;
-
-  const shadow = (variant === 'primary' || variant === 'cta') && !isDisabled ? Shadows.button : {};
+  let leading = null;
+  if (loading) leading = <ActivityIndicator size="small" color={fg} />;
+  else if (variant === 'google') leading = <GoogleLogo size={Sizes.icon} />;
+  else if (icon) leading = <MaterialIcons name={icon} size={Sizes.icon} color={fg} />;
 
   return (
-    <AnimatedPressable
-      style={[animStyle, fullWidth && { width: '100%' }]}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={isDisabled}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ disabled: inactive, busy: loading }}
+      disabled={inactive}
+      style={({ pressed }) => [
+        {
+          minHeight: size === 'lg' ? Sizes.control : Sizes.touchTarget,
+          minWidth: Sizes.touchTarget,
+          paddingHorizontal: variant === 'text' ? Spacing.ms : size === 'lg' ? Spacing.lg : Spacing.md,
+          paddingVertical: Spacing.sm,
+          borderRadius: Radii.full,
+          overflow: 'hidden',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: Spacing.sm,
+          backgroundColor: p.bg ? C[p.bg] : 'transparent',
+          borderWidth: p.border ? Borders.thin : 0,
+          borderColor: p.border ? C[p.border] : undefined,
+          opacity: disabled && !loading ? Opacity.disabled : 1,
+        },
+        fullWidth ? { alignSelf: 'stretch' } : null,
+        pressedStyle(pressed),
+        style,
+      ]}
       {...rest}
     >
-      <Animated.View
-        style={[
-          styles.base,
-          { backgroundColor: bgColor, paddingVertical, borderColor, borderWidth: variant === 'outline' || variant === 'ghost' ? 1.5 : 0 },
-          variant === 'icon' && styles.iconBase,
-          isDisabled && styles.disabled,
-          shadow,
-          style,
-        ]}
-      >
-        {loading ? (
-          <ActivityIndicator color={textColor} size="small" />
-        ) : (
-          <>
-            {icon}
-            {label && (
-              <Text
-                style={[
-                  styles.label,
-                  { color: textColor },
-                  size === 'sm' && { fontSize: 12, letterSpacing: 0.8 },
-                  size === 'lg' && { fontSize: 15, letterSpacing: 1.4 },
-                  !!icon && !!label && { marginLeft: Spacing.xs },
-                ]}
-              >
-                {label}
-              </Text>
-            )}
-          </>
-        )}
-      </Animated.View>
-    </AnimatedPressable>
+      {leading ? <View>{leading}</View> : null}
+      <AppText variant="bodyStrong" color={p.fg} style={{ textAlign: 'center', flexShrink: 1 }}>
+        {label}
+      </AppText>
+    </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.md,
-    minHeight: 48,
-  },
-  iconBase: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.full,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    minHeight: 44,
-  },
-  label: {
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    fontSize: 14,
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
-  disabled: {
-    opacity: 0.42,
-  },
-});

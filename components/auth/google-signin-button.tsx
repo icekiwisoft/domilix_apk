@@ -1,81 +1,76 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useRef, useState } from 'react';
+import { View } from 'react-native';
+import { useRouter } from 'expo-router';
+
+import { goAfterAuth } from '@/components/auth/go-after-auth';
+import { Banner, Button } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useGoogleSignIn } from '@/hooks/use-google-signin';
 import { useFirebaseLogin } from '@/hooks/queries/use-auth-queries';
-import { GoogleLogo } from './google-logo';
 
 interface GoogleSignInButtonProps {
   redirectTo?: string;
+  /** The screen to go back to is still under this one (see goAfterAuth). */
+  targetBelow?: boolean;
+  /** "Continuer avec Google" on sign-in, "S'inscrire avec Google" on sign-up. */
+  label?: string;
 }
 
-export function GoogleSignInButton({ redirectTo }: GoogleSignInButtonProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const { signIn, isReady, isLoading: isGoogleLoading } = useGoogleSignIn();
+/**
+ * Google sign-in button in Google's official style (white or #131314 surface,
+ * grey outline, multicolour logo: the kit Button's `google` variant), as
+ * required by Google's branding guidelines.
+ */
+export function GoogleSignInButton({ redirectTo, targetBelow = false, label = 'Continuer avec Google' }: GoogleSignInButtonProps) {
+  const router = useRouter();
+  const { signIn, isReady, isLoading: isGoogleLoading, errorMessage: googleError } = useGoogleSignIn();
   const firebaseLogin = useFirebaseLogin();
   const [error, setError] = useState(false);
+  // Covers the whole chain signIn -> backend login, so the button never re-enables between the two.
+  const busyRef = useRef(false);
+  const [isBusy, setIsBusy] = useState(false);
+
+  function release() {
+    busyRef.current = false;
+    setIsBusy(false);
+  }
 
   async function handlePress() {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setIsBusy(true);
     setError(false);
-    const idToken = await signIn();
+    let idToken: string | null = null;
+    try {
+      idToken = await signIn();
+    } finally {
+      if (!idToken) release();
+    }
     if (!idToken) return;
     firebaseLogin.mutate(idToken, {
-      onSuccess: () => router.replace((redirectTo ?? '/(tabs)') as never),
+      onSuccess: () => goAfterAuth(router, redirectTo, targetBelow),
       onError: () => setError(true),
+      onSettled: release,
     });
   }
 
-  const isLoading = isGoogleLoading || firebaseLogin.isPending;
+  const isLoading = isBusy || isGoogleLoading || firebaseLogin.isPending;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.dividerRow}>
-        <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
-        <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>ou</Text>
-        <View style={[styles.divider, { backgroundColor: C.outlineVariant }]} />
-      </View>
-
-      {error && (
-        <View style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}>
-          <MaterialIcons name="error-outline" size={16} color={C.error} />
-          <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
-            Connexion avec Google impossible. Réessayez.
-          </Text>
-        </View>
-      )}
-
+    <View style={{ gap: Spacing.sm }}>
       <Button
-        mode="outlined"
+        variant="google"
+        size="lg"
+        fullWidth
+        label={label}
         onPress={handlePress}
         loading={isLoading}
-        disabled={!isReady || isLoading}
-        icon={({ size }) => <GoogleLogo size={size} />}
-        contentStyle={styles.btnContent}
-        style={styles.btn}
-      >
-        Continuer avec Google
-      </Button>
+        disabled={!isReady}
+      />
+
+      {error || googleError ? (
+        <Banner tone="error">{error ? 'Connexion avec Google impossible. Réessayez.' : (googleError ?? '')}</Banner>
+      ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { gap: Spacing.md },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  divider: { flex: 1, height: 1 },
-  btn: { borderRadius: Radius.md },
-  btnContent: { height: 50 },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-  },
-});

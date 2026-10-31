@@ -1,17 +1,52 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useMe } from '@/hooks/queries/use-auth-queries';
-import { useAnnounce, useUnlockAnnounce } from '@/hooks/queries/use-announces';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { AppText, Button, Divider } from '@/components/ui';
 import { useToast } from '@/components/ui/toast';
+import { Borders, Radii, Shadows, Sizes, Spacing } from '@/constants/theme';
+import { useAnnounce, useUnlockAnnounce } from '@/hooks/queries/use-announces';
+import { useMe } from '@/hooks/queries/use-auth-queries';
+import { useThemeColors } from '@/hooks/use-theme-color';
+
+/** Largest share of the window the sheet takes; the text scrolls beyond (200 % font size). */
+const MAX_HEIGHT = 0.9;
+
+/** Domicoins taken by one unlock when the API does not say (land costs more: `unlock_cost`). */
+const DEFAULT_UNLOCK_COST = 1;
+
+function domicoins(n: number) {
+  return `${n} Domicoin${n > 1 ? 's' : ''}`;
+}
+
+function CostRow({ label, value, warn = false }: { label: string; value: string; warn?: boolean }) {
+  return (
+    <View
+      accessible
+      accessibilityLabel={`${label} : ${value}`}
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: Spacing.sm,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.ms,
+      }}
+    >
+      <AppText color="onSurfaceVariant">{label}</AppText>
+      <AppText variant="bodyStrong" color={warn ? 'error' : 'onSurface'}>
+        {value}
+      </AppText>
+    </View>
+  );
+}
 
 export default function UnlockConfirmScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const { announceId } = useLocalSearchParams<{ announceId: string }>();
   const { data: me } = useMe();
   const { data: announce } = useAnnounce(announceId ?? '');
@@ -19,10 +54,11 @@ export default function UnlockConfirmScreen() {
   const toast = useToast();
 
   // Land listings cost more Domicoins than other ads; the API exposes the cost.
-  const cost = announce?.unlock_cost ?? 1;
-  const costLabel = `${cost} crédit${cost > 1 ? 's' : ''}`;
+  const cost = announce?.unlock_cost ?? DEFAULT_UNLOCK_COST;
   const userCredits = me?.credits ?? 0;
   const hasEnoughCredits = userCredits >= cost;
+  // The warning waits for the balance: no "insufficient" flash while it loads.
+  const showShortage = !!me && !hasEnoughCredits;
 
   function handleConfirm() {
     if (!announceId || !hasEnoughCredits) return;
@@ -38,157 +74,117 @@ export default function UnlockConfirmScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: 'transparent' }]}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={() => router.back()} />
+    <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+      <Pressable
+        style={[StyleSheet.absoluteFill, { backgroundColor: C.scrim }]}
+        onPress={() => router.back()}
+        accessible={false}
+        importantForAccessibility="no"
+      />
 
-      <View style={[styles.sheet, { backgroundColor: C.surface }]}>
-        {/* Handle */}
-        <View style={styles.handleWrapper}>
-          <View style={[styles.handle, { backgroundColor: C.surfaceVariant }]} />
-        </View>
+      <View
+        accessibilityViewIsModal
+        style={[
+          {
+            borderTopLeftRadius: Radii.card,
+            borderTopRightRadius: Radii.card,
+            maxHeight: (height - insets.top) * MAX_HEIGHT,
+            backgroundColor: C.surface,
+            paddingTop: Spacing.sm,
+            paddingBottom: insets.bottom + Spacing.lg,
+            gap: Spacing.md,
+          },
+          Shadows.floating,
+        ]}
+      >
+        <View
+          importantForAccessibility="no"
+          style={{
+            alignSelf: 'center',
+            width: Sizes.grabberWidth,
+            height: Sizes.grabberHeight,
+            borderRadius: Radii.full,
+            backgroundColor: C.outline,
+          }}
+        />
 
-        {/* Icon */}
-        <View style={[styles.iconCircle, { backgroundColor: C.primaryFixed }]}>
-          <MaterialIcons name="lock-open" size={32} color={C.primary} />
-        </View>
-
-        <Text style={[Typography.headlineMd, styles.title, { color: C.onSurface }]}>
-          Débloquer le contact
-        </Text>
-        <Text style={[Typography.bodyMd, styles.body, { color: C.onSurfaceVariant }]}>
-          Déverrouiller cette annonce utilisera{' '}
-          <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}>{costLabel}</Text>.
-          {'\n'}Il vous reste{' '}
-          <Text style={{
-            color: hasEnoughCredits ? C.primary : C.error,
-            fontFamily: 'PlusJakartaSans_700Bold',
-          }}>
-            {userCredits} crédit{userCredits > 1 ? 's' : ''}
-          </Text>.
-        </Text>
-
-        {/* Credits hint */}
-        <View style={[styles.creditsRow, { backgroundColor: C.surfaceContainerLow, borderColor: C.outlineVariant }]}>
-          <MaterialIcons name="toll" size={18} color={C.primary} />
-          <Text style={[Typography.caption, { color: C.onSurface, flex: 1 }]}>
-            Vous aurez accès au numéro de téléphone de l'annonceur.
-          </Text>
-        </View>
-
-        {/* Insufficient credits warning */}
-        {!hasEnoughCredits && (
-          <View style={[styles.warningRow, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '55' }]}>
-            <MaterialIcons name="warning-amber" size={16} color={C.error} />
-            <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
-              Crédits insuffisants. Rechargez votre solde pour débloquer cette annonce.
-            </Text>
+        {/* The buttons stay pinned under the scrolling text, always reachable. */}
+        <ScrollView
+          style={{ flexShrink: 1 }}
+          contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: Spacing.md }}
+        >
+          <View
+            importantForAccessibility="no-hide-descendants"
+            style={{
+              alignSelf: 'center',
+              width: Sizes.stateIcon,
+              height: Sizes.stateIcon,
+              borderRadius: Radii.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: C.primaryFixed,
+            }}
+          >
+            <MaterialIcons name="lock-open" size={Sizes.stateIcon / 2} color={C.onPrimaryFixed} />
           </View>
-        )}
 
-        {/* Buttons */}
-        <View style={styles.actions}>
-          <Button
-            mode="outlined"
-            onPress={() => router.back()}
-            style={styles.btn}
-            contentStyle={styles.btnContent}
+          <View style={{ gap: Spacing.xs }}>
+            <AppText variant="headline" accessibilityRole="header" style={{ textAlign: 'center' }}>
+              Débloquer cette annonce
+            </AppText>
+            <AppText color="onSurfaceVariant" style={{ textAlign: 'center' }}>
+              {"Vous aurez accès au numéro de téléphone et aux coordonnées de l'annonceur."}
+            </AppText>
+          </View>
+
+          <View
+            style={{
+              borderRadius: Radii.card,
+              borderWidth: Borders.thin,
+              borderColor: C.outlineVariant,
+              backgroundColor: C.surfaceContainerLowest,
+            }}
           >
-            Annuler
-          </Button>
+            <CostRow label="Coût" value={domicoins(cost)} />
+            <Divider />
+            <CostRow label="Votre solde" value={domicoins(userCredits)} warn={showShortage} />
+          </View>
+
+          {showShortage ? (
+            <View
+              accessible
+              accessibilityLiveRegion="polite"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: Spacing.sm,
+                padding: Spacing.ms,
+                borderRadius: Radii.control,
+                backgroundColor: C.errorContainer,
+              }}
+            >
+              <MaterialIcons name="warning-amber" size={Sizes.icon} color={C.onErrorContainer} />
+              <AppText variant="caption" color="onErrorContainer" style={{ flex: 1 }}>
+                Domicoins insuffisants. Rechargez votre solde pour débloquer cette annonce.
+              </AppText>
+            </View>
+          ) : null}
+
+        </ScrollView>
+
+        <View style={{ gap: Spacing.sm, paddingHorizontal: Spacing.lg }}>
           <Button
-            mode="contained"
-            onPress={handleConfirm}
-            disabled={unlockAnnounce.isPending || !hasEnoughCredits}
+            size="lg"
+            fullWidth
+            icon="lock-open"
+            label={`Débloquer pour ${domicoins(cost)}`}
             loading={unlockAnnounce.isPending}
-            icon={unlockAnnounce.isPending ? undefined : 'lock-open'}
-            style={styles.btn}
-            contentStyle={styles.btnContent}
-          >
-            Confirmer ({costLabel})
-          </Button>
+            disabled={!hasEnoughCredits}
+            onPress={handleConfirm}
+          />
+          <Button size="lg" fullWidth variant="secondary" label="Annuler" onPress={() => router.back()} />
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    borderTopLeftRadius: Radius.lg,
-    borderTopRightRadius: Radius.lg,
-    paddingHorizontal: Spacing.marginMobile,
-    paddingBottom: Spacing.xxl,
-    alignItems: 'center',
-    shadowColor: 'rgb(82,69,52)',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 30,
-    elevation: 20,
-  },
-  handleWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.md,
-  },
-  handle: {
-    width: 48,
-    height: 6,
-    borderRadius: Radius.full,
-  },
-  iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.lg,
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: 22,
-    marginBottom: Spacing.sm,
-  },
-  body: {
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: Spacing.lg,
-  },
-  creditsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    width: '100%',
-    marginBottom: Spacing.sm,
-  },
-  warningRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    width: '100%',
-    marginBottom: Spacing.lg,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    width: '100%',
-    marginTop: Spacing.lg,
-  },
-  btn: {
-    flex: 1,
-    borderRadius: Radius.md,
-  },
-  btnContent: {
-    height: 52,
-  },
-});

@@ -1,21 +1,37 @@
-import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Pressable, View } from 'react-native';
+
 import { AnnouncerForm, type AnnouncerFormValues } from '@/components/forms/announcer-form';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useMe, useUpdateAnnouncerProfile } from '@/hooks/queries/use-auth-queries';
+import {
+  AppText,
+  Avatar,
+  Banner,
+  ErrorState,
+  LoadingState,
+  OfflineState,
+  pressedStyle,
+  Screen,
+  ScreenHeader,
+  useToast,
+} from '@/components/ui';
+import { Radii, Sizes, Spacing } from '@/constants/theme';
 import { useAnnouncer } from '@/hooks/queries/use-announcers';
+import { useMe, useUpdateAnnouncerProfile } from '@/hooks/queries/use-auth-queries';
+import { useThemeColors } from '@/hooks/use-theme-color';
+import { isNetworkError } from '@/lib/network-error';
 
 export default function AnnouncerProfileEditScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const { data: user } = useMe();
+  const router = useRouter();
+  const toast = useToast();
+  const C = useThemeColors();
+  const me = useMe();
+  const user = me.data;
   const announcerId = user?.announcer ?? '';
-  const { data: announcer } = useAnnouncer(announcerId);
+  const announcerQuery = useAnnouncer(announcerId);
+  const announcer = announcerQuery.data;
   const updateAnnouncerProfile = useUpdateAnnouncerProfile();
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
 
@@ -48,127 +64,87 @@ export default function AnnouncerProfileEditScreen() {
     }
     updateAnnouncerProfile.mutate(formData, {
       onSuccess: () => router.back(),
+      onError: (err) =>
+        toast.show(
+          isNetworkError(err)
+            ? 'Pas de connexion internet. Vos modifications ne sont pas enregistrées.'
+            : "Le profil annonceur n'a pas pu être mis à jour. Réessayez dans un instant.",
+          'error',
+        ),
     });
   }
 
+  const header = <ScreenHeader title="Profil annonceur" onBack={() => router.back()} />;
+
+  if (me.isLoading || announcerQuery.isLoading) {
+    return (
+      <Screen header={header}>
+        <LoadingState label="Chargement du profil annonceur…" media={false} count={2} />
+      </Screen>
+    );
+  }
+  const failed = (!user && me.isError) || (!announcer && announcerQuery.isError);
+  if (failed) {
+    const error = me.error ?? announcerQuery.error;
+    const retry = () => (me.isError ? me.refetch() : announcerQuery.refetch());
+    return (
+      <Screen header={header} contentStyle={{ flexGrow: 1 }}>
+        {isNetworkError(error) ? (
+          <OfflineState onRetry={retry} />
+        ) : (
+          <ErrorState title="Impossible de charger le profil annonceur" onRetry={retry} />
+        )}
+      </Screen>
+    );
+  }
+
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
+    <Screen keyboard header={header} contentStyle={{ gap: Spacing.lg }}>
+      <Banner>Ces informations sont visibles sur votre profil public et vos annonces.</Banner>
+
+      <View style={{ alignItems: 'center', gap: Spacing.sm }}>
+        <Pressable
+          onPress={handlePickAvatar}
+          accessibilityRole="button"
+          accessibilityLabel="Changer le logo ou la photo de profil"
+          style={({ pressed }) => [{ padding: Spacing.xs, borderRadius: Radii.full }, pressedStyle(pressed)]}
+        >
+          <Avatar size="lg" name={announcer?.name} uri={avatar} fallbackIcon="storefront" />
+          <View
+            style={{
+              position: 'absolute',
+              right: 0,
+              bottom: 0,
+              width: Sizes.iconLg + Spacing.xs,
+              height: Sizes.iconLg + Spacing.xs,
+              borderRadius: Radii.full,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: C.cta,
+            }}
+          >
+            <MaterialIcons name="photo-camera" size={Sizes.iconSm} color={C.onCta} />
+          </View>
         </Pressable>
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>
-          Profil annonceur
-        </Text>
-        <View style={{ width: 24 }} />
+        <AppText variant="caption" color="onSurfaceVariant" importantForAccessibility="no">
+          Logo ou photo de profil
+        </AppText>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Info banner */}
-        <View style={[styles.infoBanner, { backgroundColor: C.primaryContainer + '33', borderColor: C.primaryContainer }]}>
-          <MaterialIcons name="info-outline" size={18} color={C.primary} />
-          <Text style={[Typography.caption, { color: C.primary, flex: 1, lineHeight: 18 }]}>
-            Ces informations sont visibles sur votre profil public et vos annonces.
-          </Text>
-        </View>
-
-        {/* Avatar picker */}
-        <View style={styles.avatarSection}>
-          <Pressable onPress={handlePickAvatar} style={styles.avatarPressable}>
-            {avatar ? (
-              <Image source={{ uri: avatar }} style={[styles.avatar, { borderColor: C.primary + '40' }]} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: C.surfaceContainer, borderColor: C.outlineVariant }]}>
-                <MaterialIcons name="storefront" size={44} color={C.onSurfaceVariant} />
-              </View>
-            )}
-            <View style={[styles.cameraBtn, { backgroundColor: C.primary }]}>
-              <MaterialIcons name="photo-camera" size={16} color={C.onPrimary} />
-            </View>
-          </Pressable>
-          <Text style={[Typography.caption, { color: C.onSurfaceVariant, marginTop: Spacing.sm }]}>
-            Logo ou photo de profil
-          </Text>
-        </View>
-
-        {/* Form */}
-        <View style={styles.formWrapper}>
-          <AnnouncerForm
-            // Remount once the announcer record has loaded so react-hook-form
-            // picks up the fetched values (its defaultValues are only read once).
-            key={announcer?.id ?? 'loading'}
-            defaultValues={{
-              company_name: announcer?.company_name,
-              bio: announcer?.bio ?? undefined,
-              professional_phone: announcer?.professional_phone,
-            }}
-            onSubmit={handleSave}
-            loading={updateAnnouncerProfile.isPending}
-          />
-        </View>
-
-      </ScrollView>
-    </SafeAreaView>
+      <AnnouncerForm
+        // Remount once the announcer record has loaded so react-hook-form
+        // picks up the fetched values (its defaultValues are only read once).
+        key={announcer?.id ?? 'loading'}
+        defaultValues={{
+          // GET /announcers/:id returns the saved company_name as `name` and
+          // professional_phone as `contact` (backend AuthService.updateAnnouncerProfile).
+          company_name: announcer?.name,
+          bio: announcer?.bio ?? undefined,
+          professional_phone: announcer?.contact,
+        }}
+        onSubmit={handleSave}
+        loading={updateAnnouncerProfile.isPending}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  scroll: {
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.lg,
-  },
-  infoBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-    marginHorizontal: Spacing.marginMobile,
-    marginTop: Spacing.lg,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  avatarSection: {
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-  },
-  avatarPressable: {
-    position: 'relative',
-  },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 3,
-  },
-  avatarFallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cameraBtn: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  formWrapper: {
-    paddingHorizontal: Spacing.marginMobile,
-  },
-});

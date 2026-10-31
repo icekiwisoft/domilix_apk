@@ -1,37 +1,43 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { ActivityIndicator, Button } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View } from 'react-native';
 
 import { DocumentPickerField } from '@/components/forms/document-picker-field';
-import { LoginGate } from '@/components/ui/login-gate';
-import { useToast } from '@/components/ui/toast';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import {
+  AppText,
+  Badge,
+  Button,
+  Card,
+  ErrorState,
+  LoadingState,
+  LoginGate,
+  OfflineState,
+  Screen,
+  ScreenHeader,
+  useToast,
+  type BadgeVariant,
+} from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useStudentVerification, useSubmitStudentVerification } from '@/hooks/queries/use-verification';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { formatDateFr } from '@/lib/format-date';
+import { isNetworkError } from '@/lib/network-error';
 import type { PickedFile } from '@/services/uploads.service';
 import { useAuthStore } from '@/stores/auth.store';
 
 type DisplayStatus = 'none' | 'pending' | 'approved' | 'expired' | 'rejected';
 
-const STATUS_LABELS: Record<DisplayStatus, string> = {
-  none: 'Statut étudiant non vérifié',
-  pending: 'Demande en attente de vérification',
-  approved: 'Statut étudiant vérifié',
-  expired: 'Statut étudiant expiré',
-  rejected: 'Demande refusée',
+const STATUS: Record<DisplayStatus, { label: string; variant: BadgeVariant }> = {
+  none: { label: 'Statut étudiant non vérifié', variant: 'neutral' },
+  pending: { label: 'Demande en attente de vérification', variant: 'primary' },
+  approved: { label: 'Statut étudiant vérifié', variant: 'success' },
+  expired: { label: 'Statut étudiant expiré', variant: 'error' },
+  rejected: { label: 'Demande refusée', variant: 'error' },
 };
 
 export default function StudentVerificationScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
   const toast = useToast();
   const accessToken = useAuthStore((s) => s.accessToken);
-  const { data: request, isLoading } = useStudentVerification();
+  const { data: request, isLoading, isError, error, refetch } = useStudentVerification();
   const submit = useSubmitStudentVerification();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -48,14 +54,6 @@ export default function StudentVerificationScreen() {
         : 'expired'
       : (request.status as DisplayStatus);
   const canStart = status !== 'pending';
-
-  const statusColors: Record<DisplayStatus, { bg: string; fg: string }> = {
-    none: { bg: C.surfaceContainerHigh, fg: C.onSurfaceVariant },
-    pending: { bg: C.primaryFixed, fg: C.primary },
-    approved: { bg: '#d1fae5', fg: '#047857' },
-    expired: { bg: C.errorContainer, fg: C.error },
-    rejected: { bg: C.errorContainer, fg: C.error },
-  };
 
   function handleSubmit() {
     if (!studentId || !receipt) {
@@ -76,129 +74,108 @@ export default function StudentVerificationScreen() {
     );
   }
 
+  const header = <ScreenHeader title="Statut étudiant" />;
+
   if (!accessToken) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
+      <Screen header={header}>
         <LoginGate
           title="Statut étudiant"
           subtitle="Connectez-vous pour déclarer votre statut étudiant."
+          redirect="/profile/student-verification"
         />
-      </SafeAreaView>
+      </Screen>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <Screen header={header}>
+        <LoadingState label="Chargement de votre statut…" media={false} count={1} />
+      </Screen>
+    );
+  }
+
+  // Without GET /student-verification/me the screen cannot tell whether a request is pending.
+  if (isError) {
+    return (
+      <Screen header={header} contentStyle={{ flexGrow: 1 }}>
+        {isNetworkError(error) ? (
+          <OfflineState onRetry={() => refetch()} />
+        ) : (
+          <ErrorState title="Impossible de charger votre statut étudiant" onRetry={() => refetch()} />
+        )}
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Retour">
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
-        </Pressable>
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>Statut étudiant</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <Screen header={header} contentStyle={{ gap: Spacing.lg }}>
+      <Card surface="surfaceContainerLowest" outlined style={{ gap: Spacing.md }}>
+        <AppText color="onSurfaceVariant">
+          {"Déclarez votre statut étudiant en envoyant votre carte étudiante et un reçu (preuve d'inscription ou de paiement). Ce statut est valable 1 an, après quoi une nouvelle vérification sera nécessaire."}
+        </AppText>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.outlineVariant }]}>
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, lineHeight: 22 }]}>
-              Déclarez votre statut étudiant en envoyant votre carte étudiante et un reçu (preuve d&apos;inscription ou de
-              paiement). Ce statut est valable 1 an, après quoi une nouvelle vérification sera nécessaire.
-            </Text>
+        <Badge label={STATUS[status].label} variant={STATUS[status].variant} status style={{ alignSelf: 'flex-start' }} />
 
-            {isLoading ? (
-              <ActivityIndicator />
-            ) : (
-              <View style={[styles.chip, { backgroundColor: statusColors[status].bg }]}>
-                <Text style={[Typography.labelSm, { color: statusColors[status].fg }]}>{STATUS_LABELS[status]}</Text>
-              </View>
-            )}
+        {status === 'approved' && !!request?.expires_at ? (
+          <AppText variant="caption" color="onSurfaceVariant">
+            {`Valable jusqu'au ${formatDateFr(request.expires_at)}`}
+          </AppText>
+        ) : null}
+        {status !== 'approved' && !!request?.created_at ? (
+          <AppText variant="caption" color="onSurfaceVariant">
+            {`Demande envoyée le ${formatDateFr(request.created_at)}`}
+          </AppText>
+        ) : null}
 
-            {status === 'approved' && !!request?.expires_at && (
-              <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-                Valable jusqu&apos;au {formatDateFr(request.expires_at)}
-              </Text>
-            )}
-            {status !== 'approved' && !!request?.created_at && (
-              <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>
-                Demande envoyée le {formatDateFr(request.created_at)}
-              </Text>
-            )}
+        {canStart && !formOpen ? (
+          <Button
+            size="lg"
+            fullWidth
+            label={
+              status === 'rejected' || status === 'expired'
+                ? 'Renvoyer une vérification'
+                : status === 'approved'
+                  ? 'Renouveler la vérification'
+                  : 'Vérifier mon statut étudiant'
+            }
+            onPress={() => setFormOpen(true)}
+          />
+        ) : null}
 
-            {canStart && !formOpen && (
-              <Button mode="contained" onPress={() => setFormOpen(true)}>
-                {status === 'rejected' || status === 'expired'
-                  ? 'Renvoyer une vérification'
-                  : status === 'approved'
-                    ? 'Renouveler la vérification'
-                    : 'Vérifier mon statut étudiant'}
-              </Button>
-            )}
-
-            {canStart && formOpen && (
-              <View style={styles.form}>
-                <DocumentPickerField
-                  label="Carte étudiante"
-                  hint="Photo ou fichier PDF (10 Mo maximum)."
-                  allowPdf
-                  value={studentId}
-                  onChange={setStudentId}
-                  disabled={submit.isPending}
-                />
-                <DocumentPickerField
-                  label="Reçu (inscription ou paiement)"
-                  hint="Photo, capture d'écran ou fichier PDF (10 Mo maximum)."
-                  allowPdf
-                  value={receipt}
-                  onChange={setReceipt}
-                  disabled={submit.isPending}
-                />
-                <Text style={[Typography.caption, { color: C.onSurfaceVariant, lineHeight: 18 }]}>
-                  Vos documents sont examinés par l&apos;équipe Domilix avant validation. Ce statut expire automatiquement
-                  au bout d&apos;un an.
-                </Text>
-                <Button mode="contained" onPress={handleSubmit} loading={submit.isPending} disabled={submit.isPending}>
-                  Envoyer la vérification
-                </Button>
-              </View>
-            )}
+        {canStart && formOpen ? (
+          <View style={{ gap: Spacing.md }}>
+            <DocumentPickerField
+              label="Carte étudiante"
+              hint="Photo ou fichier PDF (10 Mo maximum)."
+              allowPdf
+              value={studentId}
+              onChange={setStudentId}
+              disabled={submit.isPending}
+            />
+            <DocumentPickerField
+              label="Reçu (inscription ou paiement)"
+              hint="Photo, capture d'écran ou fichier PDF (10 Mo maximum)."
+              allowPdf
+              value={receipt}
+              onChange={setReceipt}
+              disabled={submit.isPending}
+            />
+            <AppText variant="caption" color="onSurfaceVariant">
+              {"Vos documents sont examinés par l'équipe Domilix avant validation. Ce statut expire automatiquement au bout d'un an."}
+            </AppText>
+            <Button
+              label="Envoyer la vérification"
+              icon="send"
+              size="lg"
+              fullWidth
+              loading={submit.isPending}
+              onPress={handleSubmit}
+            />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        ) : null}
+      </Card>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  scroll: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.lg,
-  },
-  card: {
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    padding: Spacing.lg,
-    gap: Spacing.md,
-  },
-  chip: {
-    alignSelf: 'flex-start',
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
-  },
-  form: { gap: Spacing.md },
-});

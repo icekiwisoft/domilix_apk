@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthService } from '@/services/auth.service';
+import { signOutGoogle } from '@/hooks/use-google-signin';
 import { useAuthStore } from '@/stores/auth.store';
 import type { LoginDto, RegisterDto } from '@/types/auth';
 
@@ -86,6 +87,7 @@ export function useLogout() {
     onSettled: () => {
       clearAuth();
       qc.clear();
+      void signOutGoogle();
     },
   });
 }

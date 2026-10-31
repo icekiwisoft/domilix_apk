@@ -85,7 +85,9 @@ Routes are defined by files under `app/`.
 
 ## UI And Design
 
-- Before implementing or changing a screen, check the matching reference in:
+- The live website (https://domilix.com, code in `domilix.com/` of the `icekiwisoft/domilix` repo) is the primary reference for brand identity: colors, typography, radii, iconography and copy follow its Tailwind tokens and components. Layouts are adapted to mobile rather than copied from desktop. When a mockup below disagrees with the website, the website wins.
+- Every screen you touch should also come out more usable: Material 3 conventions on Android, touch targets ≥ 48 dp, WCAG AA contrast, loading/empty/error/offline states, 200 % font size, TalkBack labels, fewer taps on key journeys.
+- Before implementing or changing a screen, also check the matching (secondary) reference in:
 
 ```text
 interfacesHTML/stitch_domilix_mobile_app_ui_kit/<screen>/code.html

@@ -1,52 +1,80 @@
-import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { Radius, Spacing, Typography } from '@/constants/theme';
+import { MaterialIcons } from '@expo/vector-icons';
+import { View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 
-export type BadgeVariant = 'primary' | 'secondary' | 'tertiary' | 'error' | 'neutral';
+import { Radii, Sizes, Spacing, TextVariants, type ColorToken } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
-interface BadgeProps {
+import { AppText } from './app-text';
+import type { IconName } from './icon-button';
+
+export type BadgeVariant = 'primary' | 'secondary' | 'tertiary' | 'error' | 'success' | 'neutral';
+
+// Container / on-container pairs, AA in both themes (light / dark):
+// primary 13.3 / 13.3, secondary 4.56 / 7.25, tertiary 4.58 / 7.25,
+// error 7.24 / 7.24, success 10.0 / 7.81, neutral 7.61 / 8.57.
+const PALETTE: Record<BadgeVariant, { bg: ColorToken; fg: ColorToken }> = {
+  primary: { bg: 'primaryFixed', fg: 'onPrimaryFixed' },
+  secondary: { bg: 'secondaryContainer', fg: 'onSecondaryContainer' },
+  tertiary: { bg: 'tertiaryContainer', fg: 'onTertiaryContainer' },
+  error: { bg: 'errorContainer', fg: 'onErrorContainer' },
+  success: { bg: 'successContainer', fg: 'onSuccessContainer' },
+  neutral: { bg: 'surfaceContainerHigh', fg: 'onSurfaceVariant' },
+};
+
+export interface BadgeProps {
   label: string;
   variant?: BadgeVariant;
-  style?: ViewStyle;
+  /**
+   * Status pill ("En ligne", "En attente"): rounded, with a leading dot or
+   * icon so the status is not told by colour alone.
+   */
+  status?: boolean;
+  icon?: IconName;
+  style?: StyleProp<ViewStyle>;
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-export function Badge({ label, variant = 'neutral', style }: BadgeProps) {
-  const primary = useThemeColor({}, 'primary');
-  const secondary = useThemeColor({}, 'secondary');
-  const tertiary = useThemeColor({}, 'tertiary');
-  const error = useThemeColor({}, 'error');
-  const outlineVariant = useThemeColor({}, 'outlineVariant');
-  const onSurfaceVariant = useThemeColor({}, 'onSurfaceVariant');
-
-  const colorMap: Record<BadgeVariant, { bg: string; fg: string }> = {
-    primary:   { bg: hexToRgba(primary, 0.12),   fg: primary },
-    secondary: { bg: hexToRgba(secondary, 0.12), fg: secondary },
-    tertiary:  { bg: hexToRgba(tertiary, 0.12),  fg: tertiary },
-    error:     { bg: hexToRgba(error, 0.12),     fg: error },
-    neutral:   { bg: hexToRgba(outlineVariant, 0.3), fg: onSurfaceVariant },
-  };
-
-  const { bg, fg } = colorMap[variant];
-
+/**
+ * Small non-interactive label: a tag on a card (square corners) or a status
+ * pill (`status`). TalkBack reads the label as plain text.
+ */
+export function Badge({ label, variant = 'neutral', status = false, icon, style }: BadgeProps) {
+  const C = useThemeColors();
+  const p = PALETTE[variant];
+  // The dot or icon is centred on the first line of the label, so it stays put
+  // when a large font size wraps the label onto several lines (QA-34).
+  const { fontScale } = useWindowDimensions();
+  const firstLine = (TextVariants.caption.lineHeight ?? Sizes.iconSm) * fontScale;
   return (
-    <View style={[styles.container, { backgroundColor: bg }, style]}>
-      <Text style={[Typography.labelSm, { color: fg }]}>{label.toUpperCase()}</Text>
+    <View
+      style={[
+        {
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          alignSelf: 'flex-start',
+          flexShrink: 1,
+          gap: Spacing.xs,
+          paddingHorizontal: status ? Spacing.ms : Spacing.sm,
+          paddingVertical: Spacing.xxs,
+          borderRadius: status ? Radii.full : Radii.badge,
+          backgroundColor: C[p.bg],
+        },
+        style,
+      ]}
+    >
+      {icon || status ? (
+        <View style={{ height: firstLine, justifyContent: 'center' }}>
+          {icon ? (
+            <MaterialIcons name={icon} size={Sizes.iconSm} color={C[p.fg]} />
+          ) : (
+            <View
+              style={{ width: Spacing.sm, height: Spacing.sm, borderRadius: Radii.full, backgroundColor: C[p.fg] }}
+            />
+          )}
+        </View>
+      ) : null}
+      <AppText variant="caption" color={p.fg} style={{ flexShrink: 1 }}>
+        {label}
+      </AppText>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.sm,
-    alignSelf: 'flex-start',
-  },
-});

@@ -1,46 +1,49 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Pressable, View } from 'react-native';
+
+import { AppText, pressedStyle } from '@/components/ui';
+import { Sizes, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
 interface SectionHeaderProps {
   title: string;
   onSeeAll?: () => void;
+  /** TalkBack label of the link, e.g. "Tout voir à Douala". */
+  seeAllLabel?: string;
 }
 
-export function SectionHeader({ title, onSeeAll }: SectionHeaderProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-
+/** Section title with a "Tout voir" link; they wrap onto two lines at 200 % instead of touching. */
+export function SectionHeader({ title, onSeeAll, seeAllLabel }: SectionHeaderProps) {
+  const C = useThemeColors();
   return (
-    <View style={styles.row}>
-      <Text style={[Typography.headlineMd, styles.title, { color: C.onSurface }]}>
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        columnGap: Spacing.md,
+      }}
+    >
+      <AppText variant="headline" accessibilityRole="header" style={{ flexShrink: 1 }}>
         {title}
-      </Text>
-      {onSeeAll && (
-        <Pressable onPress={onSeeAll} style={styles.seeAll} hitSlop={8}>
-          <Text style={[Typography.labelSm, { color: C.primary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-            Voir tout
-          </Text>
-          <MaterialIcons name="chevron-right" size={16} color={C.primary} />
+      </AppText>
+      {onSeeAll ? (
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel={seeAllLabel ?? 'Tout voir'}
+          onPress={onSeeAll}
+          style={({ pressed }) => [
+            { minHeight: Sizes.touchTarget, flexDirection: 'row', alignItems: 'center', gap: Spacing.xxs },
+            pressedStyle(pressed),
+          ]}
+        >
+          <AppText variant="label" color="link">
+            Tout voir
+          </AppText>
+          <MaterialIcons name="chevron-right" size={Sizes.icon} color={C.link} />
         </Pressable>
-      )}
+      ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontSize: 22,
-  },
-  seeAll: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-});

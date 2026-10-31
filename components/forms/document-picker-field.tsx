@@ -1,10 +1,13 @@
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Button } from 'react-native-paper';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import * as DocumentPicker from 'expo-document-picker';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import { useState } from 'react';
+import { Pressable, View } from 'react-native';
+
+import { AppText, Button, pressedStyle } from '@/components/ui';
+import { Borders, Opacity, Radii, Sizes, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import type { PickedFile } from '@/services/uploads.service';
 
 interface DocumentPickerFieldProps {
@@ -32,8 +35,8 @@ function toPickedFile(asset: ImagePicker.ImagePickerAsset): PickedFile {
 // gallery; PDFs from the system file picker. The backend validates the real
 // file signature and size (10 Mo max).
 export function DocumentPickerField({ label, hint, value, onChange, disabled, allowPdf }: DocumentPickerFieldProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
+  const [error, setError] = useState<string | null>(null);
   const isPdf = value?.mimeType === 'application/pdf';
 
   async function pickPhoto() {
@@ -43,6 +46,7 @@ export function DocumentPickerField({ label, hint, value, onChange, disabled, al
       quality: 0.8,
     });
     if (!result.canceled && result.assets[0]) {
+      setError(null);
       onChange(toPickedFile(result.assets[0]));
     }
   }
@@ -56,87 +60,108 @@ export function DocumentPickerField({ label, hint, value, onChange, disabled, al
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
     if (asset.size != null && asset.size > MAX_BYTES) {
-      Alert.alert('Fichier trop volumineux', 'Le fichier ne doit pas dépasser 10 Mo.');
+      setError('Le fichier ne doit pas dépasser 10 Mo.');
       return;
     }
+    setError(null);
     onChange({ uri: asset.uri, name: asset.name, mimeType: 'application/pdf' });
   }
 
+  const box = {
+    height: Sizes.documentPreview,
+    borderRadius: Radii.control,
+    borderWidth: Borders.focus,
+    overflow: 'hidden' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: C.surfaceContainerLow,
+  };
+
   return (
-    <View style={styles.wrapper}>
-      <Text style={[Typography.labelSm, { color: C.onSurface }]}>{label}</Text>
+    <View style={{ gap: Spacing.sm }}>
+      <AppText variant="label">{label}</AppText>
 
       {value ? (
-        <View style={[styles.box, { backgroundColor: C.surface, borderColor: C.primary }]}>
+        <View style={[box, { borderColor: C.link }]}>
           {isPdf ? (
-            <View style={styles.placeholder}>
-              <MaterialIcons name="picture-as-pdf" size={40} color={C.error} />
-              <Text
-                numberOfLines={2}
-                style={[Typography.bodyMd, { color: C.onSurface, textAlign: 'center', paddingHorizontal: Spacing.md }]}
-              >
+            <View style={{ alignItems: 'center', gap: Spacing.xs, paddingHorizontal: Spacing.md }}>
+              <MaterialIcons name="picture-as-pdf" size={Sizes.stateIcon / 2} color={C.error} />
+              <AppText numberOfLines={2} style={{ textAlign: 'center' }}>
                 {value.name}
-              </Text>
+              </AppText>
             </View>
           ) : (
-            <Image source={{ uri: value.uri }} style={styles.preview} resizeMode="cover" />
+            <Image
+              source={{ uri: value.uri }}
+              style={{ width: '100%', height: '100%' }}
+              contentFit="cover"
+              accessible
+              accessibilityRole="image"
+              accessibilityLabel={`${label} : ${value.name}`}
+            />
           )}
         </View>
       ) : (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${label} : choisir une photo`}
+          accessibilityState={{ disabled: !!(disabled || allowPdf) }}
+          // With PDF allowed, the two buttons below choose the source.
           disabled={disabled || allowPdf}
           onPress={pickPhoto}
-          style={[
-            styles.box,
-            { backgroundColor: C.surface, borderColor: C.outlineVariant, opacity: disabled ? 0.6 : 1, borderStyle: 'dashed' },
+          style={({ pressed }) => [
+            box,
+            { borderColor: C.outline, borderStyle: 'dashed', opacity: disabled ? Opacity.disabled : 1 },
+            pressedStyle(pressed),
           ]}
         >
-          <View style={styles.placeholder}>
-            <MaterialIcons name="add-photo-alternate" size={34} color={C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
-              {allowPdf ? 'Ajouter un document' : 'Choisir une photo'}
-            </Text>
+          <View style={{ alignItems: 'center', gap: Spacing.xs }}>
+            <MaterialIcons name="add-photo-alternate" size={Sizes.iconLg} color={C.link} />
+            <AppText color="onSurfaceVariant">{allowPdf ? 'Ajouter un document' : 'Choisir une photo'}</AppText>
           </View>
         </Pressable>
       )}
 
-      {!value && allowPdf && (
-        <View style={styles.actions}>
-          <Button mode="outlined" icon="image-outline" onPress={pickPhoto} disabled={disabled} style={styles.action}>
-            Photo
-          </Button>
-          <Button mode="outlined" icon="file-pdf-box" onPress={pickPdf} disabled={disabled} style={styles.action}>
-            Fichier PDF
-          </Button>
+      {!value && allowPdf ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+          <Button
+            variant="secondary"
+            icon="image"
+            label="Photo"
+            onPress={pickPhoto}
+            disabled={disabled}
+            style={{ flexGrow: 1 }}
+          />
+          <Button
+            variant="secondary"
+            icon="picture-as-pdf"
+            label="Fichier PDF"
+            onPress={pickPdf}
+            disabled={disabled}
+            style={{ flexGrow: 1 }}
+          />
         </View>
-      )}
+      ) : null}
 
-      {value && !disabled && (
-        <Pressable onPress={() => onChange(null)} hitSlop={8} accessibilityRole="button">
-          <Text style={[Typography.caption, { color: C.error }]}>
-            {isPdf ? 'Retirer le fichier' : 'Retirer la photo'}
-          </Text>
-        </Pressable>
-      )}
-      {hint && <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>{hint}</Text>}
+      {value && !disabled ? (
+        <Button
+          variant="text"
+          icon="delete-outline"
+          label={isPdf ? 'Retirer le fichier' : 'Retirer la photo'}
+          onPress={() => onChange(null)}
+          style={{ alignSelf: 'flex-start', marginLeft: -Spacing.ms }}
+        />
+      ) : null}
+      {error ? (
+        <AppText variant="caption" color="error" accessibilityLiveRegion="polite">
+          {error}
+        </AppText>
+      ) : null}
+      {hint ? (
+        <AppText variant="caption" color="onSurfaceVariant">
+          {hint}
+        </AppText>
+      ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: { gap: Spacing.xs },
-  box: {
-    height: 160,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  preview: { width: '100%', height: '100%' },
-  placeholder: { alignItems: 'center', gap: Spacing.xs },
-  actions: { flexDirection: 'row', gap: Spacing.sm },
-  action: { flex: 1 },
-});

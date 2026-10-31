@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { AnnouncesService } from '@/services/announces.service';
-import { buildCreatePayload } from '@/lib/listing-payload';
-import { UploadsService, type PickedFile } from '@/services/uploads.service';
+import { buildCreatePayload, coverFirst } from '@/lib/listing-payload';
+import { UploadsService, type PickedMedia } from '@/services/uploads.service';
 import type { CreateListingDraft } from '@/stores/create-listing.store';
 import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
 import type { UploadResponse } from '@/types/verification';
@@ -25,6 +25,26 @@ export function useAnnounces(filters: AnnounceFilters = {}, options?: { enabled?
   });
 }
 
+/**
+ * Third key segment of the home rows' queries: still under ['announces'] so a
+ * favourite updates their cards in place, but left out of the refetch after a like.
+ */
+const HOME_ROW_TAG = 'home-row';
+
+/** Not a home row: what a successful like refetches. */
+const notHomeRow = (q: { queryKey: readonly unknown[] }) => q.queryKey[2] !== HOME_ROW_TAG;
+
+/** The home rows' listing queries, cached 5 minutes (four requests per home visit otherwise). */
+export function useHomeRows(filtersList: AnnounceFilters[]) {
+  return useQueries({
+    queries: filtersList.map((filters) => ({
+      queryKey: ['announces', filters, HOME_ROW_TAG],
+      queryFn: () => AnnouncesService.list(filters),
+      staleTime: 1000 * 60 * 5,
+    })),
+  });
+}
+
 export function useInfiniteAnnounces(filters: Omit<AnnounceFilters, 'page'> = {}, options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: ['announces-infinite', filters],
@@ -45,6 +65,8 @@ export function useAnnounce(id: string) {
 }
 
 export interface UploadProgress {
+  /** `upload`: sending media `current` of `total`; `create`: medias sent, saving the listing. */
+  stage: 'upload' | 'create';
   current: number;
   total: number;
   fileName: string;
@@ -68,6 +90,7 @@ export function useCreateAnnounce() {
       for (const [index, media] of draft.medias.entries()) {
         const report = (filePercent: number) =>
           onProgress?.({
+            stage: 'upload',
             current: index + 1,
             total,
             fileName: media.name,
@@ -76,6 +99,7 @@ export function useCreateAnnounce() {
         report(0);
         uploaded.push(await UploadsService.upload('media', media, report));
       }
+      onProgress?.({ stage: 'create', current: total, total, fileName: '', percent: 100 });
       return AnnouncesService.create(buildCreatePayload(draft, uploaded));
     },
     onSuccess: () => {
@@ -124,7 +148,9 @@ export function useToggleLike() {
           old ? { ...old, liked: data.liked } : old
         );
       }
-      qc.invalidateQueries({ queryKey: ['announces'] });
+      // The home rows already show the flipped like (setQueriesData above): refetching
+      // their four lists for one heart costs data for nothing.
+      qc.invalidateQueries({ queryKey: ['announces'], predicate: notHomeRow });
       qc.invalidateQueries({ queryKey: ['announces-infinite'] });
     },
     onError: (_err, id, context) => {
@@ -155,19 +181,21 @@ export function useUpdateAnnounce() {
       id,
       payload,
       newMedia,
-      keepMediaIds,
+      keepMedias,
       onProgress,
     }: {
       id: string;
       payload: Record<string, unknown>;
-      newMedia: PickedFile[];
-      keepMediaIds: string[];
+      newMedia: PickedMedia[];
+      /** Kept medias in their order; `isVideo` lets a photo become the cover. */
+      keepMedias: { id: string; isVideo: boolean }[];
       onProgress?: (progress: UploadProgress) => void;
     }) => {
-      const uploadedIds: string[] = [];
+      const uploadedMedias: { id: string; isVideo: boolean }[] = [];
       for (const [index, file] of newMedia.entries()) {
         const report = (filePercent: number) =>
           onProgress?.({
+            stage: 'upload',
             current: index + 1,
             total: newMedia.length,
             fileName: file.name,
@@ -175,11 +203,14 @@ export function useUpdateAnnounce() {
           });
         report(0);
         const uploaded = await UploadsService.upload('media', file, report);
-        uploadedIds.push(uploaded.id);
+        uploadedMedias.push({ id: uploaded.id, isVideo: file.isVideo });
       }
+      onProgress?.({ stage: 'create', current: newMedia.length, total: newMedia.length, fileName: '', percent: 100 });
+      // The first id is the cover (isPresentation): a photo when there is one.
+      const ordered = coverFirst([...keepMedias, ...uploadedMedias], (m) => m.isVideo);
       return AnnouncesService.update(id, {
         ...payload,
-        media_ids: [...keepMediaIds, ...uploadedIds],
+        media_ids: ordered.map((m) => m.id),
       });
     },
     onSuccess: (_data, { id }) => {

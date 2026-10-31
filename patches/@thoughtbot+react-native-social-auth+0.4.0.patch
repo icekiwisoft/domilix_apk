@@ -1,0 +1,13 @@
+diff --git a/node_modules/@thoughtbot/react-native-social-auth/android/src/main/java/com/thoughtbot/reactnativesocialauth/GoogleSignInModule.kt b/node_modules/@thoughtbot/react-native-social-auth/android/src/main/java/com/thoughtbot/reactnativesocialauth/GoogleSignInModule.kt
+index 10310ee..d2df7d8 100644
+--- a/node_modules/@thoughtbot/react-native-social-auth/android/src/main/java/com/thoughtbot/reactnativesocialauth/GoogleSignInModule.kt
++++ b/node_modules/@thoughtbot/react-native-social-auth/android/src/main/java/com/thoughtbot/reactnativesocialauth/GoogleSignInModule.kt
+@@ -73,7 +73,7 @@ class GoogleSignInModule(reactContext: ReactApplicationContext) :
+     val autoSignInOption = GetGoogleIdOption.Builder()
+       .setFilterByAuthorizedAccounts(true)
+       .setServerClientId(clientId)
+-      .setAutoSelectEnabled(true)
++      .setAutoSelectEnabled(false)
+       .apply { nonce?.let { setNonce(it) } }
+       .build()
+ 

@@ -1,45 +1,94 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { isAxiosError } from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import {
-  KeyboardAvoidingView,
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { Button, IconButton } from 'react-native-paper';
+import { Linking, Pressable, TextInput, View } from 'react-native';
+import Svg, { Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AuthBanner } from '@/components/auth/auth-banner';
+import { AuthDivider } from '@/components/auth/auth-divider';
 import { GoogleSignInButton } from '@/components/auth/google-signin-button';
-import { Input } from '@/components/ui/input';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { AppText, Banner, Button, Field, KeyboardTarget, Screen, pressedStyle } from '@/components/ui';
+import { Borders, Fonts, Radii, Sizes, Spacing } from '@/constants/theme';
 import { useRegister } from '@/hooks/queries/use-auth-queries';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import { registerSchema, type RegisterFormValues } from '@/lib/validators/auth.schema';
+
+const TERMS_URL = 'https://domilix.com/cgu';
+const PRIVACY_URL = 'https://domilix.com/privacy-policy';
+const MIN_PASSWORD = 8;
+
+/** Keeps the 9 national digits: drops spaces, dashes and a pasted +237 / 00237. */
+function normalizePhone(input: string): string {
+  let digits = input.replace(/\D/g, '');
+  if (digits.length > 9 && digits.startsWith('00237')) digits = digits.slice(5);
+  else if (digits.length > 9 && digits.startsWith('237')) digits = digits.slice(3);
+  return digits.slice(0, 9);
+}
+
+/** Cameroon flag (green, red, yellow), decorative. */
+function CameroonFlag() {
+  const C = useThemeColors();
+  return (
+    <Svg width={Sizes.flagWidth} height={Sizes.flagHeight} viewBox="0 0 3 2" accessible={false}>
+      <Rect width={1} height={2} fill={C.flagGreen} />
+      <Rect x={1} width={1} height={2} fill={C.flagRed} />
+      <Rect x={2} width={1} height={2} fill={C.flagYellow} />
+    </Svg>
+  );
+}
+
+/**
+ * Field errors returned by POST /auth/register (backend auth.service.ts):
+ * 400 { errors: { phone_number: ['The phone number has already been taken.'] } },
+ * { errors: { email: ['The email has already been taken.'] } } and
+ * { errors: { phone_number: ['Le numero de telephone est invalide.'] } }.
+ * Anything else (other 4xx/5xx, network) keeps the generic banner.
+ */
+function serverFieldErrors(error: unknown): { phone?: string; email?: string } {
+  if (!isAxiosError(error) || error.response?.status !== 400) return {};
+  const fields = (error.response.data as { errors?: Record<string, unknown> } | undefined)?.errors;
+  if (!fields) return {};
+  const first = (v: unknown) => (Array.isArray(v) && typeof v[0] === 'string' ? (v[0] as string) : undefined);
+  const out: { phone?: string; email?: string } = {};
+  const phone = first(fields.phone_number);
+  if (phone) {
+    out.phone = /already been taken/i.test(phone)
+      ? 'Ce numéro est déjà utilisé. Connectez-vous ou utilisez un autre numéro.'
+      : 'Ce numéro de téléphone est invalide.';
+  }
+  const email = first(fields.email);
+  if (email) {
+    out.email = /already been taken/i.test(email)
+      ? 'Cette adresse e-mail est déjà utilisée. Connectez-vous ou utilisez une autre adresse.'
+      : 'Cette adresse e-mail est invalide.';
+  }
+  return out;
+}
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const [showPwd, setShowPwd] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const C = useThemeColors();
+  const router = useRouter();
+  const phoneRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
   const register = useRegister();
 
   const {
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { name: '', email: '', phone: '', password: '', confirmPassword: '', terms: undefined as any },
+    defaultValues: { name: '', email: '', phone: '', password: '', terms: undefined as any },
   });
+  const serverErrors = serverFieldErrors(register.error);
+  const passwordLongEnough = watch('password').length >= MIN_PASSWORD;
 
   function onSubmit(data: RegisterFormValues) {
     const phoneNumber = `+237${data.phone}`;
@@ -56,337 +105,261 @@ export default function RegisterScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: C.surface }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <Screen
+      keyboard
+      background="surface"
+      heroHeight={Sizes.authBannerShort}
+      heroStatusBar="dark"
+      contentStyle={{ gap: 0, paddingBottom: insets.bottom + Spacing.sm }}
     >
-      <ScrollView
-        contentContainerStyle={[
-          styles.scroll,
-          { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl },
-        ]}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Back */}
-        {router.canGoBack() && (
-          <IconButton
-            icon="arrow-left"
-            mode="outlined"
-            size={22}
-            onPress={() => router.back()}
-            accessibilityLabel="Retour"
-            style={styles.backBtn}
-          />
-        )}
+      <AuthBanner
+        height={Sizes.authBannerShort}
+        focusY="22%"
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(auth)/login'))}
+      />
 
-        {/* Headline */}
-        <View style={styles.header}>
-          <Text style={[Typography.headlineLg, { color: C.primary }]}>Créer un compte</Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs }]}>
-            {"Rejoignez une communauté d'excellence immobilière."}
-          </Text>
+      <View style={{ flexGrow: 1, paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg, gap: Spacing.md }}>
+        <View style={{ gap: Spacing.xs }}>
+          <AppText variant="title" accessibilityRole="header">
+            Créer un compte
+          </AppText>
+          <AppText color="onSurfaceVariant">Inscrivez-vous avec Google ou avec votre numéro de téléphone.</AppText>
         </View>
 
-        {/* Form */}
-        <View style={styles.form}>
-          {/* Full name */}
+        <GoogleSignInButton label="S'inscrire avec Google" />
+
+        <AuthDivider label="ou avec votre numéro" />
+
+        <View style={{ gap: Spacing.md }}>
           <Controller
             control={control}
             name="name"
             render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Nom complet"
+              <Field
+                label="Nom d'utilisateur"
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
+                placeholder="Votre prénom ou pseudo"
                 autoCapitalize="words"
+                autoComplete="name"
+                textContentType="name"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => phoneRef.current?.focus()}
                 error={errors.name?.message}
               />
             )}
           />
 
-          {/* Email */}
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Field
+                ref={phoneRef}
+                label="Numéro de téléphone"
+                value={value}
+                onChangeText={(text) => onChange(normalizePhone(text))}
+                onBlur={onBlur}
+                placeholder="6XX XXX XXX"
+                keyboardType="phone-pad"
+                autoComplete="tel-national"
+                textContentType="telephoneNumber"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => emailRef.current?.focus()}
+                accessibilityLabel="Numéro de téléphone, après l'indicatif +237"
+                // Room between the +237 prefix and the number, as in UI-02.
+                style={{ paddingLeft: Spacing.md }}
+                error={errors.phone?.message ?? serverErrors.phone}
+                prefix={
+                  <>
+                    <CameroonFlag />
+                    <AppText variant="bodyStrong">+237</AppText>
+                  </>
+                }
+                helper="Nous vous enverrons un code par SMS pour vérifier ce numéro."
+              />
+            )}
+          />
+
           <Controller
             control={control}
             name="email"
             render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Adresse e-mail (optionnel)"
+              <Field
+                ref={emailRef}
+                label="Email"
+                labelHint="(facultatif)"
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
+                placeholder="vous@exemple.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                error={errors.email?.message}
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="emailAddress"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                error={errors.email?.message ?? serverErrors.email}
               />
             )}
           />
 
-          {/* Phone */}
-          <View style={styles.fieldGroup}>
-            <Controller
-              control={control}
-              name="phone"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <View
-                  style={[
-                    styles.phoneRow,
-                    {
-                      borderColor: errors.phone ? C.error : C.outlineVariant,
-                      borderWidth: errors.phone ? 2 : 1,
-                      backgroundColor: C.surface,
-                    },
-                  ]}
-                >
-                  <View style={[styles.prefix, { backgroundColor: C.surfaceContainer, borderRightColor: C.outlineVariant }]}>
-                    <Text style={[Typography.labelSm, { color: C.onSurfaceVariant }]}>+237</Text>
-                  </View>
-                  <TextInput
-                    style={[styles.phoneField, { color: C.onSurface }]}
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    keyboardType="phone-pad"
-                    placeholder="6 00 00 00 00"
-                    placeholderTextColor={C.onSurfaceVariant + '66'}
-                  />
-                </View>
-              )}
-            />
-            {errors.phone && (
-              <Text style={[Typography.caption, { color: C.error, marginTop: Spacing.xs, marginLeft: Spacing.md }]}>
-                {errors.phone.message}
-              </Text>
-            )}
-          </View>
-
-          {/* Password */}
           <Controller
             control={control}
             name="password"
             render={({ field: { onChange, onBlur, value } }) => (
-              <Input
+              <Field
+                ref={passwordRef}
                 label="Mot de passe"
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
-                secureTextEntry={!showPwd}
+                secure
+                autoComplete="new-password"
+                textContentType="newPassword"
+                returnKeyType="done"
                 error={errors.password?.message}
-                rightElement={
-                  <Pressable
-                    onPress={() => setShowPwd((v) => !v)}
-                    hitSlop={12}
-                    accessibilityRole="button"
-                    accessibilityLabel={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                  >
+                helperContent={
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
                     <MaterialIcons
-                      name={showPwd ? 'visibility' : 'visibility-off'}
-                      size={22}
-                      color={C.onSurfaceVariant}
+                      name={passwordLongEnough ? 'check' : 'radio-button-unchecked'}
+                      size={Sizes.iconSm}
+                      color={passwordLongEnough ? C.success : C.onSurfaceVariant}
                     />
-                  </Pressable>
+                    <AppText
+                      variant="caption"
+                      color={passwordLongEnough ? 'success' : 'onSurfaceVariant'}
+                      accessibilityLabel={
+                        passwordLongEnough ? 'Au moins 8 caractères : respecté' : 'Au moins 8 caractères'
+                      }
+                    >
+                      Au moins 8 caractères
+                    </AppText>
+                  </View>
                 }
               />
             )}
           />
 
-          {/* Confirm password */}
-          <Controller
-            control={control}
-            name="confirmPassword"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Confirmer le mot de passe"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry={!showConfirm}
-                error={errors.confirmPassword?.message}
-                rightElement={
-                  <Pressable
-                    onPress={() => setShowConfirm((v) => !v)}
-                    hitSlop={12}
-                    accessibilityRole="button"
-                    accessibilityLabel={showConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                  >
-                    <MaterialIcons
-                      name={showConfirm ? 'visibility' : 'visibility-off'}
-                      size={22}
-                      color={C.onSurfaceVariant}
-                    />
-                  </Pressable>
-                }
-              />
-            )}
-          />
-
-          {/* Terms */}
           <Controller
             control={control}
             name="terms"
             render={({ field: { onChange, value } }) => (
-              <View style={styles.termsRow}>
-                <Pressable
-                  onPress={() => onChange(value ? undefined : true)}
-                  hitSlop={8}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: !!value }}
-                  accessibilityLabel="J'accepte les conditions d'utilisation et la politique de confidentialité"
-                  style={[
-                    styles.checkbox,
-                    {
-                      borderColor: errors.terms ? C.error : value ? C.primary : C.outlineVariant,
-                      backgroundColor: value ? C.primary : C.surface,
-                    },
-                  ]}
-                >
-                  {value && <MaterialIcons name="check" size={14} color={C.onPrimary} />}
-                </Pressable>
-                <Text style={[Typography.bodyMd, styles.termsText, { color: C.onSurfaceVariant }]}>
-                  {"J'accepte les "}
-                  <Text style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}>
-                    {"conditions d'utilisation"}
-                  </Text>
-                  {' et la '}
-                  <Text
-                    style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
-                    onPress={() => Linking.openURL('https://domilix.com/privacy-policy')}
-                    accessibilityRole="link"
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                  <Pressable
+                    onPress={() => onChange(value ? undefined : true)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: !!value }}
+                    accessibilityLabel="J'accepte les conditions d'utilisation et la politique de confidentialité"
+                    // 48 dp touch target; the visible box stays aligned with the fields.
+                    style={({ pressed }) => [
+                      {
+                        width: Sizes.touchTarget,
+                        height: Sizes.touchTarget,
+                        marginLeft: -(Sizes.touchTarget - Sizes.checkbox) / 2,
+                        marginTop: -Spacing.sm,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      },
+                      pressedStyle(pressed),
+                    ]}
                   >
-                    politique de confidentialité
-                  </Text>
-                  {'.'}
-                </Text>
+                    <View
+                      style={{
+                        width: Sizes.checkbox,
+                        height: Sizes.checkbox,
+                        borderRadius: Radii.badge,
+                        borderWidth: Borders.focus,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderColor: errors.terms ? C.error : value ? C.link : C.outline,
+                        backgroundColor: value ? C.link : C.fieldSurface,
+                      }}
+                    >
+                      {value ? <MaterialIcons name="check" size={Sizes.iconSm} color={C.surface} /> : null}
+                    </View>
+                  </Pressable>
+                  <AppText variant="bodySm" color="onSurfaceVariant" style={{ flex: 1, paddingTop: Spacing.xxs }}>
+                    {"J'accepte les "}
+                    <AppText
+                      variant="bodySm"
+                      color="link"
+                      style={{ fontFamily: Fonts.bold }}
+                      onPress={() => Linking.openURL(TERMS_URL)}
+                      accessibilityRole="link"
+                    >
+                      {"conditions d'utilisation"}
+                    </AppText>
+                    {' et la '}
+                    <AppText
+                      variant="bodySm"
+                      color="link"
+                      style={{ fontFamily: Fonts.bold }}
+                      onPress={() => Linking.openURL(PRIVACY_URL)}
+                      accessibilityRole="link"
+                    >
+                      politique de confidentialité
+                    </AppText>
+                    {'.'}
+                  </AppText>
+                </View>
+                {/* Always mounted, as in Field: TalkBack reads a live region when its content changes. */}
+                <View accessibilityLiveRegion="polite">
+                  {errors.terms?.message ? (
+                    <AppText variant="caption" color="error" accessibilityLabel={`Erreur : ${errors.terms.message}`}>
+                      {errors.terms.message}
+                    </AppText>
+                  ) : null}
+                </View>
               </View>
             )}
           />
-          {errors.terms && (
-            <Text style={[Typography.caption, { color: C.error, marginLeft: Spacing.xs }]}>
-              {errors.terms.message}
-            </Text>
-          )}
 
-          {/* Erreur serveur */}
-          {register.error && (
-            <View style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}>
-              <MaterialIcons name="error-outline" size={16} color={C.error} />
-              <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
-                Impossible de créer le compte. Vérifiez vos informations et réessayez.
-              </Text>
-            </View>
-          )}
+          {register.error && !serverErrors.phone && !serverErrors.email ? (
+            <Banner tone="error">Impossible de créer le compte. Vérifiez vos informations et réessayez.</Banner>
+          ) : null}
 
-          {/* Submit */}
-          <Button
-            mode="contained"
-            onPress={handleSubmit(onSubmit)}
-            loading={register.isPending}
-            disabled={register.isPending}
-            contentStyle={styles.submitBtnContent}
-            style={styles.submitBtn}
-          >
-            {"S'inscrire"}
-          </Button>
+          <KeyboardTarget>
+            <Button
+              label="Créer mon compte"
+              size="lg"
+              fullWidth
+              onPress={handleSubmit(onSubmit)}
+              loading={register.isPending}
+              style={{ marginTop: Spacing.xs }}
+            />
+          </KeyboardTarget>
         </View>
 
-        <View style={styles.googleRow}>
-          <GoogleSignInButton />
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
-            {'Déjà un compte ? '}
-            <Text
-              style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
-              onPress={() => router.push('/(auth)/login')}
-              accessibilityRole="link"
-            >
+        <Pressable
+          onPress={() => router.dismissTo('/(auth)/login')}
+          style={({ pressed }) => [
+            {
+              marginTop: 'auto',
+              alignSelf: 'center',
+              minHeight: Sizes.touchTarget,
+              justifyContent: 'center',
+              paddingHorizontal: Spacing.sm,
+            },
+            pressedStyle(pressed),
+          ]}
+          accessibilityRole="link"
+          accessibilityLabel="Déjà inscrit ? Se connecter"
+        >
+          <AppText color="onSurfaceVariant" style={{ textAlign: 'center' }}>
+            {'Déjà inscrit ? '}
+            <AppText color="link" style={{ fontFamily: Fonts.bold }}>
               Se connecter
-            </Text>
-          </Text>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            </AppText>
+          </AppText>
+        </Pressable>
+      </View>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.marginMobile,
-  },
-  backBtn: {
-    alignSelf: 'flex-start',
-    margin: 0,
-    marginBottom: Spacing.xl,
-  },
-  header: {
-    marginBottom: Spacing.xl,
-  },
-  form: {
-    gap: Spacing.lg,
-  },
-  googleRow: {
-    marginTop: Spacing.xl,
-  },
-  fieldGroup: {
-    gap: Spacing.xs,
-  },
-  phoneRow: {
-    flexDirection: 'row',
-    borderRadius: Radius.md,
-    overflow: 'hidden',
-    height: 58,
-    alignItems: 'center',
-  },
-  prefix: {
-    paddingHorizontal: Spacing.md,
-    height: '100%',
-    justifyContent: 'center',
-    borderRightWidth: 1,
-  },
-  phoneField: {
-    flex: 1,
-    paddingHorizontal: Spacing.md,
-    ...Typography.bodyMd,
-  },
-  termsRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  termsText: {
-    flex: 1,
-    lineHeight: 22,
-  },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-  },
-  submitBtn: {
-    borderRadius: Radius.md,
-    marginTop: Spacing.sm,
-  },
-  submitBtnContent: {
-    height: 50,
-  },
-  footer: {
-    marginTop: 'auto',
-    paddingTop: Spacing.xxl,
-    alignItems: 'center',
-  },
-});

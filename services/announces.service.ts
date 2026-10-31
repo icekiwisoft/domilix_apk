@@ -1,34 +1,38 @@
 import { client } from './api.client';
 import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
 
-// The API renamed a few fields since the screens were written (bedroom,
-// neighbourhood, zip). Alias them to the names the UI reads so every screen
-// keeps working from a single mapping.
-function normalizeAnnounce(a: Announce): Announce {
-  return {
-    ...a,
-    bedrooms: a.bedrooms ?? a.bedroom,
-    neighborhood: a.neighborhood ?? a.neighbourhood,
-    postal_code: a.postal_code ?? a.zip,
-  };
+/**
+ * One row of GET /cities (backend `AdsService.cities`): listings grouped by
+ * normalised city and country, so a city can come back once per country.
+ */
+export interface CityCount {
+  city: string;
+  city_normalized: string;
+  country: string;
+  country_normalized: string;
+  ads_count: number;
 }
 
 export const AnnouncesService = {
   list: (filters: AnnounceFilters = {}) =>
     client
       .get<PaginatedResponse<Announce>>('/announces', { params: filters })
-      .then((r) => ({ ...r.data, data: r.data.data.map(normalizeAnnounce) })),
+      .then((r) => r.data),
 
   show: (id: string) =>
-    client.get<Announce>(`/announces/${id}`).then((r) => normalizeAnnounce(r.data)),
+    client.get<Announce>(`/announces/${id}`).then((r) => r.data),
 
   // Same JSON body as the website: photos/videos are uploaded beforehand
   // (POST /uploads) and referenced through `media_ids`.
   create: (payload: Record<string, unknown>) =>
     client.post<Announce>('/announces', payload).then((r) => r.data),
 
-  // PUT /announces/:id only reads a JSON body. New photos must be uploaded
-  // first (POST /uploads) and referenced through `media_ids`.
+  /**
+   * PUT /announces/:id takes JSON only (no file interceptor, backend
+   * ads.controller.ts): new photos go through UploadsService first, then
+   * `media_ids` lists every photo kept, in order, as the website does
+   * (EditAdModal.tsx, services/announceApi.ts updateAd).
+   */
   update: (id: string, payload: Record<string, unknown>) =>
     client.put<Announce>(`/announces/${id}`, payload).then((r) => r.data),
 
@@ -60,23 +64,7 @@ export const AnnouncesService = {
     order_by?: 'name' | 'count';
     order?: 'asc' | 'desc';
   }) =>
-    client.get<unknown>('/cities', { params }).then((r) => {
-      console.log('[cities] raw response', JSON.stringify(r.data));
-      // Response shape isn't documented in swagger — tolerate a plain string[],
-      // an array of { city | name } objects, or a { data: [...] } envelope.
-      const raw = r.data as unknown;
-      const list = Array.isArray(raw)
-        ? raw
-        : Array.isArray((raw as { data?: unknown[] })?.data)
-        ? (raw as { data: unknown[] }).data
-        : [];
-      return list
-        .map((entry) =>
-          typeof entry === 'string'
-            ? entry
-            : ((entry as { city?: string; name?: string })?.city ??
-                (entry as { city?: string; name?: string })?.name)
-        )
-        .filter((c): c is string => !!c);
-    }),
+    client
+      .get<{ success: boolean; data: CityCount[] }>('/cities', { params })
+      .then((r) => r.data.data ?? []),
 };
