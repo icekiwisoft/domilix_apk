@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -33,6 +33,7 @@ export default function ResetPasswordScreen() {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -45,15 +46,27 @@ export default function ResetPasswordScreen() {
       return;
     }
     setOtpError(false);
+    // The schema validates the code with the passwords (QA-22: it stayed '' in
+    // the form, so zod refused every submit without showing anything).
+    setValue('otp', otp);
     setStep('password');
+  }
+
+  // A code refused by the schema is not on the password step: go back to the
+  // code step and show it there instead of blocking silently.
+  function onInvalid(invalid: FieldErrors<ResetPasswordFormValues>) {
+    if (invalid.otp) {
+      setStep('otp');
+      setOtpError(true);
+    }
   }
 
   function onSubmit(data: ResetPasswordFormValues) {
     resetPassword.mutate(
       {
         email: email ?? '',
-        token: otp,
-        code: otp,
+        token: data.otp,
+        code: data.otp,
         password: data.password,
         password_confirmation: data.confirmPassword,
       },
@@ -149,7 +162,7 @@ export default function ResetPasswordScreen() {
               label="Réinitialiser"
               size="lg"
               fullWidth
-              onPress={handleSubmit(onSubmit)}
+              onPress={handleSubmit(onSubmit, onInvalid)}
               loading={resetPassword.isPending}
               style={{ marginTop: Spacing.xs }}
             />
