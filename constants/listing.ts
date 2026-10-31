@@ -57,7 +57,7 @@ export function knownDevise(devise: string | null | undefined): string {
 
 export const CURRENCY_OPTIONS = AD_CURRENCIES.map((c) => ({
   value: c.key as string,
-  label: `${c.key} — ${c.name}`,
+  label: `${c.key} (${c.name})`,
 }));
 
 export const PERIOD_OPTIONS = [
