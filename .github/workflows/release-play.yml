@@ -5,7 +5,8 @@ name: Release Google Play
 # - push d'un tag vX.Y.Z : build + publication, versionName = X.Y.Z
 # - lancement manuel : build, publication optionnelle
 # - PR qui modifie ce workflow : build seulement (vérifie que l'AAB se construit), jamais de publication
-# versionCode : incrémenté par EAS (appVersionSource "remote", profil production autoIncrement).
+# versionCode : incrémenté par EAS (appVersionSource "remote") seulement quand on publie ;
+# les builds de vérification utilisent le profil production-check, sans incrément.
 on:
   push:
     tags: ["v*.*.*"]
@@ -74,7 +75,9 @@ jobs:
           echo "versionName = $version"
 
       - name: Build AAB
-        run: eas build --platform android --profile production --non-interactive --local --output domilix-${{ github.run_number }}.aab
+        # Only a run that publishes uses the auto-incrementing "production" profile; a check build
+        # (PR, or manual run without publishing) uses "production-check", which keeps the versionCode.
+        run: eas build --platform android --profile ${{ (startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish)) && 'production' || 'production-check' }} --non-interactive --local --output domilix-${{ github.run_number }}.aab
         env:
           EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || 'https://api.domilix.com' }}
           EXPO_PUBLIC_GEOAPIFY_API_KEY: ${{ secrets.EXPO_PUBLIC_GEOAPIFY_API_KEY }}
