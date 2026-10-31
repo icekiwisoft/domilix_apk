@@ -53,6 +53,9 @@ export default function VerifyPhoneScreen() {
     if (seconds > 0 || resendCode.isPending) return;
     resendCode.mutate(user_id, {
       onSuccess: () => {
+        // The previous code is no longer valid: clear the boxes and the error (QA-23).
+        setOtp('');
+        setError(false);
         startCountdown();
         toast.show('Un nouveau code a été envoyé.', 'success');
       },
