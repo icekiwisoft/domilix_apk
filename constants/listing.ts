@@ -13,6 +13,7 @@ export const LAND_UNLOCK_COST = 6;
 
 export const AD_CURRENCIES = [
   { key: 'XAF', name: 'FCFA' },
+  { key: 'XOF', name: 'Franc CFA (BCEAO)' },
   { key: 'USD', name: 'Dollar américain' },
   { key: 'EUR', name: 'Euro' },
   { key: 'GBP', name: 'Livre sterling' },
@@ -36,6 +37,23 @@ export const AD_CURRENCIES = [
   { key: 'BWP', name: 'Pula botswanais' },
   { key: 'NAD', name: 'Dollar namibien' },
 ] as const;
+
+// Codes the backend accepts (AD_DEVISES in backend/src/ads/ads.service.ts,
+// checked 2026-10-31); the picker offers the African ones and the main others.
+export const BACKEND_DEVISES = [
+  'USD', 'EUR', 'GBP', 'XOF', 'XAF', 'NGN', 'KES', 'GHS', 'ZAR', 'MAD', 'DZD', 'TND', 'EGP',
+  'ETB', 'UGX', 'TZS', 'RWF', 'BIF', 'CDF', 'AOA', 'ZMW', 'MZN', 'BWP', 'NAD', 'JPY', 'CNY',
+  'INR', 'BRL', 'RUB', 'CAD', 'AUD', 'CHF', 'SGD', 'NZD', 'MXN', 'TRY', 'AED', 'SAR',
+] as const;
+
+/**
+ * Currency of a listing as the edit form should keep it: any code the backend
+ * knows stays as is (XOF included); an unknown value ("FCFA", empty) becomes XAF.
+ */
+export function knownDevise(devise: string | null | undefined): string {
+  const code = (devise ?? '').trim().toUpperCase();
+  return (BACKEND_DEVISES as readonly string[]).includes(code) ? code : 'XAF';
+}
 
 export const CURRENCY_OPTIONS = AD_CURRENCIES.map((c) => ({
   value: c.key as string,

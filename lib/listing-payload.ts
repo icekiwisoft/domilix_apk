@@ -1,4 +1,4 @@
-import { AMENITY_OPTIONS, type AmenityKey } from '@/constants/listing';
+import { AMENITY_OPTIONS, knownDevise, type AmenityKey } from '@/constants/listing';
 import type { CreateListingDraft } from '@/stores/create-listing.store';
 import type { AdType, Announce, AnnounceType, LandUse, Standing } from '@/types/announce';
 import type { UploadResponse } from '@/types/verification';
@@ -74,8 +74,9 @@ export function getEditDetails(ad: Announce) {
     ad_type: (ad.ad_type || 'location') as AdType,
     category_id: toText(ad.category?.id),
     period: toText(ad.period),
-    // XOF was what the app used to save for "FCFA": show it as XAF, the Central African franc.
-    devise: !ad.devise || ad.devise === 'XOF' ? 'XAF' : ad.devise,
+    // Kept as saved when the backend knows it (XOF is a real currency); only an
+    // unknown value such as the old "FCFA" becomes XAF.
+    devise: knownDevise(ad.devise),
     contact_phone: toText(ad.contact_phone),
     contact_email: toText(ad.contact_email),
     address: toText(ad.address),
