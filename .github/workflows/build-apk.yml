@@ -72,6 +72,14 @@ jobs:
           node-version: 22.x
           cache: 'npm'
 
+      # ubuntu-latest is Ubuntu 26.04 since 2026-10-19 and defaults to Java 25, which Gradle 8.14
+      # rejects ("Unsupported class file major version 69"). React Native 0.81 builds with JDK 17.
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: 🏗 Setup Expo and EAS
         uses: expo/expo-github-action@v8
         with:
