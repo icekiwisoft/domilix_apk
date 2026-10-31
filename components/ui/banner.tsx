@@ -1,8 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useEffect, type ReactNode } from 'react';
-import { AccessibilityInfo, View, type StyleProp, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Radii, Sizes, Spacing, type ColorToken } from '@/constants/theme';
+import { Radii, Sizes, Spacing, TextVariants, type ColorToken } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
 
 import { AppText } from './app-text';
@@ -54,6 +54,10 @@ export function Banner({
   const C = useThemeColors();
   const p = PALETTE[tone];
   const spoken = accessibilityLabel ?? children;
+  // The icon is centred on the first line of text, which grows with the font
+  // size: at 200 % it no longer sits above the line's middle (QA-34).
+  const { fontScale } = useWindowDimensions();
+  const firstLine = Math.max(Sizes.icon, (TextVariants.bodySm.lineHeight ?? Sizes.icon) * fontScale);
   useEffect(() => {
     if (announce) AccessibilityInfo.announceForAccessibility(spoken);
   }, [announce, spoken]);
@@ -65,7 +69,9 @@ export function Banner({
       ]}
     >
       <View accessible accessibilityLabel={accessibilityLabel} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm }}>
-        <MaterialIcons name={icon ?? p.icon} size={Sizes.icon} color={C[p.fg]} />
+        <View style={{ height: firstLine, justifyContent: 'center' }}>
+          <MaterialIcons name={icon ?? p.icon} size={Sizes.icon} color={C[p.fg]} />
+        </View>
         <AppText variant="bodySm" color={p.fg} style={{ flex: 1 }}>
           {children}
         </AppText>

@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Radii, Sizes, Spacing, type ColorToken } from '@/constants/theme';
+import { Radii, Sizes, Spacing, TextVariants, type ColorToken } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
 
 import { AppText } from './app-text';
@@ -40,12 +40,16 @@ export interface BadgeProps {
 export function Badge({ label, variant = 'neutral', status = false, icon, style }: BadgeProps) {
   const C = useThemeColors();
   const p = PALETTE[variant];
+  // The dot or icon is centred on the first line of the label, so it stays put
+  // when a large font size wraps the label onto several lines (QA-34).
+  const { fontScale } = useWindowDimensions();
+  const firstLine = (TextVariants.caption.lineHeight ?? Sizes.iconSm) * fontScale;
   return (
     <View
       style={[
         {
           flexDirection: 'row',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           alignSelf: 'flex-start',
           flexShrink: 1,
           gap: Spacing.xs,
@@ -57,12 +61,16 @@ export function Badge({ label, variant = 'neutral', status = false, icon, style 
         style,
       ]}
     >
-      {icon ? (
-        <MaterialIcons name={icon} size={Sizes.iconSm} color={C[p.fg]} />
-      ) : status ? (
-        <View
-          style={{ width: Spacing.sm, height: Spacing.sm, borderRadius: Radii.full, backgroundColor: C[p.fg] }}
-        />
+      {icon || status ? (
+        <View style={{ height: firstLine, justifyContent: 'center' }}>
+          {icon ? (
+            <MaterialIcons name={icon} size={Sizes.iconSm} color={C[p.fg]} />
+          ) : (
+            <View
+              style={{ width: Spacing.sm, height: Spacing.sm, borderRadius: Radii.full, backgroundColor: C[p.fg] }}
+            />
+          )}
+        </View>
       ) : null}
       <AppText variant="caption" color={p.fg} style={{ flexShrink: 1 }}>
         {label}
