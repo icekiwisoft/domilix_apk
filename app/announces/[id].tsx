@@ -256,14 +256,25 @@ export default function AnnounceDetailScreen() {
           {rent ? 'Location' : 'Prix de vente'}
         </AppText>
       </View>
-      <Button
-        size="lg"
-        icon={a.unlocked ? 'call' : 'lock-open'}
-        label={a.unlocked ? 'Contacter' : 'Débloquer le contact'}
-        accessibilityLabel={a.unlocked ? "Contacter l'annonceur" : 'Débloquer les coordonnées'}
-        onPress={handleUnlock}
-        style={{ flexGrow: 1 }}
-      />
+      {/* The owner has nothing to unlock on their own listing: offer to edit it instead (QA-30). */}
+      {a.is_owner ? (
+        <Button
+          size="lg"
+          icon="edit"
+          label="Modifier l'annonce"
+          onPress={() => router.push(`/announces/edit/${a.id}`)}
+          style={{ flexGrow: 1 }}
+        />
+      ) : (
+        <Button
+          size="lg"
+          icon={a.unlocked ? 'call' : 'lock-open'}
+          label={a.unlocked ? 'Contacter' : 'Débloquer le contact'}
+          accessibilityLabel={a.unlocked ? "Contacter l'annonceur" : 'Débloquer les coordonnées'}
+          onPress={handleUnlock}
+          style={{ flexGrow: 1 }}
+        />
+      )}
     </View>
   );
 
