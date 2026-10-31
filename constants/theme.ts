@@ -97,6 +97,10 @@ export const Colors = {
     onPhotoBadge: '#ffffff',
     viewer: '#000000',
     onViewer: '#ffffff',
+    // Cameroon flag before the +237 prefix (sign-up), same in both themes.
+    flagGreen: '#007a5e',
+    flagRed: '#ce1126',
+    flagYellow: '#fcd116',
   },
   dark: {
     // Surfaces
@@ -182,6 +186,10 @@ export const Colors = {
     onPhotoBadge: '#ffffff',
     viewer: '#000000',
     onViewer: '#ffffff',
+    // Cameroon flag before the +237 prefix (sign-up), same in both themes.
+    flagGreen: '#007a5e',
+    flagRed: '#ce1126',
+    flagYellow: '#fcd116',
   },
 } as const;
 
@@ -319,6 +327,13 @@ export const TextVariants = {
   },
   // Field labels, buttons, chips
   label: Typography.labelMd,
+  // "Domilix" name in the badge over the sign-in mascot banner (UI-01).
+  brand: {
+    fontFamily: Fonts.bold,
+    fontSize: 17,
+    fontWeight: fontWeight('700'),
+    lineHeight: 22,
+  },
   caption: Typography.caption,
   // Listing price amount (the unit uses `label`, see PriceTag)
   price: {
@@ -396,6 +411,8 @@ export const Sizes = {
   authBannerTall: 236, // mascot banner, sign-in
   authBannerShort: 148, // mascot banner, sign-up
   authBannerMin: 100, // smallest sign-in banner, when the "session expirée" notice adds height
+  authLogoWidth: 32, // Domilix logo in the badge over the mascot banner
+  authLogoHeight: 28,
   iconSm: 16,
   icon: 20,
   iconLg: 24,
@@ -410,6 +427,9 @@ export const Sizes = {
   progress: 4, // track of the step progress bar
   radio: 20, // outer ring of a radio button
   radioDot: 10,
+  checkbox: 22, // visible box of a checkbox (CGU on sign-up), inside a 48 dp target
+  flagWidth: 22, // Cameroon flag before +237
+  flagHeight: 15,
   dialogMaxWidth: 560, // Material 3 dialog
   // UI-07: listing cards, tab bar, search bar
   listingThumb: 112, // photo of a compact listing card (explore list, map preview)

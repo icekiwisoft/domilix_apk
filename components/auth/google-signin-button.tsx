@@ -1,15 +1,12 @@
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { goAfterAuth } from '@/components/auth/go-after-auth';
-import { Colors, Fonts, Radius, Sizes, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Banner, Button } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useGoogleSignIn } from '@/hooks/use-google-signin';
 import { useFirebaseLogin } from '@/hooks/queries/use-auth-queries';
-import { GoogleLogo } from './google-logo';
 
 interface GoogleSignInButtonProps {
   redirectTo?: string;
@@ -21,11 +18,10 @@ interface GoogleSignInButtonProps {
 
 /**
  * Google sign-in button in Google's official style (white or #131314 surface,
- * grey outline, multicolour logo), as required by Google's branding guidelines.
+ * grey outline, multicolour logo: the kit Button's `google` variant), as
+ * required by Google's branding guidelines.
  */
 export function GoogleSignInButton({ redirectTo, targetBelow = false, label = 'Continuer avec Google' }: GoogleSignInButtonProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
   const router = useRouter();
   const { signIn, isReady, isLoading: isGoogleLoading, errorMessage: googleError } = useGoogleSignIn();
   const firebaseLogin = useFirebaseLogin();
@@ -61,54 +57,20 @@ export function GoogleSignInButton({ redirectTo, targetBelow = false, label = 'C
   const isLoading = isBusy || isGoogleLoading || firebaseLogin.isPending;
 
   return (
-    <View style={styles.container}>
+    <View style={{ gap: Spacing.sm }}>
       <Button
-        mode="outlined"
+        variant="google"
+        size="lg"
+        fullWidth
+        label={label}
         onPress={handlePress}
         loading={isLoading}
-        disabled={!isReady || isLoading}
-        icon={() => <GoogleLogo size={20} />}
-        buttonColor={C.googleSurface}
-        textColor={C.onGoogleSurface}
-        rippleColor={C.googleOutline + '33'}
-        contentStyle={styles.btnContent}
-        labelStyle={styles.label}
-        style={[styles.btn, { borderColor: C.googleOutline }]}
-      >
-        {label}
-      </Button>
+        disabled={!isReady}
+      />
 
-      {(error || googleError) && (
-        <View
-          style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}
-          accessibilityLiveRegion="polite"
-        >
-          <MaterialIcons name="error-outline" size={16} color={C.error} />
-          <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
-            {error ? 'Connexion avec Google impossible. Réessayez.' : googleError}
-          </Text>
-        </View>
-      )}
+      {error || googleError ? (
+        <Banner tone="error">{error ? 'Connexion avec Google impossible. Réessayez.' : (googleError ?? '')}</Banner>
+      ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { gap: Spacing.sm },
-  btn: { borderRadius: Radius.full, borderWidth: 1 },
-  btnContent: { minHeight: Sizes.control },
-  label: {
-    fontFamily: Fonts.semiBold,
-    fontSize: 16,
-    lineHeight: 22,
-    letterSpacing: 0,
-  },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-  },
-});

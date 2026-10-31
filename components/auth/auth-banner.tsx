@@ -1,10 +1,10 @@
-import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, Radius, Sizes, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppText, IconButton } from '@/components/ui';
+import { Radius, Radii, Sizes, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
 const MASCOT = require('@/assets/images/domilix-mascot.jpg');
 const LOGO = require('@/assets/images/domilix-logo.png');
@@ -20,86 +20,63 @@ interface AuthBannerProps {
 
 /** Mascot photo with the Domilix badge, top of the sign-in and sign-up screens. */
 export function AuthBanner({ height, focusY, onBack }: AuthBannerProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
   const insets = useSafeAreaInsets();
 
   return (
     <View style={{ height: height + insets.top }}>
       <Image
         source={MASCOT}
-        style={styles.photo}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderBottomLeftRadius: Radius.banner,
+          borderBottomRightRadius: Radius.banner,
+        }}
         contentFit="cover"
         contentPosition={{ left: '50%', top: focusY }}
         accessible
         accessibilityLabel="La mascotte Domilix, un écureuil, devant un quartier résidentiel"
       />
       <View
-        style={[
-          styles.overlay,
-          {
-            top: insets.top + Spacing.md,
-            left: onBack ? Spacing.md : Spacing.marginMobile,
-            justifyContent: onBack ? 'space-between' : 'flex-start',
-          },
-        ]}
+        style={{
+          position: 'absolute',
+          top: insets.top + Spacing.md,
+          left: onBack ? Spacing.md : Spacing.marginMobile,
+          right: Spacing.marginMobile,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: onBack ? 'space-between' : 'flex-start',
+        }}
       >
-        {onBack && (
-          <Pressable
-            onPress={onBack}
-            accessibilityRole="button"
-            accessibilityLabel="Retour"
-            style={[styles.back, { backgroundColor: C.bannerChip }]}
-          >
-            <MaterialIcons name="arrow-back" size={22} color={C.onBannerChip} />
-          </Pressable>
-        )}
-        <View style={[styles.badge, { backgroundColor: C.bannerChip }]} accessibilityRole="header">
-          <Image source={LOGO} style={styles.logo} contentFit="contain" accessible={false} />
-          <Text style={[styles.badgeText, { color: C.onBannerChip }]}>Domilix</Text>
+        {onBack ? <IconButton icon="arrow-back" label="Retour" overlay onPress={onBack} /> : null}
+        <View
+          accessibilityRole="header"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: Spacing.sm,
+            paddingVertical: Spacing.xs + Spacing.xxs,
+            paddingLeft: Spacing.xs + Spacing.xxs,
+            paddingRight: Spacing.ms + Spacing.xxs,
+            borderRadius: Radii.full,
+            backgroundColor: C.bannerChip,
+          }}
+        >
+          <Image
+            source={LOGO}
+            style={{ width: Sizes.authLogoWidth, height: Sizes.authLogoHeight }}
+            contentFit="contain"
+            accessible={false}
+          />
+          <AppText variant="brand" color="onBannerChip">
+            Domilix
+          </AppText>
         </View>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  photo: {
-    ...StyleSheet.absoluteFillObject,
-    borderBottomLeftRadius: Radius.banner,
-    borderBottomRightRadius: Radius.banner,
-  },
-  overlay: {
-    position: 'absolute',
-    right: Spacing.marginMobile,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  back: {
-    width: Sizes.touchTarget,
-    height: Sizes.touchTarget,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: 6,
-    paddingLeft: 6,
-    paddingRight: 14,
-    borderRadius: Radius.full,
-  },
-  logo: {
-    width: 32,
-    height: 28,
-  },
-  badgeText: {
-    ...Typography.labelMd,
-    fontSize: 17,
-    lineHeight: 22,
-    fontFamily: Typography.titleLg.fontFamily,
-    fontWeight: Typography.titleLg.fontWeight,
-  },
-});
