@@ -1,19 +1,18 @@
 import { isAxiosError } from 'axios';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View } from 'react-native';
 
 import { deviseLabel } from '@/components/forms/listing-options';
 import { ListingRecap } from '@/components/forms/listing-recap';
 import { OptionPickerDialog } from '@/components/forms/option-picker-dialog';
-import { CREATE_STEPS, CREATE_TITLE, StepFooter, StepIntro } from '@/components/forms/step-layout';
+import { CREATE_STEPS, CREATE_TITLE, SendProgress, StepFooter, StepIntro } from '@/components/forms/step-layout';
 import {
   AppText,
   Banner,
   Button,
   ChipGroup,
   Field,
-  ProgressBar,
   Screen,
   StepHeader,
   useToast,
@@ -45,15 +44,27 @@ export default function CreateStep4Screen() {
     draft.medias.length > 0 &&
     (draft.type !== 'land' || Number(draft.size) > 0) &&
     (!isLocation || !!draft.period);
-  const publishing = createAnnounce.isPending;
+  // Set on the tap itself, before React Query reports the mutation: the
+  // whole sequence (media uploads, then create) shows busy and a second tap
+  // is ignored (QA-33). The ref closes the gap until the re-render.
+  const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
+  const publishing = sending || createAnnounce.isPending;
   const periodLabel = PERIOD_OPTIONS.find((p) => p.value === draft.period)?.label.toLowerCase();
 
   function handlePublish() {
-    if (!canPublish || publishing) return;
+    if (!canPublish || publishing || sendingRef.current) return;
+    sendingRef.current = true;
+    setSending(true);
+    setProgress(null);
     setRefusal(null);
     createAnnounce.mutate(
       { draft, onProgress: setProgress },
       {
+        onSettled: () => {
+          sendingRef.current = false;
+          setSending(false);
+        },
         onSuccess: () => {
           resetDraft();
           router.replace('/profile/my-listings');
@@ -95,7 +106,8 @@ export default function CreateStep4Screen() {
       footer={
         <StepFooter
           onPrevious={() => router.back()}
-          label={publishing ? (progress ? `Envoi ${progress.percent} %` : 'Publication…') : "Publier l'annonce"}
+          label={publishing ? 'Publication…' : "Publier l'annonce"}
+          status={publishing ? <SendProgress progress={progress} saveLabel="Publication de l'annonce…" /> : null}
           icon="publish"
           onNext={handlePublish}
           disabled={!canPublish}
@@ -201,14 +213,6 @@ export default function CreateStep4Screen() {
         city={draft.city}
       />
 
-      {progress && publishing ? (
-        <View style={{ gap: Spacing.sm }} accessibilityLiveRegion="polite">
-          <AppText variant="caption" numberOfLines={1}>
-            {`Envoi ${progress.current}/${progress.total} · ${progress.fileName} · ${progress.percent} %`}
-          </AppText>
-          <ProgressBar value={progress.percent / 100} label="Envoi des médias" />
-        </View>
-      ) : null}
 
       <OptionPickerDialog
         visible={currencyOpen}

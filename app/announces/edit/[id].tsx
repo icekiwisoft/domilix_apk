@@ -17,7 +17,7 @@ import {
 import { MediaPickerGrid } from '@/components/forms/media-picker-grid';
 import { PhotoGrid, PhotoTile } from '@/components/forms/media-upload-grid';
 import { OptionPickerDialog } from '@/components/forms/option-picker-dialog';
-import { StepFooter } from '@/components/forms/step-layout';
+import { SendProgress, StepFooter } from '@/components/forms/step-layout';
 import {
   AppText,
   Banner,
@@ -30,7 +30,6 @@ import {
   Field,
   LoadingState,
   OfflineState,
-  ProgressBar,
   Screen,
   ScreenHeader,
   SegmentedControl,
@@ -109,6 +108,10 @@ export default function EditAnnounceScreen() {
   const [locationError, setLocationError] = useState<{ message: string; openSettings?: boolean } | null>(null);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [error, setError] = useState('');
+  // Busy from the tap until the server answers, uploads included (QA-33).
+  const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
+  const saving = sending || updateAnnounce.isPending;
 
   // Pre-populate once the listing has loaded, and keep a snapshot to detect unsaved changes.
   const initialized = useRef(false);
@@ -234,7 +237,7 @@ export default function EditAnnounceScreen() {
   }
 
   function handleSave() {
-    if (!details || !amenities || !announce || updateAnnounce.isPending) return;
+    if (!details || !amenities || !announce || saving || sendingRef.current) return;
 
     const longitude = Number.parseFloat(coordinates.longitude.replace(',', '.'));
     const latitude = Number.parseFloat(coordinates.latitude.replace(',', '.'));
@@ -269,10 +272,17 @@ export default function EditAnnounceScreen() {
     // The API replaces the ad's media with `media_ids`: keep the ones that were
     // not removed, the new ones are uploaded by the hook first.
     const keepMediaIds = existingMedias.map((m) => String(m.id));
+    sendingRef.current = true;
+    setSending(true);
+    setProgress(null);
 
     updateAnnounce.mutate(
       { id, payload, newMedia: newMedias, keepMediaIds, onProgress: setProgress },
       {
+        onSettled: () => {
+          sendingRef.current = false;
+          setSending(false);
+        },
         onSuccess: () => {
           toast.show('Annonce mise à jour.', 'success');
           allowLeave.current = true;
@@ -290,7 +300,6 @@ export default function EditAnnounceScreen() {
     );
   }
 
-  const saving = updateAnnounce.isPending;
   const header = <ScreenHeader title={TITLE} onBack={() => router.back()} />;
 
   if (isLoading || (announce && (!details || !amenities))) {
@@ -326,7 +335,8 @@ export default function EditAnnounceScreen() {
       header={header}
       footer={
         <StepFooter
-          label={saving && progress ? `Envoi ${progress.percent} %` : 'Enregistrer les modifications'}
+          label={saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+          status={saving ? <SendProgress progress={progress} saveLabel="Enregistrement des modifications…" /> : null}
           icon="check-circle"
           onNext={handleSave}
           loading={saving}
@@ -424,14 +434,6 @@ export default function EditAnnounceScreen() {
           >
             {`${removedMediaIds.length} média${removedMediaIds.length > 1 ? 's' : ''} supprimé${removedMediaIds.length > 1 ? 's' : ''} à l'enregistrement.`}
           </Banner>
-        ) : null}
-        {progress && saving ? (
-          <View style={{ gap: Spacing.sm }} accessibilityLiveRegion="polite">
-            <AppText variant="caption" numberOfLines={1}>
-              {`Envoi ${progress.current}/${progress.total} · ${progress.fileName} · ${progress.percent} %`}
-            </AppText>
-            <ProgressBar value={progress.percent / 100} label="Envoi des médias" />
-          </View>
         ) : null}
       </Section>
 

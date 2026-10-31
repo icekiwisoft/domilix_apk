@@ -1,7 +1,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { AnnouncesService } from '@/services/announces.service';
 import { buildCreatePayload } from '@/lib/listing-payload';
-import { UploadsService, type PickedFile } from '@/services/uploads.service';
+import { UploadsService, type PickedMedia } from '@/services/uploads.service';
 import type { CreateListingDraft } from '@/stores/create-listing.store';
 import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
 import type { UploadResponse } from '@/types/verification';
@@ -65,6 +65,8 @@ export function useAnnounce(id: string) {
 }
 
 export interface UploadProgress {
+  /** `upload`: sending media `current` of `total`; `create`: medias sent, saving the listing. */
+  stage: 'upload' | 'create';
   current: number;
   total: number;
   fileName: string;
@@ -88,6 +90,7 @@ export function useCreateAnnounce() {
       for (const [index, media] of draft.medias.entries()) {
         const report = (filePercent: number) =>
           onProgress?.({
+            stage: 'upload',
             current: index + 1,
             total,
             fileName: media.name,
@@ -96,6 +99,7 @@ export function useCreateAnnounce() {
         report(0);
         uploaded.push(await UploadsService.upload('media', media, report));
       }
+      onProgress?.({ stage: 'create', current: total, total, fileName: '', percent: 100 });
       return AnnouncesService.create(buildCreatePayload(draft, uploaded));
     },
     onSuccess: () => {
@@ -182,7 +186,7 @@ export function useUpdateAnnounce() {
     }: {
       id: string;
       payload: Record<string, unknown>;
-      newMedia: PickedFile[];
+      newMedia: PickedMedia[];
       keepMediaIds: string[];
       onProgress?: (progress: UploadProgress) => void;
     }) => {
@@ -190,6 +194,7 @@ export function useUpdateAnnounce() {
       for (const [index, file] of newMedia.entries()) {
         const report = (filePercent: number) =>
           onProgress?.({
+            stage: 'upload',
             current: index + 1,
             total: newMedia.length,
             fileName: file.name,
@@ -199,6 +204,7 @@ export function useUpdateAnnounce() {
         const uploaded = await UploadsService.upload('media', file, report);
         uploadedIds.push(uploaded.id);
       }
+      onProgress?.({ stage: 'create', current: newMedia.length, total: newMedia.length, fileName: '', percent: 100 });
       return AnnouncesService.update(id, {
         ...payload,
         media_ids: [...keepMediaIds, ...uploadedIds],
