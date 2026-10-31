@@ -26,6 +26,14 @@ export interface BannerProps {
   /** Element under the text, e.g. a text Button "Ouvrir les réglages". */
   action?: ReactNode;
   style?: StyleProp<ViewStyle>;
+  /** What TalkBack reads for the message, e.g. "Erreur : …" (default: the text). */
+  accessibilityLabel?: string;
+  /**
+   * Announce the message when it appears (default: error banners). Pass false
+   * when the banner sits in an always-mounted live region, as Field does, so it
+   * is not read twice.
+   */
+  announce?: boolean;
 }
 
 /**
@@ -34,12 +42,21 @@ export interface BannerProps {
  * appears or its text changes (a live region that mounts with its text is not
  * reliably read on Android).
  */
-export function Banner({ children, tone = 'info', icon, action, style }: BannerProps) {
+export function Banner({
+  children,
+  tone = 'info',
+  icon,
+  action,
+  style,
+  accessibilityLabel,
+  announce = tone === 'error',
+}: BannerProps) {
   const C = useThemeColors();
   const p = PALETTE[tone];
+  const spoken = accessibilityLabel ?? children;
   useEffect(() => {
-    if (tone === 'error') AccessibilityInfo.announceForAccessibility(children);
-  }, [tone, children]);
+    if (announce) AccessibilityInfo.announceForAccessibility(spoken);
+  }, [announce, spoken]);
   return (
     <View
       style={[
@@ -47,7 +64,7 @@ export function Banner({ children, tone = 'info', icon, action, style }: BannerP
         style,
       ]}
     >
-      <View accessible style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm }}>
+      <View accessible accessibilityLabel={accessibilityLabel} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm }}>
         <MaterialIcons name={icon ?? p.icon} size={Sizes.icon} color={C[p.fg]} />
         <AppText variant="bodySm" color={p.fg} style={{ flex: 1 }}>
           {children}

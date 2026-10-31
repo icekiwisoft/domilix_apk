@@ -50,7 +50,6 @@ const LEGACY_UI = [
   'components/ui/collapsible.tsx',
   'components/ui/icon-symbol.tsx',
   'components/ui/icon-symbol.ios.tsx',
-  'components/ui/input.tsx',
   'components/ui/login-gate.tsx',
   'components/ui/otp-input.tsx',
   'components/ui/plan-card.tsx',

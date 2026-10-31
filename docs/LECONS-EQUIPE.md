@@ -66,6 +66,10 @@ avant de commencer.** Copie de référence : vault `30_Resources/Leçons - équi
 12. **L'utilisateur se sert aussi de l'émulateur avec son compte de production.** Avant toute QA,
    regarder si une session est ouverte ; si ce n'est pas le compte de test, ne pas s'en servir et le
    signaler.
+13. **Ne jamais fusionner une autre branche dans la branche d'un lot** (ni `main`, ni la branche
+   d'un collègue ou de l'utilisateur) : la branche part de `develop` et ne contient que le lot. *Constat
+   (2026-10-31, UI-13) : un développeur a fusionné `ci/release-aab` (PR #1 de l'utilisateur, encore
+   ouverte) dans le lot ; retiré par l'orchestrateur avant le push.*
 
 ## Commun à tous les rôles
 
