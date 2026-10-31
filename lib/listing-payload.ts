@@ -125,6 +125,16 @@ const orNull = (text: string) => (text ? Number(text) : null);
 const EDIT_AMENITY_KEYS: AmenityKey[] = [...AMENITY_OPTIONS.map((a) => a.key), 'garden'];
 
 /**
+ * Amenities GET /announces/:id really returns. The backend saves `garage` and
+ * `furnitured` but its serializer does not send them back (AdsService.show,
+ * checked 2026-10-31): the form shows them off, and sending that "0" would
+ * erase what was published. They are only sent once the user turns them on.
+ */
+export function readableAmenityKeys(ad: Announce): AmenityKey[] {
+  return EDIT_AMENITY_KEYS.filter((key) => ad[key] !== undefined && ad[key] !== null);
+}
+
+/**
  * JSON body of PUT /announces/:id, field for field the website's edit dialog
  * (domilix.com EditAdModal.tsx), with the names AdsService.updateAd reads.
  * `media_ids` is added by useUpdateAnnounce once the new medias are uploaded.
@@ -133,7 +143,9 @@ export function buildUpdatePayload(
   type: AnnounceType,
   details: EditDetails,
   amenities: Record<AmenityKey, boolean>,
-  location: { manualAddress: boolean; coordinates: { longitude: number; latitude: number } | null }
+  location: { manualAddress: boolean; coordinates: { longitude: number; latitude: number } | null },
+  /** readableAmenityKeys(listing): the others are sent only when turned on. */
+  readable: AmenityKey[] = EDIT_AMENITY_KEYS
 ): Record<string, unknown> {
   const { manualAddress, coordinates } = location;
   const typeFields =
@@ -154,7 +166,12 @@ export function buildUpdatePayload(
             caution: orNull(details.caution),
             // The website's dialog has no standing field; the app kept it (UI-12): sent only when set.
             ...(details.standing ? { standing: details.standing } : {}),
-            ...Object.fromEntries(EDIT_AMENITY_KEYS.map((key) => [key, flag(amenities[key])])),
+            ...Object.fromEntries(
+              EDIT_AMENITY_KEYS.filter((key) => readable.includes(key) || amenities[key]).map((key) => [
+                key,
+                flag(amenities[key]),
+              ])
+            ),
           }
         : {
             condition: details.condition || 'used',

@@ -47,6 +47,7 @@ import {
   buildUpdatePayload,
   getEditAmenities,
   getEditDetails,
+  readableAmenityKeys,
   toText,
   type EditDetails,
 } from '@/lib/listing-payload';
@@ -257,10 +258,13 @@ export default function EditAnnounceScreen() {
     }
     setError('');
 
-    const payload = buildUpdatePayload(announce.type, details, amenities, {
-      manualAddress,
-      coordinates: hasCoordinates ? { longitude, latitude } : null,
-    });
+    const payload = buildUpdatePayload(
+      announce.type,
+      details,
+      amenities,
+      { manualAddress, coordinates: hasCoordinates ? { longitude, latitude } : null },
+      readableAmenityKeys(announce)
+    );
 
     // The API replaces the ad's media with `media_ids`: keep the ones that were
     // not removed, the new ones are uploaded by the hook first.
