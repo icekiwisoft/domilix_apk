@@ -82,6 +82,7 @@ export default function StudentVerificationScreen() {
         <LoginGate
           title="Statut étudiant"
           subtitle="Connectez-vous pour déclarer votre statut étudiant."
+          redirect="/profile/student-verification"
         />
       </SafeAreaView>
     );

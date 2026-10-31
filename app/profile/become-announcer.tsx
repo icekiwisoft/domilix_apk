@@ -87,6 +87,7 @@ export default function BecomeAnnouncerScreen() {
         <LoginGate
           title="Devenir annonceur"
           subtitle="Connectez-vous pour activer votre profil annonceur et publier vos annonces."
+          redirect="/profile/become-announcer"
         />
       </SafeAreaView>
     );
