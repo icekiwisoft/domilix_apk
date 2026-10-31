@@ -15,6 +15,9 @@ export function coverFirst<T>(items: T[], isVideo: (item: T) => boolean): T[] {
   return [items[photo], ...items.filter((_, i) => i !== photo)];
 }
 
+/** Country sent when none was entered or detected, as the location step defaults to. */
+export const DEFAULT_COUNTRY = 'Cameroun';
+
 // Body of POST /announces, field for field the one the domilix.com publish
 // dialog sends (ArticlePostDialog.handleSubmit).
 export function buildCreatePayload(draft: CreateListingDraft, uploaded: UploadResponse[]) {
@@ -55,7 +58,7 @@ export function buildCreatePayload(draft: CreateListingDraft, uploaded: UploadRe
     city: draft.city,
     neighbourhood: draft.neighbourhood,
     state: draft.state,
-    country: draft.country,
+    country: draft.country.trim() || DEFAULT_COUNTRY,
     // Empty, as on the website: the form shows no postal code, so the
     // Geoapify one the user never saw is not sent (UI-12, QA-19). The backend
     // fills it from the coordinates of an automatic location.
@@ -208,7 +211,7 @@ export function buildUpdatePayload(
     city: details.city,
     neighbourhood: details.neighbourhood,
     state: details.state,
-    country: details.country,
+    country: details.country.trim() || DEFAULT_COUNTRY,
     zip: details.zip,
     location_source: manualAddress ? 'manual' : 'auto',
     hide_on_map: manualAddress ? '1' : '0',
