@@ -77,7 +77,7 @@ export default function ExploreScreen() {
 
   function handleCreateAlert() {
     if (!accessToken) {
-      router.push('/(auth)/login');
+      router.push({ pathname: '/(auth)/login', params: { redirect: '/(tabs)/explore' } });
       return;
     }
     if (announceType === 'land') return;
