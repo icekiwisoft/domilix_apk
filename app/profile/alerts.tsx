@@ -1,33 +1,45 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { ActivityIndicator, Button, Dialog, Portal, Switch } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { FlatList, RefreshControl, View } from 'react-native';
 
-import { EmptyState } from '@/components/ui/empty-state';
-import { LoginGate } from '@/components/ui/login-gate';
-import { useToast } from '@/components/ui/toast';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import {
+  AppText,
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  LoginGate,
+  OfflineState,
+  Screen,
+  ScreenHeader,
+  Switch,
+  useToast,
+} from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useAlerts, useDeleteAlert, useUpdateAlertStatus } from '@/hooks/queries/use-alerts';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import { describeAlertFilters } from '@/lib/alert-helpers';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { formatDateFr } from '@/lib/format-date';
+import { isNetworkError } from '@/lib/network-error';
 import { useAuthStore } from '@/stores/auth.store';
 import type { SearchAlert } from '@/types/alert';
 
 export default function AlertsScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const C = useThemeColors();
+  const router = useRouter();
   const toast = useToast();
   const accessToken = useAuthStore((s) => s.accessToken);
-  const { data, isLoading, isError, isFetching, refetch } = useAlerts();
+  const { data, isLoading, isError, error, isFetching, refetch } = useAlerts();
   const updateStatus = useUpdateAlertStatus();
   const deleteAlert = useDeleteAlert();
   const [toDelete, setToDelete] = useState<SearchAlert | null>(null);
 
   const alerts = data?.data ?? [];
+  const header = <ScreenHeader title="Mes alertes" />;
 
   function toggle(alert: SearchAlert) {
     updateStatus.mutate(
@@ -47,59 +59,65 @@ export default function AlertsScreen() {
 
   if (!accessToken) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
+      <Screen header={header}>
         <LoginGate
           title="Connectez-vous pour voir vos alertes"
           subtitle="Chaque alerte est personnelle et n'est jamais visible par les autres utilisateurs."
+          redirect="/profile/alerts"
         />
-      </SafeAreaView>
+      </Screen>
+    );
+  }
+
+  let body;
+  if (isLoading) {
+    body = <LoadingState label="Chargement de vos alertes…" media={false} count={3} />;
+  } else if (isError) {
+    body = isNetworkError(error) ? (
+      <OfflineState onRetry={() => refetch()} />
+    ) : (
+      <ErrorState title="Impossible de charger vos alertes" onRetry={() => refetch()} />
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Retour">
-          <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
-        </Pressable>
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 20 }]}>Mes alertes</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator />
-        </View>
-      ) : isError ? (
-        <EmptyState
-          title="Impossible de charger vos alertes."
-          ctaLabel="Réessayer"
-          onCta={() => refetch()}
-          icon={<MaterialIcons name="error-outline" size={36} color={C.primary} />}
-        />
-      ) : (
+    <Screen
+      scroll={false}
+      header={header}
+      contentStyle={body ? { flexGrow: 1 } : { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}
+    >
+      {body ?? (
         <FlatList
           data={alerts}
           keyExtractor={(a) => String(a.id)}
-          contentContainerStyle={alerts.length === 0 ? styles.emptyContainer : styles.list}
+          contentContainerStyle={{
+            flexGrow: 1,
+            padding: Spacing.marginMobile,
+            paddingBottom: Spacing.xl,
+          }}
           refreshControl={
-            <RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} tintColor={C.primary} />
+            <RefreshControl
+              refreshing={isFetching && !isLoading}
+              onRefresh={refetch}
+              colors={[C.primaryContainer]}
+              progressBackgroundColor={C.surfaceContainerLowest}
+              tintColor={C.primaryContainer}
+            />
           }
           ListHeaderComponent={
             alerts.length > 0 ? (
-              <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, lineHeight: 22 }]}>
-                Vos recherches sont privées. Domilix vous avertit lorsqu&apos;une nouvelle annonce correspond à vos
-                critères.
-              </Text>
+              <AppText color="onSurfaceVariant" style={{ paddingBottom: Spacing.md }}>
+                {"Vos recherches sont privées. Domilix vous avertit lorsqu'une nouvelle annonce correspond à vos critères."}
+              </AppText>
             ) : null
           }
           ListEmptyComponent={
             <EmptyState
+              icon="notifications-none"
               title="Aucune alerte active"
               description="Lancez une recherche. Si elle ne donne aucun résultat, vous pourrez créer une alerte en un clic."
-              ctaLabel="Lancer une recherche"
-              onCta={() => router.push('/(tabs)/explore')}
-              icon={<MaterialIcons name="notifications-none" size={36} color={C.primary} />}
+              actionLabel="Lancer une recherche"
+              onAction={() => router.push('/(tabs)/explore')}
             />
           }
           ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
@@ -107,92 +125,63 @@ export default function AlertsScreen() {
             const chips = describeAlertFilters(item.filters);
             const active = item.status === 'active';
             return (
-              <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.outlineVariant }]}>
-                <View style={styles.cardTop}>
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={[Typography.labelSm, { color: C.primary }]}>
+              <Card surface="surfaceContainerLowest" outlined style={{ gap: Spacing.sm }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                  <View style={{ flex: 1, gap: Spacing.xxs }}>
+                    <AppText variant="label" color="link">
                       {item.request_type === 'furniture' ? 'Recherche de mobilier' : 'Recherche immobilière'}
-                    </Text>
-                    <Text style={[Typography.bodyMd, { color: C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold' }]}>
-                      {item.description || 'Toutes les nouvelles annonces'}
-                    </Text>
+                    </AppText>
+                    <AppText variant="bodyStrong">{item.description || 'Toutes les nouvelles annonces'}</AppText>
                   </View>
                   <Switch
                     value={active}
                     onValueChange={() => toggle(item)}
                     accessibilityLabel={active ? 'Mettre en pause cette alerte' : 'Réactiver cette alerte'}
-                    color={C.primary}
                   />
                 </View>
 
-                {chips.length > 0 && (
-                  <View style={styles.chips}>
+                {chips.length > 0 ? (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs }}>
                     {chips.map((chip) => (
-                      <View key={chip} style={[styles.chip, { backgroundColor: C.surfaceContainerHigh }]}>
-                        <Text style={[Typography.caption, { color: C.onSurfaceVariant }]}>{chip}</Text>
-                      </View>
+                      <Badge key={chip} label={chip} variant="neutral" />
                     ))}
                   </View>
-                )}
+                ) : null}
 
-                <View style={styles.cardBottom}>
-                  <Text style={[Typography.caption, { color: active ? '#047857' : C.onSurfaceVariant }]}>
-                    {active ? 'Active' : 'En pause'}
-                    {item.created_at ? ` · créée le ${formatDateFr(item.created_at)}` : ''}
-                  </Text>
-                  <Button mode="text" textColor={C.error} compact onPress={() => setToDelete(item)}>
-                    Supprimer
-                  </Button>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: Spacing.sm,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.sm, flexShrink: 1 }}>
+                    <Badge label={active ? 'Active' : 'En pause'} variant={active ? 'success' : 'neutral'} status />
+                    {item.created_at ? (
+                      <AppText variant="caption" color="onSurfaceVariant">
+                        {`créée le ${formatDateFr(item.created_at)}`}
+                      </AppText>
+                    ) : null}
+                  </View>
+                  <Button variant="text" icon="delete-outline" label="Supprimer" onPress={() => setToDelete(item)} />
                 </View>
-              </View>
+              </Card>
             );
           }}
         />
       )}
 
-      <Portal>
-        <Dialog visible={!!toDelete} onDismiss={() => setToDelete(null)}>
-          <Dialog.Title>Supprimer cette alerte ?</Dialog.Title>
-          <Dialog.Content>
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
-              Vous ne serez plus averti des nouvelles annonces correspondant à ces critères.
-            </Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button mode="text" onPress={() => setToDelete(null)}>Annuler</Button>
-            <Button mode="text" textColor={C.error} onPress={confirmDelete}>Supprimer</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-    </SafeAreaView>
+      <Dialog
+        visible={!!toDelete}
+        title="Supprimer cette alerte ?"
+        message="Vous ne serez plus averti des nouvelles annonces correspondant à ces critères."
+        confirmLabel="Supprimer"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setToDelete(null)}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  list: {
-    padding: Spacing.marginMobile,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.md,
-  },
-  emptyContainer: { flexGrow: 1 },
-  card: {
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
-  chip: { borderRadius: Radius.full, paddingHorizontal: Spacing.sm, paddingVertical: 4 },
-  cardBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-});

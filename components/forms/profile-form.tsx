@@ -1,8 +1,10 @@
-import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRef } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { View, type TextInput } from 'react-native';
 import { z } from 'zod';
-import { StyleSheet, View } from 'react-native';
-import { Button, HelperText, TextInput } from 'react-native-paper';
+
+import { Button, Field, KeyboardTarget } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 
 const schema = z.object({
@@ -23,8 +25,19 @@ interface ProfileFormProps {
   loading?: boolean;
 }
 
+/**
+ * Name, email and phone of the account. Errors are the kit Field messages
+ * (read by TalkBack); the keyboard's "Suivant" moves down the fields and the
+ * last one submits. Use inside `<Screen keyboard>`.
+ */
 export function ProfileForm({ defaultValues, onSubmit, loading }: ProfileFormProps) {
-  const { control, handleSubmit, formState: { errors } } = useForm<ProfileFormValues>({
+  const emailRef = useRef<TextInput>(null);
+  const phoneRef = useRef<TextInput>(null);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProfileFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: defaultValues?.name ?? '',
@@ -32,90 +45,81 @@ export function ProfileForm({ defaultValues, onSubmit, loading }: ProfileFormPro
       phone_number: defaultValues?.phone_number ?? '',
     },
   });
+  const submit = handleSubmit(onSubmit);
 
   return (
-    <View style={styles.form}>
-      <View>
-        <Controller
-          control={control}
-          name="name"
-          render={({ field: { value, onChange } }) => (
-            <TextInput
-              mode="outlined"
-              label="Nom complet"
-              value={value ?? ''}
-              onChangeText={onChange}
-              placeholder="Jean Dupont"
-              autoCapitalize="words"
-              error={!!errors.name}
-            />
-          )}
-        />
-        <HelperText type="error" visible={!!errors.name}>
-          {errors.name?.message}
-        </HelperText>
-      </View>
+    <View style={{ gap: Spacing.md }}>
+      <Controller
+        control={control}
+        name="name"
+        render={({ field: { value, onChange, onBlur } }) => (
+          <Field
+            label="Nom complet"
+            value={value ?? ''}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            placeholder="Jean Dupont"
+            autoCapitalize="words"
+            autoComplete="name"
+            error={errors.name?.message}
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => emailRef.current?.focus()}
+          />
+        )}
+      />
+      <Controller
+        control={control}
+        name="email"
+        render={({ field: { value, onChange, onBlur } }) => (
+          <Field
+            ref={emailRef}
+            label="Email"
+            value={value ?? ''}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            placeholder="vous@exemple.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            error={errors.email?.message}
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => phoneRef.current?.focus()}
+          />
+        )}
+      />
+      <Controller
+        control={control}
+        name="phone_number"
+        render={({ field: { value, onChange, onBlur } }) => (
+          <Field
+            ref={phoneRef}
+            label="Téléphone"
+            value={value ?? ''}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            placeholder="+237 6XX XXX XXX"
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+            autoComplete="tel"
+            error={errors.phone_number?.message}
+            returnKeyType="done"
+            onSubmitEditing={submit}
+          />
+        )}
+      />
 
-      <View>
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { value, onChange } }) => (
-            <TextInput
-              mode="outlined"
-              label="Email"
-              value={value ?? ''}
-              onChangeText={onChange}
-              placeholder="vous@exemple.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              error={!!errors.email}
-            />
-          )}
+      <KeyboardTarget>
+        <Button
+          label="Enregistrer les modifications"
+          size="lg"
+          fullWidth
+          loading={loading}
+          onPress={submit}
+          style={{ marginTop: Spacing.sm }}
         />
-        <HelperText type="error" visible={!!errors.email}>
-          {errors.email?.message}
-        </HelperText>
-      </View>
-
-      <View>
-        <Controller
-          control={control}
-          name="phone_number"
-          render={({ field: { value, onChange } }) => (
-            <TextInput
-              mode="outlined"
-              label="Téléphone"
-              value={value ?? ''}
-              onChangeText={onChange}
-              placeholder="+237 6XX XXX XXX"
-              keyboardType="phone-pad"
-              autoCapitalize="none"
-              error={!!errors.phone_number}
-            />
-          )}
-        />
-        <HelperText type="error" visible={!!errors.phone_number}>
-          {errors.phone_number?.message}
-        </HelperText>
-      </View>
-
-      <Button
-        mode="contained"
-        onPress={handleSubmit(onSubmit)}
-        loading={loading}
-        disabled={loading}
-        style={styles.submitBtn}
-        contentStyle={styles.submitContent}
-      >
-        Enregistrer les modifications
-      </Button>
+      </KeyboardTarget>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  form: { gap: Spacing.xs },
-  submitBtn: { marginTop: Spacing.sm },
-  submitContent: { height: 48 },
-});

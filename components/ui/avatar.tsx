@@ -1,57 +1,79 @@
-import { Image, StyleSheet, Text, View, type ViewStyle } from 'react-native';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { Typography } from '@/constants/theme';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 
-type AvatarSize = 'sm' | 'md' | 'lg';
+import { Radii, Sizes, Typography, type TextVariant } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
-interface AvatarProps {
+import { AppText } from './app-text';
+import type { IconName } from './icon-button';
+
+export type AvatarSize = 'sm' | 'md' | 'lg';
+
+export interface AvatarProps {
   name?: string;
   uri?: string;
   size?: AvatarSize;
-  style?: ViewStyle;
+  /** Shown when there is neither a photo nor a name (instead of "?"). */
+  fallbackIcon?: IconName;
+  style?: StyleProp<ViewStyle>;
 }
 
-const sizeMap: Record<AvatarSize, number> = { sm: 32, md: 44, lg: 64 };
+const DIMENSION: Record<AvatarSize, number> = { sm: Sizes.avatarSm, md: Sizes.avatarMd, lg: Sizes.avatarLg };
+/** Largest font scale of the initials: "WW" fits the sm, md and lg circles. */
+const INITIALS_MAX_SCALE = 1.3;
+const INITIALS: Record<AvatarSize, TextVariant> = { sm: 'caption', md: 'bodyStrong', lg: 'headline' };
 
-const initialsTypography: Record<AvatarSize, object> = {
-  sm: Typography.caption,
-  md: { ...Typography.bodyMd, fontWeight: '600' as const },
-  lg: { ...Typography.headlineMd, fontSize: 24, lineHeight: 28 },
-};
-
-export function Avatar({ name, uri, size = 'md', style }: AvatarProps) {
-  const bgColor = useThemeColor({}, 'primaryContainer');
-  const textColor = useThemeColor({}, 'onPrimaryContainer');
-  const dimension = sizeMap[size];
-
-  const initials = name
-    ? name.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
-    : '?';
-
+/**
+ * Round photo, or the initials on primaryContainer (white 6.45:1 light,
+ * peach 4.98:1 dark). Read by TalkBack as the name when one is given.
+ */
+export function Avatar({ name, uri, size = 'md', fallbackIcon = 'person', style }: AvatarProps) {
+  const C = useThemeColors();
+  const dimension = DIMENSION[size];
+  const initials = (name ?? '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
   return (
     <View
+      accessible={!!name}
+      accessibilityRole={name ? 'image' : undefined}
+      accessibilityLabel={name}
+      importantForAccessibility={name ? 'yes' : 'no-hide-descendants'}
       style={[
-        styles.container,
-        { width: dimension, height: dimension, borderRadius: dimension / 2, backgroundColor: bgColor },
+        {
+          width: dimension,
+          height: dimension,
+          borderRadius: Radii.full,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          backgroundColor: C.primaryContainer,
+        },
         style,
       ]}
     >
       {uri ? (
-        <Image
-          source={{ uri }}
-          style={{ width: dimension, height: dimension, borderRadius: dimension / 2 }}
-        />
+        <Image source={{ uri }} style={{ width: dimension, height: dimension }} contentFit="cover" />
+      ) : !initials ? (
+        <MaterialIcons name={fallbackIcon} size={dimension / 2} color={C.onPrimaryContainer} />
       ) : (
-        <Text style={[initialsTypography[size], { color: textColor }]}>{initials}</Text>
+        <AppText
+          variant={INITIALS[size]}
+          color="onPrimaryContainer"
+          // The initials must fit the fixed circle: at 2.0 "NW" was clipped
+          // (QA-12, UI-10). They are decorative (the avatar is read as the
+          // name, which is written next to it at full size), so their growth
+          // is capped where two wide capitals still fit every size.
+          maxFontSizeMultiplier={INITIALS_MAX_SCALE}
+          style={size === 'lg' ? Typography.headlineSm : undefined}
+        >
+          {initials}
+        </AppText>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-});

@@ -19,3 +19,9 @@ export function useThemeColor(
     return Colors[theme][colorName];
   }
 }
+
+/** All colour tokens of the active theme (light, dark or the user's choice). */
+export function useThemeColors() {
+  const theme = useColorScheme() ?? 'light';
+  return Colors[theme];
+}

@@ -54,18 +54,15 @@ export interface Announce {
   description: string;
   address: string;
   city: string;
-  neighborhood?: string;
+  /** Spelled the backend way (serializer `neighbourhood`). */
+  neighbourhood?: string;
   state?: string;
   country: string;
   postal_code?: string;
-  zip?: string;
   contact_phone?: string;
   contact_email?: string;
   size?: number;
-  bedrooms?: number;
-  // Field names used by the current API (the legacy names above are kept for
-  // screens that predate the API change).
-  neighbourhood?: string;
+  /** Number of bedrooms (GET /announces/:id `bedroom`). */
   bedroom?: number;
   toilet?: number;
   mainroom?: number;
@@ -101,8 +98,8 @@ export interface Announce {
   furnitured?: boolean;
   garden?: boolean;
   // Relations
-  category_id?: string;
-  category?: Category;
+  /** The id is under `category` (GET has no category_id); null when unset. */
+  category?: Category | null;
   announcer_id?: string;
   announcer: Announcer;
   medias: Media[];
@@ -114,6 +111,9 @@ export interface Announce {
 }
 
 // ─── Filters ──────────────────────────────────────────────────────────────────
+
+/** Rental periods accepted by the API (backend `AD_PERIODS`). */
+export type AdPeriod = 'hour' | 'day' | 'night' | 'month' | 'year';
 
 export interface AnnounceFilters {
   type?: AnnounceType;
@@ -132,6 +132,10 @@ export interface AnnounceFilters {
   size_max?: number;
   land_use?: LandUse;
   land_title?: boolean;
+  /** Rental period, e.g. `night` for the home row "Séjours à la nuit" (backend AD_PERIODS). */
+  period?: AdPeriod;
+  /** `1`: recommended listings only (backend: listings with at least one photo). */
+  recommended?: 1;
   search?: string;
   orderBy?: string;
   AnnouncerId?: string;

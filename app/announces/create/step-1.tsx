@@ -1,43 +1,47 @@
-import { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { SegmentedButtons } from 'react-native-paper';
-import { CreateStepHeader } from '@/components/forms/create-step-header';
-import { ChoiceChip, SectionLabel, StepTitle, WizardFooter, wizardStyles } from '@/components/forms/create-step-parts';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCategories } from '@/hooks/queries/use-categories';
-import { useCreateListingStore, type CreatableType } from '@/stores/create-listing.store';
-import type { AdType } from '@/types/announce';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 
-const TYPE_OPTIONS = [
-  { value: 'realestate', label: 'Immobilier', icon: 'home-work' },
-  { value: 'land', label: 'Terrain', icon: 'square-foot' },
-  { value: 'furniture', label: 'Mobilier', icon: 'chair' },
-] as const;
+import { CategoryPicker } from '@/components/forms/category-picker';
+import { AD_TYPE_OPTIONS } from '@/components/forms/listing-options';
+import { CREATE_STEPS, CREATE_TITLE, StepFooter, StepIntro } from '@/components/forms/step-layout';
+import { AppText, Dialog, RadioRow, Screen, SegmentedControl, StepHeader, type IconName } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
+import { useCategories } from '@/hooks/queries/use-categories';
+import { isDraftEmpty, useCreateListingStore, type CreatableType } from '@/stores/create-listing.store';
+
+const TYPE_CARDS: readonly { value: CreatableType; label: string; hint: string; icon: IconName }[] = [
+  {
+    value: 'realestate',
+    label: 'Immobilier',
+    hint: 'Appartement, studio, chambre, maison, bureau',
+    icon: 'home-work',
+  },
+  { value: 'land', label: 'Terrain', hint: 'Terrain à bâtir, agricole, commercial', icon: 'square-foot' },
+  { value: 'furniture', label: 'Mobilier', hint: 'Meubles, électroménager, décoration', icon: 'chair' },
+];
 
 export default function CreateStep1Screen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const { draft, setDraft } = useCreateListingStore();
-  const segmentedTheme = { colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } };
+  const router = useRouter();
+  const { draft, setDraft, resetDraft } = useCreateListingStore();
+  // Opening the flow with a draft left from an earlier visit: offer to go on
+  // with it or start over (read once, when the flow opens).
+  const [askResume, setAskResume] = useState(() => !isDraftEmpty(useCreateListingStore.getState().draft));
   const isLand = draft.type === 'land';
 
   // Land listings have no category (usage and surface describe them).
-  const { data: categoriesData, isLoading } = useCategories(
+  const { data: categoriesData } = useCategories(
     { type: draft.type === 'realestate' ? 'house' : 'furniture' },
     { enabled: !isLand }
   );
   const loadedCategories = categoriesData?.data;
-  const categories = loadedCategories ?? [];
 
   // Like the website, a category is always selected once they are loaded.
+  // The API sends numeric ids: compare them as strings, as CategoryPicker does.
   useEffect(() => {
     if (isLand || !loadedCategories || loadedCategories.length === 0) return;
-    if (!loadedCategories.some((c) => c.id === draft.category_id)) {
-      setDraft({ category_id: loadedCategories[0].id });
+    if (!loadedCategories.some((c) => String(c.id) === String(draft.category_id))) {
+      setDraft({ category_id: String(loadedCategories[0].id) });
     }
   }, [isLand, loadedCategories, draft.category_id, setDraft]);
 
@@ -48,106 +52,68 @@ export default function CreateStep1Screen() {
   }
 
   return (
-    <SafeAreaView style={[wizardStyles.safe, { backgroundColor: C.background }]}>
-      <CreateStepHeader step={1} total={4} onBack={() => router.back()} closeMode />
+    <Screen
+      header={
+        <StepHeader title={CREATE_TITLE} step={1} total={CREATE_STEPS} onBack={() => router.back()} closeMode />
+      }
+      footer={
+        <StepFooter
+          onNext={() => router.push('/announces/create/step-2')}
+          disabled={!canContinue}
+          hint="Choisissez une catégorie pour continuer."
+        />
+      }
+      contentStyle={{ gap: Spacing.lg }}
+    >
+      <StepIntro title="Que publiez-vous ?" description="Vous pourrez modifier ces choix avant la publication." />
 
-      <ScrollView
-        contentContainerStyle={wizardStyles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <StepTitle title="Informations générales" subtitle="Quel type d'annonce souhaitez-vous publier ?" />
-
-        <View>
-          <SectionLabel>Type de bien</SectionLabel>
-          <View style={styles.typeGrid}>
-            {TYPE_OPTIONS.map((opt) => {
-              const active = draft.type === opt.value;
-              return (
-                <Pressable
-                  key={opt.value}
-                  accessibilityRole="radio"
-                  accessibilityLabel={opt.label}
-                  accessibilityState={{ selected: active }}
-                  onPress={() => selectType(opt.value)}
-                  style={[
-                    styles.typeCard,
-                    {
-                      borderColor: active ? C.primary : C.outlineVariant,
-                      backgroundColor: active ? C.primary + '10' : C.surfaceContainerLow,
-                    },
-                  ]}
-                >
-                  <View style={[styles.typeIconBox, { backgroundColor: active ? C.primary : C.surfaceContainerHighest }]}>
-                    <MaterialIcons name={opt.icon} size={28} color={active ? C.onPrimary : C.onSurfaceVariant} />
-                  </View>
-                  <Text
-                    style={[
-                      Typography.bodyMd,
-                      { color: active ? C.primary : C.onSurface, fontFamily: 'PlusJakartaSans_600SemiBold', marginTop: Spacing.sm },
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        {!isLand && (
-          <View>
-            <SectionLabel>Genre</SectionLabel>
-            {isLoading ? (
-              <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>Chargement des catégories…</Text>
-            ) : (
-              <View style={wizardStyles.wrap}>
-                {categories.map((cat) => (
-                  <ChoiceChip
-                    key={cat.id}
-                    label={cat.name}
-                    active={draft.category_id === cat.id}
-                    onPress={() => setDraft({ category_id: cat.id })}
-                  />
-                ))}
-              </View>
-            )}
-          </View>
-        )}
-
-        <View>
-          <SectionLabel>Mode</SectionLabel>
-          <SegmentedButtons
-            value={draft.ad_type}
-            onValueChange={(v) => setDraft({ ad_type: v as AdType })}
-            theme={segmentedTheme}
-            buttons={[
-              { value: 'location', label: 'Location' },
-              { value: 'sale', label: 'Vente' },
-            ]}
+      <View accessibilityRole="radiogroup" accessibilityLabel="Type de bien" style={{ gap: Spacing.ms }}>
+        {TYPE_CARDS.map((opt) => (
+          <RadioRow
+            key={opt.value}
+            variant="card"
+            icon={opt.icon}
+            title={opt.label}
+            subtitle={opt.hint}
+            selected={draft.type === opt.value}
+            onPress={() => selectType(opt.value)}
           />
-        </View>
-      </ScrollView>
+        ))}
+      </View>
 
-      <WizardFooter label="Suivant" disabled={!canContinue} onPress={() => router.push('/announces/create/step-2')} />
-    </SafeAreaView>
+      {!isLand ? (
+        <CategoryPicker
+          type={draft.type}
+          value={draft.category_id}
+          onChange={(id) => setDraft({ category_id: id })}
+        />
+      ) : null}
+
+      <View style={{ gap: Spacing.sm }}>
+        <AppText variant="bodyStrong" accessibilityRole="header">
+          {"Type d'annonce"}
+        </AppText>
+        <SegmentedControl
+          label="Type d'annonce"
+          options={AD_TYPE_OPTIONS}
+          value={draft.ad_type}
+          onChange={(v) => setDraft({ ad_type: v })}
+        />
+      </View>
+      <Dialog
+        visible={askResume}
+        title="Reprendre votre annonce ?"
+        message="Une annonce commencée n'a pas été publiée. Vous pouvez la reprendre ou en créer une nouvelle."
+        // Dismissing the dialog (back, tap outside) keeps the draft: only the
+        // explicit "Nouvelle annonce" clears it.
+        confirmLabel="Nouvelle annonce"
+        cancelLabel="Reprendre"
+        onConfirm={() => {
+          resetDraft();
+          setAskResume(false);
+        }}
+        onCancel={() => setAskResume(false)}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  typeGrid: { flexDirection: 'row', gap: Spacing.md },
-  typeCard: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    alignItems: 'center',
-  },
-  typeIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

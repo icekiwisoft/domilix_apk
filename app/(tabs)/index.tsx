@@ -1,99 +1,281 @@
-import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import {
-  Linking,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
-import { Badge, IconButton } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { useState, type ComponentProps, type ReactNode } from 'react';
+import { Linking, ScrollView, View } from 'react-native';
 
 import { BroadcastBanner } from '@/components/home/broadcast-banner';
 import { SectionHeader } from '@/components/home/section-header';
-import { ListingCard } from '@/components/listing/listing-card';
-import { ListingSkeleton } from '@/components/listing/listing-skeleton';
-import { SearchBar } from '@/components/search/search-bar';
-import { Colors, Shadows, Spacing, Typography } from '@/constants/theme';
-import { useAnnounces, useCities, useToggleLike } from '@/hooks/queries/use-announces';
+import { AnnounceCard } from '@/components/listing/announce-card';
+import { activeFilters } from '@/components/search/active-filters';
+import {
+  AppText,
+  Chip,
+  ChipGroup,
+  EmptyState,
+  ErrorState,
+  IconButton,
+  ListingCardSkeleton,
+  Screen,
+  SearchBar,
+  Skeleton,
+} from '@/components/ui';
+import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
+import { useCities, useHomeRows, useToggleLike } from '@/hooks/queries/use-announces';
 import { useBroadcasts } from '@/hooks/queries/use-broadcasts';
 import { useUnreadCount } from '@/hooks/queries/use-notifications';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useFilterStore } from '@/stores/filter.store';
+import { useThemeColors } from '@/hooks/use-theme-color';
+import { useAuthStore } from '@/stores/auth.store';
+import type { CityCount } from '@/services/announces.service';
+import { toAnnounceQuery, useFilterStore, type ExploreFilters } from '@/stores/filter.store';
+import type { Announce, AnnounceType, PaginatedResponse } from '@/types/announce';
 
 const CATEGORIES = [
-  { id: 'realestate', label: 'Immobilier', icon: 'home-work' as const, active: true },
-  { id: 'furniture', label: 'Mobilier', icon: 'chair' as const, active: false },
+  { value: 'realestate' as const, label: 'Immobilier', icon: 'home-work' as const },
+  { value: 'furniture' as const, label: 'Mobilier', icon: 'chair' as const },
 ];
 
-const CITIES_LIMIT = '6';
-const LISTINGS_PER_CITY = 8;
+/** Cards shown per row. */
+const ROW_SIZE = 10;
+/** A row is hidden below this many listings once the duplicates are removed. */
+const ROW_MIN = 3;
+/** City chips: cities with at least this many listings. */
+const CITY_MIN_LISTINGS = 5;
+/** GET /cities caps `limit` at 50. */
+const CITIES_LIMIT = '50';
 
-// ─── Region row (one horizontal scroll of listings per city) ──────────────────
+interface HomeRow {
+  key: string;
+  title: string;
+  /** Exactly what "Tout voir" puts in the explore filters; the row's query derives from it. */
+  filters: ExploreFilters;
+}
 
-function RegionRow({
-  city,
-  onCardPress,
-  onLike,
-}: {
-  city: string;
-  onCardPress: (id: string) => void;
-  onLike: (id: string) => void;
-}) {
-  const { data, isLoading } = useAnnounces({ type: 'realestate', city, page: 1 });
-  const items = data?.data.slice(0, LISTINGS_PER_CITY) ?? [];
+// Same rows, in the same order, as the website (domilix.com src/views/Ads/Ads.tsx), real estate only.
+const ROWS: HomeRow[] = [
+  { key: 'recommended', title: 'Nos recommandations', filters: { recommended: 1 } },
+  { key: 'recent', title: 'Dernières annonces', filters: {} },
+  { key: 'night', title: 'Séjours à la nuit', filters: { ad_type: 'location', period: 'night' } },
+  { key: 'sale', title: 'Biens à vendre', filters: { ad_type: 'sale' } },
+];
 
-  if (!isLoading && items.length === 0) return null;
+type RowState =
+  | { row: HomeRow; status: 'loading' }
+  | { row: HomeRow; status: 'ready'; items: Announce[] };
+
+/**
+ * Removes from each row the listings already shown in a row above it, then
+ * keeps ROW_SIZE of them. A row waits for the rows above it, since its content
+ * depends on theirs. Row i asks for ROW_SIZE × (i + 1) listings, so it still
+ * has ROW_SIZE left when every listing shown above is in its page.
+ */
+function dedupeRows(pages: (PaginatedResponse<Announce> | undefined)[]): RowState[] {
+  const shown = new Set<string>();
+  let waiting = false;
+  return ROWS.map((row, i) => {
+    const page = pages[i];
+    if (waiting || !page) {
+      waiting = true;
+      return { row, status: 'loading' };
+    }
+    const items = page.data.filter((a) => !shown.has(String(a.id))).slice(0, ROW_SIZE);
+    for (const a of items) shown.add(String(a.id));
+    return { row, status: 'ready', items };
+  });
+}
+
+/** Strips flags and stray symbols typed into city names ("🇨🇲 yaounde" → "yaounde"). */
+function cleanCity(name: string) {
+  return name.replace(/[^\p{L}\p{N}\s'-]/gu, '').trim().replace(/\s+/g, ' ');
+}
+
+interface CityChip {
+  /** Explore filter: the API's `city_normalized`, cleaned. */
+  value: string;
+  label: string;
+  count: number;
+}
+
+/** Cities with at least CITY_MIN_LISTINGS listings, most listings first, one chip per normalised name. */
+function cityChips(rows: CityCount[]): CityChip[] {
+  const byCity = new Map<string, CityChip>();
+  // GET /cities groups by city and country: "yaounde" comes back once with an
+  // empty country and once with "cameroun". Rows arrive largest first, so the
+  // label comes from the biggest group.
+  for (const r of rows) {
+    const value = cleanCity(r.city_normalized);
+    if (!value) continue;
+    const chip = byCity.get(value);
+    if (chip) chip.count += r.ads_count;
+    else byCity.set(value, { value, label: cleanCity(r.city) || value, count: r.ads_count });
+  }
+  return [...byCity.values()].filter((c) => c.count >= CITY_MIN_LISTINGS).sort((a, b) => b.count - a.count);
+}
+
+/** Horizontal row that bleeds to the screen edges and starts on the page gutter. */
+function CardRow({ children }: { children: ReactNode }) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginHorizontal: -Spacing.marginMobile }}
+      contentContainerStyle={{ gap: Spacing.ms, paddingHorizontal: Spacing.marginMobile, paddingBottom: Spacing.sm }}
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
+/** Horizontal row of chips (city chips and their placeholders), bleeding to the screen edges. */
+function ChipRow({ children, ...rest }: { children: ReactNode } & ComponentProps<typeof ScrollView>) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginHorizontal: -Spacing.marginMobile }}
+      contentContainerStyle={{ gap: Spacing.sm, paddingHorizontal: Spacing.marginMobile }}
+      {...rest}
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
+/** Same height as the city chips, so the page does not move down when GET /cities answers. */
+function CityChipsSkeleton() {
+  return (
+    <View accessible accessibilityLabel="Chargement des villes…" accessibilityState={{ busy: true }}>
+      <ChipRow scrollEnabled={false}>
+        {[1, 2, 3, 4].map((k) => (
+          <Skeleton key={k} width={Sizes.chipSkeletonWidth} height={Sizes.touchTarget} radius={Radii.full} />
+        ))}
+      </ChipRow>
+    </View>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <CardRow>
+      {[1, 2].map((k) => (
+        <ListingCardSkeleton key={k} style={{ width: Sizes.listingCardWidth }} />
+      ))}
+    </CardRow>
+  );
+}
+
+// ─── Listing row ──────────────────────────────────────────────────────────────
+
+function ListingRow({ state, onLike }: { state: RowState; onLike: (id: string) => void }) {
+  const router = useRouter();
+  const { row } = state;
+
+  if (state.status === 'loading') {
+    return (
+      // The title stays a TalkBack header; only the placeholders are grouped as "loading".
+      <View style={{ gap: Spacing.xs }}>
+        <SectionHeader title={row.title} />
+        <View accessible accessibilityLabel={`${row.title}, chargement…`} accessibilityState={{ busy: true }}>
+          <SkeletonRow />
+        </View>
+      </View>
+    );
+  }
+
+  if (state.items.length < ROW_MIN) return null;
 
   function handleSeeAll() {
-    useFilterStore.getState().setFilter('city', city);
-    router.push({ pathname: '/(tabs)/explore', params: { type: 'realestate' } });
+    // Only this row's criteria: nothing left over from an earlier search or filter sheet.
+    useFilterStore.getState().replaceFilters(row.filters);
+    router.push('/(tabs)/explore');
   }
 
   return (
-    <>
-      <View style={styles.section}>
-        <SectionHeader title={city} onSeeAll={handleSeeAll} />
+    <View style={{ gap: Spacing.xs }}>
+      <SectionHeader title={row.title} onSeeAll={handleSeeAll} seeAllLabel={`Tout voir : ${row.title}`} />
+      <CardRow>
+        {state.items.map((item) => (
+          <AnnounceCard
+            key={item.id}
+            announce={item}
+            onPress={() => router.push(`/announces/${item.id}`)}
+            onToggleFavorite={onLike}
+            style={{ width: Sizes.listingCardWidth }}
+          />
+        ))}
+      </CardRow>
+    </View>
+  );
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+
+function HomeHeader() {
+  const C = useThemeColors();
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const { data: unread } = useUnreadCount();
+  const count = unread?.count ?? 0;
+  const firstName = user?.name?.trim().split(/\s+/)[0];
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: Spacing.md,
+        paddingHorizontal: Spacing.marginMobile,
+        paddingTop: Spacing.sm,
+      }}
+    >
+      <View style={{ flexShrink: 1 }}>
+        {firstName ? (
+          <AppText color="onSurfaceVariant" numberOfLines={1}>
+            {`Bonjour ${firstName}`}
+          </AppText>
+        ) : null}
+        <AppText variant="title" color="link" accessibilityRole="header" accessibilityLabel="Domilix">
+          DOMILIX
+        </AppText>
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.regionRow}
-        style={styles.regionScroll}
-      >
-        {isLoading
-          ? [1, 2, 3].map((k) => (
-              <View key={k} style={styles.regionCard}>
-                <ListingSkeleton />
-              </View>
-            ))
-          : items.map((item) => (
-              <View key={item.id} style={styles.regionCard}>
-                <ListingCard
-                  announce={item}
-                  onPress={() => onCardPress(item.id)}
-                  onLike={onLike}
-                />
-              </View>
-            ))}
-      </ScrollView>
-    </>
+      <View>
+        <IconButton
+          icon="notifications-none"
+          label={count > 0 ? `Notifications, ${count} non lue${count > 1 ? 's' : ''}` : 'Notifications'}
+          color="link"
+          background="surfaceContainerLowest"
+          onPress={() => router.push('/(tabs)/notifications')}
+          style={{ borderWidth: Borders.thin, borderColor: C.outlineVariant }}
+        />
+        {count > 0 ? (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: Spacing.sm,
+              right: Spacing.sm,
+              width: Sizes.dot + Borders.focus * 2,
+              height: Sizes.dot + Borders.focus * 2,
+              borderRadius: Radii.full,
+              backgroundColor: C.error,
+              borderWidth: Borders.focus,
+              borderColor: C.surfaceContainerLowest,
+            }}
+          />
+        ) : null}
+      </View>
+    </View>
   );
 }
 
 // ─── Screen ─────────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const router = useRouter();
+  const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const filterCount = useFilterStore((s) => activeFilters(s.filters).length);
 
-  const { data: unreadCount } = useUnreadCount();
   const { data: broadcastsData, refetch: refetchBroadcasts } = useBroadcasts();
   const { data: cities, isLoading: citiesLoading, refetch: refetchCities } = useCities({
     type: 'realestate',
@@ -101,24 +283,43 @@ export default function HomeScreen() {
     order: 'desc',
     limit: CITIES_LIMIT,
   });
+  // One cached query per row, under the same ['announces', …] key as the explore list so
+  // favourites toggled anywhere update the cards here too (without refetching the rows).
+  const rowQueries = useHomeRows(
+    ROWS.map((row, i) => ({ ...toAnnounceQuery(row.filters), page: 1, per_page: ROW_SIZE * (i + 1) })),
+  );
   const toggleLike = useToggleLike();
 
   async function onRefresh() {
     setRefreshing(true);
-    await Promise.all([refetchBroadcasts(), refetchCities()]);
+    await Promise.all([
+      refetchBroadcasts(),
+      refetchCities(),
+      qc.invalidateQueries({ queryKey: ['announces'] }),
+    ]);
     setRefreshing(false);
   }
 
   const broadcast = broadcastsData?.[0];
+  const chips = cityChips(cities ?? []);
 
   function handleSearch() {
     if (search.trim()) {
-      router.push({ pathname: '/(tabs)/explore', params: { q: search.trim() } });
+      // The explore tab stays mounted: the store replaces its search even for an identical text.
+      useFilterStore.getState().setFilters({ search: search.trim() });
+      router.push('/(tabs)/explore');
     }
   }
 
-  function handleCardPress(id: string) {
-    router.push(`/announces/${id}`);
+  function handleCategory(type: AnnounceType) {
+    useFilterStore.getState().setFilter('type', type === 'realestate' ? undefined : type);
+    router.push('/(tabs)/explore');
+  }
+
+  function handleCity(chip: CityChip) {
+    // Filter on the normalised name, show the backend's accented one ("Yaoundé").
+    useFilterStore.getState().replaceFilters({ city: chip.value, cityLabel: chip.label });
+    router.push('/(tabs)/explore');
   }
 
   function handleBroadcastPress(url?: string) {
@@ -133,169 +334,86 @@ export default function HomeScreen() {
     }
   }
 
+  // A row that failed with nothing in cache: one error for the whole list, rows above
+  // it included, since the duplicates can no longer be removed.
+  const failed = rowQueries.filter((q) => q.isError && !q.data);
+  const rowStates = dedupeRows(rowQueries.map((q) => q.data));
+  let rows: ReactNode;
+  if (failed.length > 0) {
+    rows = (
+      <ErrorState
+        title="Impossible de charger les annonces"
+        onRetry={() => {
+          for (const q of failed) q.refetch();
+        }}
+      />
+    );
+  } else if (rowStates.every((r) => r.status === 'ready' && r.items.length < ROW_MIN)) {
+    rows = (
+      <EmptyState
+        icon="home-work"
+        title="Aucune annonce pour le moment"
+        description="Revenez bientôt ou lancez une recherche."
+        actionLabel="Explorer"
+        onAction={() => router.push('/(tabs)/explore')}
+      />
+    );
+  } else {
+    rows = rowStates.map((state) => (
+      <ListingRow key={state.row.key} state={state} onLike={(id) => toggleLike.mutate(id)} />
+    ));
+  }
+
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant + '55' }]}>
-        <Text style={[styles.logo, { color: C.primary }]}>DOMILIX</Text>
-        <View style={styles.cartBtn}>
-          <IconButton
-            icon="bell-outline"
-            size={24}
-            iconColor={C.primary}
-            accessibilityLabel="Notifications"
-            onPress={() => router.push('/(tabs)/notifications')}
-          />
-          <Badge visible={!!unreadCount?.count} size={10} style={[styles.notifDot, { backgroundColor: C.error }]} />
-        </View>
+    <Screen
+      header={<HomeHeader />}
+      bottomInset={false}
+      onRefresh={onRefresh}
+      refreshing={refreshing}
+      showsVerticalScrollIndicator={false}
+      contentStyle={{ gap: Spacing.lg }}
+    >
+      <View style={{ gap: Spacing.md }}>
+        <SearchBar
+          value={search}
+          onChangeText={setSearch}
+          onSubmitEditing={handleSearch}
+          onFilterPress={() => router.push('/(modals)/filter-sheet')}
+          filterCount={filterCount}
+        />
+        <ChipGroup
+          label="Catégorie"
+          layout="scroll"
+          options={CATEGORIES}
+          // The home screen lists real estate: Immobilier shows as the current one.
+          value="realestate"
+          onChange={handleCategory}
+        />
+        {citiesLoading ? (
+          <CityChipsSkeleton />
+        ) : chips.length > 0 ? (
+          <ChipRow accessibilityLabel="Villes">
+            {chips.map((c) => (
+              <Chip
+                key={c.value}
+                label={c.label}
+                icon="location-on"
+                // An action that opens the explore list, not a selectable chip.
+                accessibilityRole="button"
+                accessibilityState={{}}
+                accessibilityLabel={`Annonces à ${c.label}`}
+                onPress={() => handleCity(c)}
+              />
+            ))}
+          </ChipRow>
+        ) : null}
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />
-        }
-      >
-        {/* Search */}
-        <View style={styles.section}>
-          <SearchBar
-            value={search}
-            onChangeText={setSearch}
-            onFilterPress={() => router.push('/(modals)/filter-sheet')}
-            onSubmitEditing={handleSearch}
-          />
-        </View>
+      {broadcast ? (
+        <BroadcastBanner broadcast={broadcast} onPress={() => handleBroadcastPress(broadcast.action_url)} />
+      ) : null}
 
-        {/* Broadcast */}
-        {broadcast && (
-          <View style={styles.section}>
-            <BroadcastBanner broadcast={broadcast} onPress={() => handleBroadcastPress(broadcast.action_url)} />
-          </View>
-        )}
-
-        {/* Categories */}
-        <View style={[styles.section, { paddingHorizontal: 0, paddingLeft: Spacing.marginMobile }]}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catRow}>
-            {CATEGORIES.map((cat) => (
-              <Pressable
-                key={cat.id}
-                accessibilityRole="button"
-                accessibilityLabel={cat.label}
-                accessibilityState={{ selected: cat.active }}
-                style={({ pressed }) => [styles.catItem, pressed && { opacity: 0.75 }]}
-                onPress={() => router.push({ pathname: '/(tabs)/explore', params: { type: cat.id } })}
-              >
-                <View style={[
-                  styles.catCircle,
-                  { backgroundColor: cat.active ? C.primaryContainer : C.secondaryContainer },
-                ]}>
-                  <MaterialIcons
-                    name={cat.icon}
-                    size={26}
-                    color={cat.active ? C.onPrimaryContainer : C.onSecondaryContainer}
-                  />
-                </View>
-                <Text style={[Typography.caption, { color: cat.active ? C.onSurface : C.onSurfaceVariant, marginTop: 4 }]}>
-                  {cat.label}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Régions — un scroll horizontal de logements par ville */}
-        {citiesLoading ? (
-          <>
-            <View style={styles.section}>
-              <SectionHeader title="Chargement…" />
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.regionRow}
-              style={styles.regionScroll}
-            >
-              {[1, 2, 3].map((k) => (
-                <View key={k} style={styles.regionCard}>
-                  <ListingSkeleton />
-                </View>
-              ))}
-            </ScrollView>
-          </>
-        ) : (
-          (cities ?? []).map((city) => (
-            <RegionRow
-              key={city}
-              city={city}
-              onCardPress={handleCardPress}
-              onLike={(id) => toggleLike.mutate(id)}
-            />
-          ))
-        )}
-
-        <View style={{ height: Spacing.xxl }} />
-      </ScrollView>
-    </SafeAreaView>
+      {rows}
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  logo: {
-    fontFamily: 'PlusJakartaSans_700Bold',
-    fontSize: 24,
-    fontWeight: '700',
-    lineHeight: 32,
-  },
-  cartBtn: {
-    position: 'relative',
-  },
-  notifDot: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-  },
-  scroll: { paddingTop: Spacing.md },
-  section: {
-    paddingHorizontal: Spacing.marginMobile,
-    marginBottom: Spacing.md,
-  },
-  // Categories
-  catRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    paddingRight: Spacing.marginMobile,
-  },
-  catItem: {
-    alignItems: 'center',
-    minWidth: 72,
-  },
-  catCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.xs,
-  },
-  // Regions (horizontal scroll of listings per city)
-  regionScroll: {
-    marginBottom: Spacing.lg,
-  },
-  regionRow: {
-    paddingHorizontal: Spacing.marginMobile,
-    gap: Spacing.sm,
-  },
-  regionCard: {
-    width: 180,
-  },
-});

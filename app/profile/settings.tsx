@@ -1,17 +1,25 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, Dialog, IconButton, Portal, SegmentedButtons } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View } from 'react-native';
 
-import { Input } from '@/components/ui/input';
+import {
+  AppText,
+  Button,
+  Dialog,
+  Field,
+  KeyboardTarget,
+  ListRow,
+  Screen,
+  ScreenHeader,
+  Section,
+  SegmentedControl,
+  useToast,
+  type SegmentOption,
+} from '@/components/ui';
 import { OtpInput } from '@/components/ui/otp-input';
-import { useToast } from '@/components/ui/toast';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Spacing } from '@/constants/theme';
 import {
   useChangePassword,
   useDeleteAccount,
@@ -23,19 +31,31 @@ import { getApiErrorMessage } from '@/lib/api-error';
 import { changePasswordSchema, type ChangePasswordFormValues } from '@/lib/validators/auth.schema';
 import { useThemeStore, type ThemePreference } from '@/stores/theme.store';
 
-function SectionLabel({ children }: { children: string }) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+const THEME_OPTIONS: readonly SegmentOption<ThemePreference>[] = [
+  { value: 'light', label: 'Clair', icon: 'light-mode' },
+  { value: 'dark', label: 'Sombre', icon: 'dark-mode' },
+  { value: 'system', label: 'Système', icon: 'brightness-auto' },
+];
+
+type PasswordField = keyof ChangePasswordFormValues;
+
+const PASSWORD_FIELDS: { name: PasswordField; label: string; autoComplete: 'current-password' | 'new-password' }[] = [
+  { name: 'oldPassword', label: 'Mot de passe actuel', autoComplete: 'current-password' },
+  { name: 'newPassword', label: 'Nouveau mot de passe', autoComplete: 'new-password' },
+  { name: 'confirmPassword', label: 'Confirmer le nouveau mot de passe', autoComplete: 'new-password' },
+];
+
+/** Heading of a block that is not a list of rows (Section draws rows in a card). */
+function BlockTitle({ children }: { children: string }) {
   return (
-    <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 1.12, marginBottom: Spacing.sm }]}>
+    <AppText variant="label" color="onSurfaceVariant" accessibilityRole="header" style={{ paddingHorizontal: Spacing.xs }}>
       {children}
-    </Text>
+    </AppText>
   );
 }
 
 export default function SettingsScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const router = useRouter();
   const toast = useToast();
   const { preference, setPreference } = useThemeStore();
   const changePassword = useChangePassword();
@@ -48,10 +68,6 @@ export default function SettingsScreen() {
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const needsEmailVerification = !!me?.email && me.email_verified === false;
-  const [showOld, setShowOld] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const segmentedTheme = { colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } };
 
   const {
     control,
@@ -104,6 +120,7 @@ export default function SettingsScreen() {
   }
 
   function handleDeleteAccount() {
+    if (!deletePassword) return;
     deleteAccount.mutate(deletePassword, {
       onSuccess: () => {
         setDeleteVisible(false);
@@ -114,247 +131,126 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <IconButton
-          icon="arrow-left"
-          size={22}
-          onPress={() => router.back()}
-          accessibilityLabel="Retour"
+    <Screen keyboard header={<ScreenHeader title="Paramètres" />} contentStyle={{ gap: Spacing.lg }}>
+      <View style={{ gap: Spacing.sm }}>
+        <BlockTitle>Apparence</BlockTitle>
+        <SegmentedControl
+          label="Thème de l'application"
+          options={THEME_OPTIONS}
+          value={preference}
+          onChange={setPreference}
         />
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 18 }]}>
-          Paramètres
-        </Text>
-        <View style={{ width: 40 }} />
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Apparence */}
-          <View style={styles.section}>
-            <SectionLabel>Apparence</SectionLabel>
-            <SegmentedButtons
-              value={preference}
-              onValueChange={(v) => setPreference(v as ThemePreference)}
-              theme={segmentedTheme}
-              buttons={[
-                { value: 'light', label: 'Clair', icon: 'white-balance-sunny' },
-                { value: 'dark', label: 'Sombre', icon: 'weather-night' },
-                { value: 'system', label: 'Système', icon: 'theme-light-dark' },
-              ]}
-            />
-          </View>
-
-          {/* Vérification de l'email */}
-          {needsEmailVerification && (
-            <View style={styles.section}>
-              <SectionLabel>Vérification de l&apos;email</SectionLabel>
-              <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, lineHeight: 22 }]}>
-                Votre adresse {me?.email} n&apos;est pas encore vérifiée. Un code à 6 chiffres vous sera envoyé.
-              </Text>
-              {emailCodeSent && (
-                <View style={{ gap: Spacing.md }}>
-                  <OtpInput value={emailCode} onChange={setEmailCode} />
-                  <Button
-                    mode="contained"
-                    onPress={handleVerifyEmail}
-                    loading={verifyEmail.isPending}
-                    disabled={verifyEmail.isPending || emailCode.length < 6}
-                  >
-                    Vérifier
-                  </Button>
-                </View>
-              )}
+      {needsEmailVerification ? (
+        <View style={{ gap: Spacing.md }}>
+          <BlockTitle>{"Vérification de l'email"}</BlockTitle>
+          <AppText color="onSurfaceVariant">
+            {`Votre adresse ${me?.email} n'est pas encore vérifiée. Un code à 6 chiffres vous sera envoyé.`}
+          </AppText>
+          {emailCodeSent ? (
+            <>
+              <OtpInput value={emailCode} onChange={setEmailCode} />
               <Button
-                mode={emailCodeSent ? 'text' : 'contained'}
-                onPress={handleSendEmailCode}
-                loading={sendEmailVerification.isPending}
-                disabled={sendEmailVerification.isPending}
-              >
-                {emailCodeSent ? 'Renvoyer le code' : 'Envoyer le code'}
-              </Button>
-            </View>
-          )}
-
-          {/* Sécurité */}
-          <View style={styles.section}>
-            <SectionLabel>Changer le mot de passe</SectionLabel>
-            <View style={styles.form}>
-              <Controller
-                control={control}
-                name="oldPassword"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="Mot de passe actuel"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    secureTextEntry={!showOld}
-                    error={errors.oldPassword?.message}
-                    rightElement={
-                      <Pressable
-                        onPress={() => setShowOld((v) => !v)}
-                        hitSlop={12}
-                        accessibilityRole="button"
-                        accessibilityLabel={showOld ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                      >
-                        <MaterialIcons name={showOld ? 'visibility' : 'visibility-off'} size={22} color={C.onSurfaceVariant} />
-                      </Pressable>
-                    }
-                  />
-                )}
+                label="Vérifier"
+                size="lg"
+                fullWidth
+                loading={verifyEmail.isPending}
+                disabled={emailCode.length < 6}
+                onPress={handleVerifyEmail}
               />
+            </>
+          ) : null}
+          <Button
+            label={emailCodeSent ? 'Renvoyer le code' : 'Envoyer le code'}
+            variant={emailCodeSent ? 'text' : 'primary'}
+            size="lg"
+            fullWidth
+            loading={sendEmailVerification.isPending}
+            onPress={handleSendEmailCode}
+          />
+        </View>
+      ) : null}
 
-              <Controller
-                control={control}
-                name="newPassword"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="Nouveau mot de passe"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    secureTextEntry={!showNew}
-                    error={errors.newPassword?.message}
-                    rightElement={
-                      <Pressable
-                        onPress={() => setShowNew((v) => !v)}
-                        hitSlop={12}
-                        accessibilityRole="button"
-                        accessibilityLabel={showNew ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                      >
-                        <MaterialIcons name={showNew ? 'visibility' : 'visibility-off'} size={22} color={C.onSurfaceVariant} />
-                      </Pressable>
-                    }
-                  />
-                )}
+      <View style={{ gap: Spacing.md }}>
+        <BlockTitle>Changer le mot de passe</BlockTitle>
+        {PASSWORD_FIELDS.map(({ name, label, autoComplete }) => (
+          <Controller
+            key={name}
+            control={control}
+            name={name}
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Field
+                label={label}
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                secure
+                autoComplete={autoComplete}
+                error={errors[name]?.message}
               />
+            )}
+          />
+        ))}
+        <KeyboardTarget>
+          <Button
+            label="Mettre à jour le mot de passe"
+            size="lg"
+            fullWidth
+            loading={changePassword.isPending}
+            onPress={handleSubmit(onSubmit)}
+          />
+        </KeyboardTarget>
+      </View>
 
-              <Controller
-                control={control}
-                name="confirmPassword"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="Confirmer le nouveau mot de passe"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    secureTextEntry={!showConfirm}
-                    error={errors.confirmPassword?.message}
-                    rightElement={
-                      <Pressable
-                        onPress={() => setShowConfirm((v) => !v)}
-                        hitSlop={12}
-                        accessibilityRole="button"
-                        accessibilityLabel={showConfirm ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                      >
-                        <MaterialIcons name={showConfirm ? 'visibility' : 'visibility-off'} size={22} color={C.onSurfaceVariant} />
-                      </Pressable>
-                    }
-                  />
-                )}
-              />
+      <View style={{ gap: Spacing.md }}>
+        <BlockTitle>Supprimer mon compte</BlockTitle>
+        <AppText color="onSurfaceVariant">
+          Cette action désactive votre compte Domilix. Vous serez déconnecté immédiatement et ne pourrez plus accéder à
+          votre espace.
+        </AppText>
+        <Button
+          label="Supprimer mon compte"
+          variant="danger"
+          size="lg"
+          fullWidth
+          onPress={() => {
+            setDeletePassword('');
+            setDeleteVisible(true);
+          }}
+        />
+      </View>
 
-              <Button
-                mode="contained"
-                onPress={handleSubmit(onSubmit)}
-                loading={changePassword.isPending}
-                disabled={changePassword.isPending}
-                contentStyle={styles.submitBtnContent}
-                style={styles.submitBtn}
-              >
-                Mettre à jour le mot de passe
-              </Button>
-            </View>
-          </View>
+      <Dialog
+        visible={deleteVisible}
+        title="Confirmer la suppression"
+        message="Saisissez votre mot de passe pour supprimer votre compte Domilix. Cette action est irréversible."
+        confirmLabel="Supprimer définitivement"
+        danger
+        loading={deleteAccount.isPending}
+        onConfirm={handleDeleteAccount}
+        onCancel={() => setDeleteVisible(false)}
+      >
+        <Field
+          label="Votre mot de passe"
+          value={deletePassword}
+          onChangeText={setDeletePassword}
+          secure
+          autoComplete="current-password"
+        />
+      </Dialog>
 
-          {/* Suppression du compte */}
-          <View style={styles.section}>
-            <SectionLabel>Supprimer mon compte</SectionLabel>
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, lineHeight: 22 }]}>
-              Cette action désactive votre compte Domilix. Vous serez déconnecté immédiatement et ne pourrez plus
-              accéder à votre espace.
-            </Text>
-            <Button
-              mode="outlined"
-              textColor={C.error}
-              style={{ borderColor: C.error }}
-              onPress={() => {
-                setDeletePassword('');
-                setDeleteVisible(true);
-              }}
-            >
-              Supprimer mon compte
-            </Button>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-
-      <Portal>
-        <Dialog visible={deleteVisible} onDismiss={() => setDeleteVisible(false)}>
-          <Dialog.Title>Confirmer la suppression</Dialog.Title>
-          <Dialog.Content style={{ gap: Spacing.md }}>
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
-              Saisissez votre mot de passe pour supprimer votre compte Domilix. Cette action est irréversible.
-            </Text>
-            <Input
-              label="Votre mot de passe"
-              value={deletePassword}
-              onChangeText={setDeletePassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button mode="text" onPress={() => setDeleteVisible(false)}>Annuler</Button>
-            <Button
-              mode="text"
-              textColor={C.error}
-              onPress={handleDeleteAccount}
-              loading={deleteAccount.isPending}
-              disabled={deleteAccount.isPending || !deletePassword}
-            >
-              Supprimer définitivement
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-    </SafeAreaView>
+      {/* Developer entry, only in builds with EXPO_PUBLIC_SHOW_CATALOGUE=1 */}
+      {process.env.EXPO_PUBLIC_SHOW_CATALOGUE === '1' ? (
+        <Section title="Développement">
+          <ListRow
+            title="Catalogue des composants"
+            icon="widgets"
+            chevron
+            onPress={() => router.push('/dev/catalogue' as Href)}
+          />
+        </Section>
+      ) : null}
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-  },
-  scroll: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.xl,
-  },
-  section: {
-    gap: Spacing.sm,
-  },
-  form: {
-    gap: Spacing.lg,
-  },
-  submitBtn: {
-    borderRadius: Radius.md,
-    marginTop: Spacing.sm,
-  },
-  submitBtnContent: {
-    height: 50,
-  },
-});

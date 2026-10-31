@@ -1,58 +1,69 @@
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState, type ReactNode } from 'react';
+import { View, useWindowDimensions } from 'react-native';
+
+import { AMENITY_OPTIONS, LAND_USE_OPTIONS, STANDING_OPTIONS } from '@/components/search/active-filters';
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Button, Chip, IconButton, SegmentedButtons, TextInput } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useFilterStore } from '@/stores/filter.store';
-import type { AnnounceFilters, LandUse, Standing } from '@/types/announce';
+  AppText,
+  Button,
+  Chip,
+  ChipGroup,
+  Field,
+  IconButton,
+  Screen,
+  ScreenHeader,
+  SegmentedControl,
+} from '@/components/ui';
+import { Borders, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
+import { useFilterStore, type ExploreFilters } from '@/stores/filter.store';
+import type { AdType, AnnounceType, LandUse, Standing } from '@/types/announce';
 
-const AMENITY_OPTIONS: { key: string; label: string; icon: React.ComponentProps<typeof MaterialIcons>['name'] }[] = [
-  { key: 'wifi', label: 'Wifi', icon: 'wifi' },
-  { key: 'pool', label: 'Piscine', icon: 'pool' },
-  { key: 'air_conditioning', label: 'Climatisation', icon: 'ac-unit' },
-  { key: 'security_24h', label: 'Gardiennage', icon: 'security' },
-  { key: 'gate', label: 'Portail', icon: 'lock' },
-  { key: 'equipped_kitchen', label: 'Cuisine équipée', icon: 'kitchen' },
+const TYPE_OPTIONS = [
+  { value: 'realestate' as const, label: 'Immobilier' },
+  { value: 'furniture' as const, label: 'Mobilier' },
+  { value: 'land' as const, label: 'Terrain' },
 ];
 
-const STANDING_OPTIONS: { value: Standing; label: string }[] = [
-  { value: 'standard', label: 'Standard' },
-  { value: 'confort', label: 'Confort' },
-  { value: 'haut_standing', label: 'Haut standing' },
+// "Tout" (no ad_type) first and by default, as on the website's search.
+const AD_TYPE_OPTIONS = [
+  { value: 'all' as const, label: 'Tout' },
+  { value: 'location' as const, label: 'À louer' },
+  { value: 'sale' as const, label: 'À vendre' },
 ];
 
-const LAND_USE_OPTIONS: { value: LandUse; label: string }[] = [
-  { value: 'residential', label: 'Habitation' },
-  { value: 'agricultural', label: 'Agricole' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'industrial', label: 'Industriel' },
-];
+const BEDROOM_OPTIONS = [0, 1, 2, 3, 4, 5].map((n) => ({
+  value: n,
+  label: n === 0 ? 'Toutes' : `${n}+`,
+}));
 
-function SectionTitle({ children }: { children: string }) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 1.12, marginBottom: Spacing.sm }]}>
+    <View style={{ gap: Spacing.ms }}>
+      <AppText variant="bodyStrong" accessibilityRole="header">
+        {title}
+      </AppText>
       {children}
-    </Text>
+    </View>
   );
 }
 
-export default function FilterSheetScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const { filters, setFilters, clearFilters } = useFilterStore();
-  const segmentedTheme = { colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } };
+/** Digits only ("150 000" typed or pasted becomes 150000); empty means no bound. */
+function parseAmount(text: string): number | undefined {
+  const digits = text.replace(/\D/g, '');
+  return digits ? Number(digits) : undefined;
+}
 
-  const [adType, setAdType] = useState<'location' | 'sale'>(filters.ad_type ?? 'location');
+export default function FilterSheetScreen() {
+  const C = useThemeColors();
+  const router = useRouter();
+  const { filters, setFilters } = useFilterStore();
+  // Side by side the two budget fields cut "Sans limite" from 150 % font size: stack them.
+  const { fontScale } = useWindowDimensions();
+  const budgetField = { flexGrow: 1, flexBasis: fontScale >= 1.5 ? ('100%' as const) : 0 };
+
+  const [type, setType] = useState<AnnounceType>(filters.type ?? 'realestate');
+  const [adType, setAdType] = useState<AdType | 'all'>(filters.ad_type ?? 'all');
   const [budgetMin, setBudgetMin] = useState(filters.budget_min ? String(filters.budget_min) : '');
   const [budgetMax, setBudgetMax] = useState(filters.budget_max ? String(filters.budget_max) : '');
   const [bedroomMin, setBedroomMin] = useState(filters.bedroom_min ?? 0);
@@ -62,15 +73,28 @@ export default function FilterSheetScreen() {
   const [sizeMax, setSizeMax] = useState(filters.size_max ? String(filters.size_max) : '');
   const [landUse, setLandUse] = useState<LandUse | undefined>(filters.land_use);
   const [landTitle, setLandTitle] = useState(!!filters.land_title);
-
-  function toggleAmenity(key: string) {
-    setAmenities((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
-  }
+  const isLand = type === 'land';
 
   function handleReset() {
-    clearFilters();
+    // Reset the sheet's criteria and those a home row's "Tout voir" sets (recommended,
+    // period), which the sheet does not show. The city and the search text stay (UI-07).
+    setFilters({
+      type: undefined,
+      ad_type: undefined,
+      recommended: undefined,
+      period: undefined,
+      budget_min: undefined,
+      budget_max: undefined,
+      bedroom_min: undefined,
+      amenities: undefined,
+      standing: undefined,
+      size_min: undefined,
+      size_max: undefined,
+      land_use: undefined,
+      land_title: undefined,
+    });
+    setType('realestate');
+    setAdType('all');
     setBudgetMin('');
     setBudgetMax('');
     setBedroomMin(0);
@@ -80,262 +104,157 @@ export default function FilterSheetScreen() {
     setSizeMax('');
     setLandUse(undefined);
     setLandTitle(false);
-    setAdType('location');
   }
 
   function handleApply() {
-    const patch: Partial<AnnounceFilters> = {
-      ad_type: adType,
-      budget_min: budgetMin ? Number(budgetMin.replace(/\s/g, '')) : undefined,
-      budget_max: budgetMax ? Number(budgetMax.replace(/\s/g, '')) : undefined,
-      bedroom_min: bedroomMin > 0 ? bedroomMin : undefined,
-      amenities: amenities.length > 0 ? amenities : undefined,
-      standing,
-      size_min: sizeMin ? Number(sizeMin.replace(/\s/g, '')) : undefined,
-      size_max: sizeMax ? Number(sizeMax.replace(/\s/g, '')) : undefined,
-      land_use: landUse,
-      land_title: landTitle ? true : undefined,
+    const patch: Partial<ExploreFilters> = {
+      // Defaults (Immobilier, Tout) are stored as "not set": they are not active filters.
+      type: type === 'realestate' ? undefined : type,
+      ad_type: adType === 'all' ? undefined : adType,
+      budget_min: parseAmount(budgetMin),
+      budget_max: parseAmount(budgetMax),
+      // Rooms, standing and amenities do not apply to land; size, use and title only to land.
+      bedroom_min: !isLand && bedroomMin > 0 ? bedroomMin : undefined,
+      amenities: !isLand && amenities.length > 0 ? amenities : undefined,
+      standing: isLand ? undefined : standing,
+      size_min: isLand ? parseAmount(sizeMin) : undefined,
+      size_max: isLand ? parseAmount(sizeMax) : undefined,
+      land_use: isLand ? landUse : undefined,
+      land_title: isLand && landTitle ? true : undefined,
     };
+    // A rental period ("À la nuit" from the home row) never matches a sale: drop it
+    // rather than show a list that is always empty.
+    if (adType === 'sale') patch.period = undefined;
     setFilters(patch);
     router.back();
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.surface }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: C.surfaceVariant }]}>
-        <IconButton
-          icon="refresh"
-          size={20}
-          onPress={handleReset}
-          accessibilityLabel="Réinitialiser les filtres"
+    <Screen
+      keyboard
+      background="surface"
+      header={
+        <ScreenHeader
+          title="Filtres"
+          onBack={false}
+          actions={<IconButton icon="close" label="Fermer" onPress={() => router.back()} />}
         />
-        <Text style={[Typography.headlineMd, { color: C.onSurface, fontSize: 22 }]}>Filtres</Text>
-        <IconButton
-          icon="close"
-          size={20}
-          onPress={() => router.back()}
-          accessibilityLabel="Fermer"
-        />
-      </View>
+      }
+      footer={
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: Spacing.ms,
+            paddingHorizontal: Spacing.marginMobile,
+            paddingTop: Spacing.ms,
+            paddingBottom: Spacing.ms,
+            borderTopWidth: Borders.thin,
+            borderTopColor: C.outlineVariant,
+          }}
+        >
+          <Button label="Réinitialiser" variant="secondary" size="lg" onPress={handleReset} />
+          <Button label="Afficher les résultats" size="lg" onPress={handleApply} style={{ flexGrow: 1 }} />
+        </View>
+      }
+      contentStyle={{ gap: Spacing.lg }}
+    >
+      <Section title="Catégorie">
+        <SegmentedControl label="Catégorie" options={TYPE_OPTIONS} value={type} onChange={setType} />
+      </Section>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Type d'annonce */}
-        <View style={styles.section}>
-          <SectionTitle>Type d'annonce</SectionTitle>
-          <SegmentedButtons
-            value={adType}
-            onValueChange={(v) => setAdType(v as 'location' | 'sale')}
-            theme={segmentedTheme}
-            buttons={[
-              { value: 'location', label: 'Location' },
-              { value: 'sale', label: 'Vente' },
-            ]}
+      <Section title="Type d'annonce">
+        <SegmentedControl label="Type d'annonce" options={AD_TYPE_OPTIONS} value={adType} onChange={setAdType} />
+      </Section>
+
+      <Section title="Budget">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.ms }}>
+          <Field
+            label="Minimum"
+            value={budgetMin}
+            onChangeText={setBudgetMin}
+            placeholder="0"
+            keyboardType="number-pad"
+            suffix="FCFA"
+            containerStyle={budgetField}
+          />
+          <Field
+            label="Maximum"
+            value={budgetMax}
+            onChangeText={setBudgetMax}
+            placeholder="Sans limite"
+            keyboardType="number-pad"
+            suffix="FCFA"
+            containerStyle={budgetField}
           />
         </View>
+      </Section>
 
-        {/* Budget */}
-        <View style={styles.section}>
-          <SectionTitle>Budget (FCFA)</SectionTitle>
-          <View style={styles.budgetRow}>
-            <TextInput
-              mode="outlined"
-              label="Min"
-              value={budgetMin}
-              onChangeText={setBudgetMin}
-              keyboardType="numeric"
-              style={styles.budgetInput}
-            />
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>—</Text>
-            <TextInput
-              mode="outlined"
-              label="Max"
-              value={budgetMax}
-              onChangeText={setBudgetMax}
-              keyboardType="numeric"
-              style={styles.budgetInput}
-            />
-          </View>
-        </View>
-
-        {/* Chambres */}
-        <View style={styles.section}>
-          <SectionTitle>Chambres minimum</SectionTitle>
-          <View style={styles.counterRow}>
-            {[0, 1, 2, 3, 4, 5].map((n) => {
-              const active = bedroomMin === n;
-              return (
-                <Chip
-                  key={n}
-                  compact
-                  selected={active}
-                  showSelectedCheck={false}
-                  onPress={() => setBedroomMin(n)}
-                  style={active ? { backgroundColor: C.primary } : { backgroundColor: C.surfaceContainer }}
-                  textStyle={{ color: active ? C.onPrimary : C.onSurface }}
-                >
-                  {n === 0 ? 'Tous' : `${n}+`}
-                </Chip>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Terrain */}
-        <View style={styles.section}>
-          <SectionTitle>Terrains — surface (m²)</SectionTitle>
-          <View style={styles.budgetRow}>
-            <TextInput
-              mode="outlined"
-              label="Min"
+      {isLand ? (
+        <Section title="Surface du terrain">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.ms }}>
+            <Field
+              label="Minimum"
               value={sizeMin}
               onChangeText={setSizeMin}
-              keyboardType="numeric"
-              style={styles.budgetInput}
+              placeholder="0"
+              keyboardType="number-pad"
+              suffix="m²"
+              containerStyle={budgetField}
             />
-            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>—</Text>
-            <TextInput
-              mode="outlined"
-              label="Max"
+            <Field
+              label="Maximum"
               value={sizeMax}
               onChangeText={setSizeMax}
-              keyboardType="numeric"
-              style={styles.budgetInput}
+              placeholder="Sans limite"
+              keyboardType="number-pad"
+              suffix="m²"
+              containerStyle={budgetField}
             />
           </View>
-          <View style={[styles.amenityGrid, { marginTop: Spacing.sm }]}>
-            {LAND_USE_OPTIONS.map((opt) => {
-              const active = landUse === opt.value;
-              return (
-                <Chip
-                  key={opt.value}
-                  compact
-                  selected={active}
-                  showSelectedCheck={false}
-                  onPress={() => setLandUse(active ? undefined : opt.value)}
-                  style={active ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
-                  textStyle={{ color: active ? C.primary : C.onSurface }}
-                >
-                  {opt.label}
-                </Chip>
-              );
-            })}
-            <Chip
-              compact
-              selected={landTitle}
-              showSelectedCheck={false}
-              onPress={() => setLandTitle((v) => !v)}
-              style={landTitle ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
-              textStyle={{ color: landTitle ? C.primary : C.onSurface }}
-            >
-              Titre foncier
-            </Chip>
-          </View>
-        </View>
+        </Section>
+      ) : null}
 
-        {/* Équipements */}
-        <View style={styles.section}>
-          <SectionTitle>Équipements</SectionTitle>
-          <View style={styles.amenityGrid}>
-            {AMENITY_OPTIONS.map((a) => {
-              const active = amenities.includes(a.key);
-              return (
-                <Chip
-                  key={a.key}
-                  compact
-                  selected={active}
-                  showSelectedCheck={false}
-                  icon={({ size }) => (
-                    <MaterialIcons name={a.icon} size={size} color={active ? C.primary : C.onSurfaceVariant} />
-                  )}
-                  onPress={() => toggleAmenity(a.key)}
-                  style={active ? { backgroundColor: C.primaryFixed, borderColor: C.primaryFixedDim } : { backgroundColor: C.surfaceContainer }}
-                  textStyle={{ color: active ? C.primary : C.onSurface }}
-                >
-                  {a.label}
-                </Chip>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Standing */}
-        <View style={styles.section}>
-          <SectionTitle>Standing</SectionTitle>
-          <SegmentedButtons
-            value={standing ?? ''}
-            onValueChange={(v) => setStanding(v ? (v as Standing) : undefined)}
-            theme={segmentedTheme}
-            buttons={STANDING_OPTIONS}
+      {isLand ? (
+        <Section title="Usage">
+          <ChipGroup
+            label="Usage"
+            options={LAND_USE_OPTIONS}
+            value={landUse ?? null}
+            onChange={(v) => setLandUse(v === landUse ? undefined : v)}
           />
-        </View>
-      </ScrollView>
+          <View style={{ flexDirection: 'row' }}>
+            <Chip
+              label="Titre foncier"
+              icon="verified-user"
+              selected={landTitle}
+              onPress={() => setLandTitle((v) => !v)}
+            />
+          </View>
+        </Section>
+      ) : null}
 
-      {/* Footer */}
-      <View style={[styles.footer, { borderTopColor: C.outlineVariant, backgroundColor: C.surface }]}>
-        <Button
-          mode="contained"
-          onPress={handleApply}
-          contentStyle={styles.applyBtnContent}
-          style={styles.applyBtn}
-        >
-          Appliquer les filtres
-        </Button>
-      </View>
-    </SafeAreaView>
+      {isLand ? null : (
+      <>
+      <Section title="Chambres minimum">
+        <ChipGroup label="Chambres minimum" options={BEDROOM_OPTIONS} value={bedroomMin} onChange={setBedroomMin} />
+      </Section>
+
+      <Section title="Équipements">
+        <ChipGroup label="Équipements" multiple options={AMENITY_OPTIONS} value={amenities} onChange={setAmenities} />
+      </Section>
+
+      <Section title="Standing">
+        <ChipGroup
+          label="Standing"
+          options={STANDING_OPTIONS}
+          value={standing ?? null}
+          // Touching the selected standing again clears it.
+          onChange={(v) => setStanding(v === standing ? undefined : v)}
+        />
+      </Section>
+      </>
+      )}
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-  },
-  scroll: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.lg,
-  },
-  section: {
-    gap: Spacing.sm,
-  },
-  budgetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  budgetInput: {
-    flex: 1,
-  },
-  counterRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    flexWrap: 'wrap',
-  },
-  amenityGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  footer: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingVertical: Spacing.md,
-    borderTopWidth: 1,
-  },
-  applyBtn: {
-    borderRadius: Radius.md,
-  },
-  applyBtnContent: {
-    height: 52,
-  },
-});

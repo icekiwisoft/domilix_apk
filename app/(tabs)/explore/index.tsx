@@ -1,85 +1,79 @@
-import { ListingCard } from '@/components/listing/listing-card';
-import { ListingSkeleton } from '@/components/listing/listing-skeleton';
-import { FilterBar } from '@/components/search/filter-bar';
-import { ResultsCount } from '@/components/search/results-count';
-import { SearchBar } from '@/components/search/search-bar';
-import { Colors, Spacing, Typography } from '@/constants/theme';
-import { useToast } from '@/components/ui/toast';
+import { useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { FlatList, RefreshControl, View } from 'react-native';
+
+import { ExploreHeader } from '@/components/search/explore-header';
+import { AnnounceCard } from '@/components/listing/announce-card';
+import { activeFilters, cityLabel } from '@/components/search/active-filters';
+import { AppText, Button, EmptyState, ErrorState, ListingCardSkeleton, Screen, useToast } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useCreateAlert } from '@/hooks/queries/use-alerts';
 import { useAnnounces, useToggleLike } from '@/hooks/queries/use-announces';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 import { announceFiltersToAlertFilters } from '@/lib/alert-helpers';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { SearchHistoryService } from '@/services/search-history.service';
 import { useAuthStore } from '@/stores/auth.store';
-import { useFilterStore } from '@/stores/filter.store';
-import type { AdType, AnnounceType } from '@/types/announce';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import {
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { ActivityIndicator, Button, SegmentedButtons } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { toAnnounceQuery, useFilterStore } from '@/stores/filter.store';
+
+function ResultsCount({ count, query, city }: { count: number; query?: string; city?: string }) {
+  const noun = `${count} ${query ? 'résultat' : 'annonce'}${count !== 1 ? 's' : ''}`;
+  const rest = query ? ` pour « ${query} »` : city ? ` à ${city}` : '';
+  return (
+    <AppText color="onSurfaceVariant" accessibilityLiveRegion="polite">
+      <AppText variant="bodyStrong">{noun}</AppText>
+      {rest}
+    </AppText>
+  );
+}
 
 export default function ExploreScreen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const params = useLocalSearchParams<{ q?: string; type?: string }>();
+  const C = useThemeColors();
+  const router = useRouter();
 
-  const [search, setSearch] = useState(params.q ?? '');
-  const [announceType, setAnnounceType] = useState<AnnounceType>(
-    (params.type as AnnounceType) ?? 'realestate'
-  );
-  const [adType, setAdType] = useState<AdType>('location');
-  const [page, setPage] = useState(1);
-
-  const { filters, setFilter, clearFilters } = useFilterStore();
+  const { filters, setFilters, clearFilters } = useFilterStore();
+  // The search text lives in the filter store so the list and the map share it.
+  const search = filters.search ?? '';
+  const setSearch = (text: string) => setFilters({ search: text || undefined });
   const toggleLike = useToggleLike();
+  const query = toAnnounceQuery(filters);
+
+  // Back to page 1 whenever the search or a filter changes.
+  const queryKey = JSON.stringify(query);
+  const [pageState, setPageState] = useState({ key: queryKey, page: 1 });
+  const page = pageState.key === queryKey ? pageState.page : 1;
+
+  const { data, isLoading, isFetching, isError, refetch } = useAnnounces({ ...query, page });
   const toast = useToast();
   const accessToken = useAuthStore((s) => s.accessToken);
   const createAlert = useCreateAlert();
   const lastLoggedKey = useRef<string | null>(null);
-
-  // Land-only filters must not leak into real-estate / furniture searches.
-  const { size_min, size_max, land_use, land_title, ...commonFilters } = filters;
-  const queryFilters =
-    announceType === 'land' ? { ...commonFilters, size_min, size_max, land_use, land_title } : commonFilters;
-
-  const { data, isLoading, isFetching, refetch } = useAnnounces({
-    ...queryFilters,
-    type: announceType,
-    ad_type: adType,
-    search: search.trim() || undefined,
-    page,
-  });
+  const [refreshing, setRefreshing] = useState(false);
 
   const announces = data?.data ?? [];
   const total = data?.meta.total ?? 0;
   const hasMore = data ? data.meta.current_page < data.meta.last_page : false;
+  const chips = activeFilters(filters);
+  const announceType = query.type ?? 'realestate';
 
   // Record the search (type, text, filters, result count) once the user has
   // stopped typing and the results are in, so admins can see what people look
   // for. Skipped for pagination and never blocks the UI.
   useEffect(() => {
     if (!data || isFetching || page !== 1) return;
-    const key = JSON.stringify([announceType, adType, search.trim(), filters]);
-    if (key === lastLoggedKey.current) return;
+    if (queryKey === lastLoggedKey.current) return;
     const timer = setTimeout(() => {
-      lastLoggedKey.current = key;
+      lastLoggedKey.current = queryKey;
+      const { page: _page, ...logged } = query;
       void SearchHistoryService.log({
         type: announceType,
-        search_text: search.trim() || undefined,
-        filters: { ...filters, search: search.trim() || undefined, ad_type: adType },
+        search_text: query.search,
+        filters: logged,
         results_count: total,
       });
     }, 1500);
     return () => clearTimeout(timer);
-  }, [data, isFetching, page, announceType, adType, search, filters, total]);
+  }, [data, isFetching, page, queryKey, query, announceType, total]);
 
   function handleCreateAlert() {
     if (!accessToken) {
@@ -87,188 +81,134 @@ export default function ExploreScreen() {
       return;
     }
     if (announceType === 'land') return;
+    const text = search.trim();
     createAlert.mutate(
       {
         requestType: announceType,
-        description: search.trim() ? `Recherche à ${search.trim()}` : 'Alerte de recherche',
-        filters: announceFiltersToAlertFilters(filters, { search, ad_type: adType }),
+        description: text ? `Recherche à ${text}` : 'Alerte de recherche',
+        filters: announceFiltersToAlertFilters(query, { search: text, ad_type: query.ad_type }),
       },
       {
         onSuccess: () =>
-          toast.show('Votre alerte est active. Nous vous préviendrons dès qu\'une annonce correspondra.', 'success'),
+          toast.show("Votre alerte est active. Nous vous préviendrons dès qu'une annonce correspondra.", 'success'),
         onError: (err) => toast.show(getApiErrorMessage(err, "Impossible de créer l'alerte pour le moment."), 'error'),
       }
     );
   }
 
-  function handleFilterPress() {
-    router.push('/(modals)/filter-sheet');
+  async function onRefresh() {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }
+
+  function resetAll() {
+    clearFilters();
+  }
+
+  let empty = null;
+  if (isLoading) {
+    empty = (
+      <View accessible accessibilityLabel="Chargement des annonces…" accessibilityState={{ busy: true }} style={{ gap: Spacing.ms }}>
+        {[1, 2, 3, 4].map((k) => (
+          <ListingCardSkeleton key={k} variant="compact" />
+        ))}
+      </View>
+    );
+  } else if (isError) {
+    empty = <ErrorState title="Impossible de charger les annonces" onRetry={() => refetch()} />;
+  } else {
+    empty = (
+      <View style={{ gap: Spacing.md }}>
+        <EmptyState
+          icon="search-off"
+          title="Aucune annonce ne correspond à vos critères"
+          description={chips.length || search.trim() ? 'Retirez un filtre ou modifiez votre recherche.' : undefined}
+          actionLabel={chips.length || search.trim() ? 'Réinitialiser les filtres' : undefined}
+          onAction={resetAll}
+        />
+        {announceType !== 'land' ? (
+          <View style={{ gap: Spacing.sm, paddingHorizontal: Spacing.md }}>
+            <Button
+              label="Créer une alerte"
+              icon="add-alert"
+              loading={createAlert.isPending}
+              onPress={handleCreateAlert}
+              style={{ alignSelf: 'center' }}
+            />
+            <AppText variant="caption" color="onSurfaceVariant" style={{ textAlign: 'center' }}>
+              {"Vous serez averti par email et dans Domilix lorsqu'une nouvelle annonce correspondra à ces critères, tant que l'alerte restera active."}
+            </AppText>
+          </View>
+        ) : null}
+      </View>
+    );
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: C.background }]}>
-      {/* Header controls */}
-      <View style={[styles.controls, { backgroundColor: C.surface, borderBottomColor: C.outlineVariant }]}>
-        <SearchBar
-          value={search}
-          onChangeText={setSearch}
-          onFilterPress={handleFilterPress}
-          placeholder="Où souhaitez-vous habiter ?"
+    <Screen
+      scroll={false}
+      bottomInset={false}
+      header={
+        <ExploreHeader
+          mode="list"
+          search={search}
+          onSearchChange={setSearch}
+          chips={chips}
+          onRemoveChip={(c) => setFilters(c.remove(filters))}
+          onModeChange={() => router.push('/(tabs)/explore/map')}
         />
-
-        <View style={styles.toggleRow}>
-          <SegmentedButtons
-            style={styles.segmented}
-            value={announceType}
-            onValueChange={(v) => { setAnnounceType(v as AnnounceType); setPage(1); }}
-            theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
-            buttons={[
-              { value: 'realestate', label: 'Immobilier' },
-              { value: 'furniture', label: 'Mobilier' },
-              { value: 'land', label: 'Terrain' },
-            ]}
-          />
-          {announceType !== 'furniture' && (
-            <SegmentedButtons
-              style={styles.segmented}
-              value={adType}
-              onValueChange={(v) => { setAdType(v as AdType); setPage(1); }}
-              theme={{ colors: { secondaryContainer: C.primary, onSecondaryContainer: C.onPrimary } }}
-              buttons={[
-                { value: 'location', label: 'Location' },
-                { value: 'sale', label: 'Vente' },
-              ]}
-            />
-          )}
-        </View>
-
-        <FilterBar
-          filters={filters}
-          onRemove={(key) => setFilter(key, undefined)}
-        />
-      </View>
-
+      }
+      contentStyle={{ paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }}
+    >
       <FlatList
-        data={isLoading ? [] : announces}
-        keyExtractor={(a) => a.id}
-        numColumns={1}
+        data={isLoading || isError ? [] : announces}
+        keyExtractor={(a) => String(a.id)}
         renderItem={({ item }) => (
-          <ListingCard
+          <AnnounceCard
+            variant="compact"
             announce={item}
             onPress={() => router.push(`/announces/${item.id}`)}
-            onLike={(id) => toggleLike.mutate(id)}
-            imageHeight={200}
+            onToggleFavorite={(id) => toggleLike.mutate(id)}
           />
         )}
         ListHeaderComponent={
-          <View style={styles.listHeader}>
-            {isLoading ? (
-              <ActivityIndicator />
-            ) : (
-              <ResultsCount count={total} query={search.trim() || undefined} />
-            )}
-          </View>
-        }
-        ListEmptyComponent={
-          isLoading ? (
-            <View style={styles.skeletons}>
-              {[1, 2, 3].map((k) => <ListingSkeleton key={k} />)}
+          !isLoading && !isError && announces.length > 0 ? (
+            <View style={{ paddingBottom: Spacing.xs }}>
+              <ResultsCount count={total} query={search.trim() || undefined} city={cityLabel(filters)} />
             </View>
-          ) : (
-            <View style={styles.empty}>
-              <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, textAlign: 'center' }]}>
-                Aucune annonce ne correspond à vos critères.
-              </Text>
-              <Button mode="text" onPress={clearFilters}>
-                Réinitialiser les filtres
-              </Button>
-              {announceType !== 'land' && (
-                <View style={styles.alertBox}>
-                  <Button
-                    mode="contained"
-                    icon="bell-plus-outline"
-                    onPress={handleCreateAlert}
-                    loading={createAlert.isPending}
-                    disabled={createAlert.isPending}
-                  >
-                    Créer une alerte
-                  </Button>
-                  <Text style={[Typography.caption, { color: C.onSurfaceVariant, textAlign: 'center', lineHeight: 18 }]}>
-                    Vous serez averti par email et dans Domilix lorsqu&apos;une nouvelle annonce correspondra à ces critères,
-                    tant que l&apos;alerte restera active.
-                  </Text>
-                </View>
-              )}
-            </View>
-          )
+          ) : null
         }
+        ListEmptyComponent={empty}
         ListFooterComponent={
           hasMore && !isLoading ? (
             <Button
-              mode="outlined"
-              onPress={() => setPage((p) => p + 1)}
-              style={styles.loadMore}
-            >
-              Charger plus
-            </Button>
+              label="Charger plus"
+              variant="secondary"
+              onPress={() => setPageState({ key: queryKey, page: page + 1 })}
+              style={{ marginTop: Spacing.md, alignSelf: 'center' }}
+            />
           ) : null
         }
-        ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
-        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={() => <View style={{ height: Spacing.ms }} />}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: Spacing.marginMobile,
+          paddingTop: Spacing.ms,
+          paddingBottom: Spacing.xl,
+        }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
-            refreshing={isFetching && !isLoading}
-            onRefresh={refetch}
-            tintColor={C.primary}
-            colors={[C.primary]}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[C.primaryContainer]}
+            progressBackgroundColor={C.surfaceContainerLowest}
+            tintColor={C.primaryContainer}
           />
         }
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  controls: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
-    borderBottomWidth: 1,
-    gap: Spacing.sm,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  segmented: {
-    alignSelf: 'flex-start',
-  },
-  listHeader: {
-    paddingBottom: Spacing.sm,
-  },
-  list: {
-    paddingHorizontal: Spacing.marginMobile,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xxl,
-  },
-  skeletons: {
-    gap: Spacing.md,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingTop: Spacing.xxl,
-    gap: Spacing.md,
-  },
-  loadMore: {
-    marginTop: Spacing.lg,
-  },
-  alertBox: {
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-  },
-});

@@ -133,7 +133,7 @@ export default function BecomeAnnouncerScreen() {
             <>
               <View style={[styles.banner, { backgroundColor: '#ecfdf5', borderColor: '#6ee7b7' }]}>
                 <MaterialIcons name="check-circle" size={22} color="#047857" />
-                <Text style={[Typography.bodyMd, { color: '#047857', fontFamily: 'PlusJakartaSans_700Bold' }]}>
+                <Text style={[Typography.bodyMd, { color: '#047857', fontFamily: 'MonaSans_700Bold' }]}>
                   Compte annonceur actif
                 </Text>
               </View>

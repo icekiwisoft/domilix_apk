@@ -1,30 +1,42 @@
+import { isAxiosError } from 'axios';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Button, ProgressBar, TextInput } from 'react-native-paper';
-import { CreateStepHeader } from '@/components/forms/create-step-header';
-import { ChoiceChip, SectionLabel, StepTitle, WizardFooter, wizardStyles } from '@/components/forms/create-step-parts';
+import { View } from 'react-native';
+
+import { deviseLabel } from '@/components/forms/listing-options';
+import { ListingRecap } from '@/components/forms/listing-recap';
 import { OptionPickerDialog } from '@/components/forms/option-picker-dialog';
+import { CREATE_STEPS, CREATE_TITLE, StepFooter, StepIntro } from '@/components/forms/step-layout';
+import {
+  AppText,
+  Banner,
+  Button,
+  ChipGroup,
+  Field,
+  ProgressBar,
+  Screen,
+  StepHeader,
+  useToast,
+} from '@/components/ui';
 import { CURRENCY_OPTIONS, PERIOD_OPTIONS, currencyLabel } from '@/constants/listing';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Spacing } from '@/constants/theme';
 import { useCreateAnnounce, type UploadProgress } from '@/hooks/queries/use-announces';
 import { getApiErrorMessage } from '@/lib/api-error';
+import { digitsOnly } from '@/lib/digits';
+import { isNetworkError } from '@/lib/network-error';
 import { useCreateListingStore } from '@/stores/create-listing.store';
 
-const TYPE_LABEL = { realestate: 'Immobilier', land: 'Terrain', furniture: 'Mobilier' } as const;
-const TYPE_ICON = { realestate: 'home-work', land: 'square-foot', furniture: 'chair' } as const;
-
 export default function CreateStep4Screen() {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
+  const router = useRouter();
+  const toast = useToast();
   const { draft, setDraft, resetDraft } = useCreateListingStore();
   const createAnnounce = useCreateAnnounce();
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
-  const [error, setError] = useState('');
+  // 403 from POST /announces: not an announcer, or no publication left in
+  // the packs (backend ensureAnnouncerUser / assertCanPublish). The server's
+  // message is shown as is, with the way to the packs.
+  const [refusal, setRefusal] = useState<string | null>(null);
 
   const isLocation = draft.ad_type === 'location';
   const canPublish =
@@ -34,10 +46,11 @@ export default function CreateStep4Screen() {
     (draft.type !== 'land' || Number(draft.size) > 0) &&
     (!isLocation || !!draft.period);
   const publishing = createAnnounce.isPending;
+  const periodLabel = PERIOD_OPTIONS.find((p) => p.value === draft.period)?.label.toLowerCase();
 
   function handlePublish() {
     if (!canPublish || publishing) return;
-    setError('');
+    setRefusal(null);
     createAnnounce.mutate(
       { draft, onProgress: setProgress },
       {
@@ -45,155 +58,157 @@ export default function CreateStep4Screen() {
           resetDraft();
           router.replace('/profile/my-listings');
         },
-        onError: (e) => {
+        // The draft is kept: the user can publish again once the cause is fixed.
+        onError: (error) => {
           setProgress(null);
-          setError(getApiErrorMessage(e, "Impossible de publier l'annonce. Vérifiez votre connexion et réessayez."));
+          const status = isAxiosError(error) ? error.response?.status : undefined;
+          if (status === 401) {
+            router.push({ pathname: '/(auth)/login', params: { redirect: '/announces/create/step-4' } });
+            return;
+          }
+          if (status === 403) {
+            const message = getApiErrorMessage(
+              error,
+              "Votre compte ne permet pas de publier cette annonce pour l'instant."
+            );
+            // The toast is seen wherever the page is scrolled; the banner keeps
+            // the message and the link to the packs.
+            toast.show(message, 'error');
+            setRefusal(message);
+            return;
+          }
+          toast.show(
+            isNetworkError(error)
+              ? "Pas de connexion internet. Votre annonce n'a pas été publiée, réessayez."
+              : getApiErrorMessage(error, "L'annonce n'a pas pu être publiée. Réessayez dans un instant."),
+            'error'
+          );
         },
       }
     );
   }
 
-  const place = draft.city || draft.neighbourhood || draft.address;
-
   return (
-    <SafeAreaView style={[wizardStyles.safe, { backgroundColor: C.background }]}>
-      <CreateStepHeader step={4} total={4} onBack={() => router.back()} />
-
-      <ScrollView
-        contentContainerStyle={wizardStyles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <StepTitle title="Prix & description" subtitle="Dernière étape avant la publication de votre annonce." />
-
-        <TextInput
-          mode="outlined"
-          label="Description"
-          placeholder="Décrivez votre bien..."
-          value={draft.description}
-          onChangeText={(description) => setDraft({ description })}
-          multiline
-          numberOfLines={5}
-          style={styles.textArea}
+    <Screen
+      keyboard
+      header={<StepHeader title={CREATE_TITLE} step={4} total={CREATE_STEPS} onBack={() => router.back()} />}
+      footer={
+        <StepFooter
+          onPrevious={() => router.back()}
+          label={publishing ? (progress ? `Envoi ${progress.percent} %` : 'Publication…') : "Publier l'annonce"}
+          icon="publish"
+          onNext={handlePublish}
+          disabled={!canPublish}
+          loading={publishing}
+          hint={
+            isLocation
+              ? 'Indiquez une description, un prix et une période de paiement pour publier.'
+              : 'Indiquez une description et un prix pour publier.'
+          }
         />
+      }
+      contentStyle={{ gap: Spacing.lg }}
+    >
+      <StepIntro title="Prix & description" description="Dernière étape avant la publication de votre annonce." />
 
-        <View style={styles.block}>
-          <TextInput
-            mode="outlined"
-            label="Téléphone à afficher"
-            placeholder="Optionnel, sinon téléphone pro"
-            value={draft.contact_phone}
-            onChangeText={(contact_phone) => setDraft({ contact_phone })}
-            keyboardType="phone-pad"
-          />
-          <TextInput
-            mode="outlined"
-            label="Email à afficher"
-            placeholder="Optionnel, sinon email du profil"
-            value={draft.contact_email}
-            onChangeText={(contact_email) => setDraft({ contact_email })}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
-
-        <View style={styles.block}>
-          <SectionLabel>{isLocation ? 'Prix de location' : 'Prix de vente'}</SectionLabel>
-          <View style={wizardStyles.row}>
-            <TextInput
-              mode="outlined"
-              label={isLocation ? 'Montant par période' : 'Prix total'}
-              value={draft.price}
-              onChangeText={(t) => setDraft({ price: t.replace(/[^0-9.]/g, '') })}
-              keyboardType="decimal-pad"
-              style={styles.price}
-            />
+      {refusal ? (
+        <Banner
+          tone="error"
+          action={
             <Button
-              mode="outlined"
-              icon="chevron-down"
-              contentStyle={styles.currencyContent}
-              style={styles.currency}
-              onPress={() => setCurrencyOpen(true)}
-              accessibilityLabel={`Devise : ${currencyLabel(draft.devise)}`}
-            >
-              {draft.devise}
-            </Button>
-          </View>
-        </View>
+              variant="text"
+              icon="toll"
+              label="Voir les packs Domicoin"
+              onPress={() => router.push('/profile/subscriptions')}
+              style={{ alignSelf: 'flex-start' }}
+            />
+          }
+        >
+          {refusal}
+        </Banner>
+      ) : null}
 
-        {isLocation && (
-          <View>
-            <SectionLabel>Période de paiement</SectionLabel>
-            <View style={wizardStyles.wrap}>
-              {PERIOD_OPTIONS.map((opt) => (
-                <ChoiceChip
-                  key={opt.value}
-                  label={opt.label}
-                  active={draft.period === opt.value}
-                  onPress={() => setDraft({ period: opt.value })}
-                />
-              ))}
-            </View>
-          </View>
-        )}
-
-        <View style={[styles.recap, { backgroundColor: C.primaryContainer + '1A', borderColor: C.primaryContainer + '33' }]}>
-          <Text style={[Typography.labelSm, { color: C.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
-            Récapitulatif
-          </Text>
-          <View style={styles.recapRow}>
-            <MaterialIcons name={TYPE_ICON[draft.type]} size={16} color={C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-              {TYPE_LABEL[draft.type]} · {isLocation ? 'Location' : 'Vente'}
-            </Text>
-          </View>
-          <View style={styles.recapRow}>
-            <MaterialIcons name="photo-library" size={16} color={C.primary} />
-            <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-              {draft.medias.length} média{draft.medias.length > 1 ? 's' : ''}
-            </Text>
-          </View>
-          {!!draft.price && (
-            <View style={styles.recapRow}>
-              <MaterialIcons name="payments" size={16} color={C.primary} />
-              <Text style={[Typography.bodyMd, { color: C.onSurface }]}>
-                {Number(draft.price).toLocaleString('fr-FR')} {draft.devise}
-                {isLocation ? ` / ${PERIOD_OPTIONS.find((p) => p.value === draft.period)?.label.toLowerCase() ?? ''}` : ''}
-              </Text>
-            </View>
-          )}
-          {!!place && (
-            <View style={styles.recapRow}>
-              <MaterialIcons name="place" size={16} color={C.primary} />
-              <Text style={[Typography.bodyMd, { color: C.onSurface, flex: 1 }]}>{place}</Text>
-            </View>
-          )}
-        </View>
-
-        {progress && publishing && (
-          <View style={[styles.progress, { backgroundColor: C.primaryContainer + '1A', borderColor: C.primaryContainer + '33' }]}>
-            <View style={styles.progressHead}>
-              <Text numberOfLines={1} style={[Typography.caption, { color: C.onSurface, flex: 1 }]}>
-                {`Upload ${progress.current}/${progress.total} · ${progress.fileName}`}
-              </Text>
-              <Text style={[Typography.caption, { color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }]}>
-                {progress.percent}%
-              </Text>
-            </View>
-            <ProgressBar progress={progress.percent / 100} color={C.primary} />
-          </View>
-        )}
-      </ScrollView>
-
-      <WizardFooter
-        label={publishing ? (progress ? `${progress.percent}%` : 'Publication…') : "Publier l'annonce"}
-        icon="rocket-launch"
-        disabled={!canPublish}
-        loading={publishing}
-        onPress={handlePublish}
-        error={error}
+      <Field
+        label="Description"
+        value={draft.description}
+        onChangeText={(description) => setDraft({ description })}
+        placeholder="Décrivez votre bien : état, atouts, équipements..."
+        multiline
+        numberOfLines={5}
       />
+
+      <Field
+        label="Téléphone à afficher"
+        labelHint="(facultatif)"
+        helper="Sinon, le téléphone de votre profil annonceur."
+        value={draft.contact_phone}
+        onChangeText={(contact_phone) => setDraft({ contact_phone })}
+        keyboardType="phone-pad"
+        autoComplete="tel"
+      />
+      <Field
+        label="Email à afficher"
+        labelHint="(facultatif)"
+        helper="Sinon, l'email de votre profil."
+        value={draft.contact_email}
+        onChangeText={(contact_email) => setDraft({ contact_email })}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="email"
+      />
+
+      <View style={{ gap: Spacing.sm }}>
+        <Field
+          label={isLocation ? 'Prix de location' : 'Prix de vente'}
+          labelHint={isLocation ? '(par période)' : undefined}
+          value={draft.price}
+          onChangeText={(t) => setDraft({ price: digitsOnly(t) })}
+          keyboardType="number-pad"
+          suffix={deviseLabel(draft.devise)}
+        />
+        <Button
+          variant="secondary"
+          icon="expand-more"
+          label={`Devise : ${currencyLabel(draft.devise)}`}
+          onPress={() => setCurrencyOpen(true)}
+          style={{ alignSelf: 'flex-start' }}
+        />
+      </View>
+
+      {isLocation ? (
+        <View style={{ gap: Spacing.sm }}>
+          <AppText variant="bodyStrong" accessibilityRole="header">
+            Période de paiement
+          </AppText>
+          <ChipGroup
+            label="Période de paiement"
+            options={PERIOD_OPTIONS}
+            value={draft.period || null}
+            onChange={(period) => setDraft({ period })}
+          />
+        </View>
+      ) : null}
+
+      <ListingRecap
+        type={draft.type}
+        adType={draft.ad_type}
+        photos={`${draft.medias.length} média${draft.medias.length > 1 ? 's' : ''}`}
+        price={draft.price}
+        devise={draft.devise}
+        period={isLocation ? periodLabel : undefined}
+        address={draft.address || draft.neighbourhood}
+        city={draft.city}
+      />
+
+      {progress && publishing ? (
+        <View style={{ gap: Spacing.sm }} accessibilityLiveRegion="polite">
+          <AppText variant="caption" numberOfLines={1}>
+            {`Envoi ${progress.current}/${progress.total} · ${progress.fileName} · ${progress.percent} %`}
+          </AppText>
+          <ProgressBar value={progress.percent / 100} label="Envoi des médias" />
+        </View>
+      ) : null}
 
       <OptionPickerDialog
         visible={currencyOpen}
@@ -203,28 +218,6 @@ export default function CreateStep4Screen() {
         onSelect={(devise) => setDraft({ devise })}
         onDismiss={() => setCurrencyOpen(false)}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  block: { gap: Spacing.md },
-  textArea: { minHeight: 110 },
-  price: { flex: 1 },
-  currency: { alignSelf: 'center', marginTop: 6, borderRadius: Radius.md },
-  currencyContent: { flexDirection: 'row-reverse', height: 52 },
-  recap: {
-    padding: Spacing.lg,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    gap: Spacing.xs,
-  },
-  recapRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  progress: {
-    gap: Spacing.sm,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  progressHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-});

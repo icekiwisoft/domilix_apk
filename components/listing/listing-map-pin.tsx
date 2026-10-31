@@ -1,84 +1,48 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { Colors, Radius, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { View } from 'react-native';
+
+import { AppText } from '@/components/ui';
+import { Borders, Radii, Shadows, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
 interface ListingMapPinProps {
   price: number;
-  devise: string;
   selected?: boolean;
 }
 
-function formatShort(price: number): string {
-  if (price >= 1_000_000_000) return `${(price / 1_000_000_000).toFixed(1)}Md`;
-  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(0)}M`;
-  if (price >= 1_000) return `${(price / 1_000).toFixed(0)}k`;
+/** "250k", "90 M": the full price is on the preview card and in the TalkBack label. */
+export function shortPrice(price: number): string {
+  if (price >= 1_000_000_000) return `${(price / 1_000_000_000).toFixed(1).replace('.0', '').replace('.', ',')} Md`;
+  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(1).replace('.0', '').replace('.', ',')} M`;
+  if (price >= 1_000) return `${Math.round(price / 1_000)}k`;
   return String(price);
 }
 
-export function ListingMapPin({ price, devise, selected = false }: ListingMapPinProps) {
-  const scheme = useColorScheme();
-  const C = Colors[scheme ?? 'light'];
-  const currency = devise === 'XAF' ? 'FCFA' : devise;
-
+/**
+ * Price marker of the map (mock-up "Carte"): a pill with a ring, inverted
+ * when selected so the selection shows by more than a hue. Contrast:
+ * onSurface on surfaceContainerLowest 17:1, inverseOnSurface on inverseSurface 12:1.
+ */
+export function ListingMapPin({ price, selected = false }: ListingMapPinProps) {
+  const C = useThemeColors();
   return (
-    <View style={styles.wrapper}>
-      <View
-        style={[
-          styles.pin,
-          {
-            backgroundColor: selected ? C.primary : C.surface,
-            borderColor: selected ? C.primary : C.outlineVariant,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            Typography.caption,
-            styles.label,
-            { color: selected ? C.onPrimary : C.primary, fontFamily: 'PlusJakartaSans_700Bold' },
-          ]}
-        >
-          {formatShort(price)} {currency}
-        </Text>
-      </View>
-      {/* Tail */}
-      <View
-        style={[
-          styles.tail,
-          { borderTopColor: selected ? C.primary : C.outlineVariant },
-        ]}
-      />
+    <View
+      style={[
+        {
+          paddingHorizontal: Spacing.ms,
+          paddingVertical: Spacing.xs,
+          borderRadius: Radii.full,
+          borderWidth: Borders.focus,
+          borderColor: selected ? C.inverseOnSurface : C.surfaceContainerLowest,
+          backgroundColor: selected ? C.inverseSurface : C.surfaceContainerLowest,
+          // Room for the shadow inside the marker snapshot.
+          margin: Spacing.xs,
+        },
+        Shadows.xs,
+      ]}
+    >
+      <AppText variant="label" color={selected ? 'inverseOnSurface' : 'onSurface'}>
+        {shortPrice(price)}
+      </AppText>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    alignItems: 'center',
-  },
-  pin: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
-    borderWidth: 1.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  label: {
-    fontSize: 11,
-    lineHeight: 14,
-  },
-  tail: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 5,
-    borderRightWidth: 5,
-    borderTopWidth: 6,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    marginTop: -1,
-  },
-});

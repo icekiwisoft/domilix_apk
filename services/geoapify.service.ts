@@ -39,11 +39,42 @@ interface GeoapifyResponse {
   }[];
 }
 
+/**
+ * Typed failure so screens can tell the causes apart. Every message ends by
+ * pointing to manual entry, which always stays possible.
+ */
+export type GeoapifyErrorKind = 'missing_key' | 'network' | 'quota' | 'not_found' | 'unavailable';
+
+export class GeoapifyError extends Error {
+  readonly kind: GeoapifyErrorKind;
+
+  constructor(kind: GeoapifyErrorKind, message: string) {
+    super(message);
+    this.name = 'GeoapifyError';
+    this.kind = kind;
+  }
+}
+
+const MESSAGES: Record<GeoapifyErrorKind, string> = {
+  missing_key:
+    "La recherche d'adresse n'est pas disponible dans cette version de l'application. Saisissez l'adresse manuellement.",
+  network:
+    "Pas de connexion internet. Vérifiez votre réseau ou saisissez l'adresse manuellement.",
+  quota:
+    "Le service d'adresses est momentanément saturé. Réessayez plus tard ou saisissez l'adresse manuellement.",
+  not_found:
+    "Aucune adresse n'a été trouvée pour cette position. Saisissez l'adresse manuellement.",
+  unavailable:
+    "La recherche d'adresse est indisponible. Réessayez dans un instant ou saisissez l'adresse manuellement.",
+};
+
+function geoapifyError(kind: GeoapifyErrorKind) {
+  return new GeoapifyError(kind, MESSAGES[kind]);
+}
+
 function getApiKey() {
   const apiKey = process.env.EXPO_PUBLIC_GEOAPIFY_API_KEY;
-  if (!apiKey) {
-    throw new Error('La clé Geoapify est absente de la configuration de l’application.');
-  }
+  if (!apiKey) throw geoapifyError('missing_key');
   return apiKey;
 }
 
@@ -86,12 +117,28 @@ async function request(path: string, params: Record<string, string | number>, si
     apiKey: getApiKey(),
   }).toString();
 
-  const response = await fetch(url.toString(), { signal });
-  if (!response.ok) {
-    throw new Error('La recherche d’adresse est indisponible. Réessayez dans un instant.');
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), { signal });
+  } catch (err) {
+    // Cancellation (new keystroke, unmount) is not a failure to report.
+    if (signal?.aborted) throw err;
+    throw geoapifyError('network');
   }
+  if (response.status === 429) throw geoapifyError('quota');
+  // Geoapify answers 401/403 to an invalid, revoked or restricted key:
+  // retrying cannot help, it is the same case as a key missing from the build.
+  if (response.status === 401 || response.status === 403) throw geoapifyError('missing_key');
+  if (!response.ok) throw geoapifyError('unavailable');
 
-  return response.json() as Promise<GeoapifyResponse>;
+  try {
+    return (await response.json()) as GeoapifyResponse;
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    // A truncated or non-JSON body (proxy page, captive portal) must not
+    // surface as a raw SyntaxError.
+    throw geoapifyError('unavailable');
+  }
 }
 
 export const GeoapifyService = {
@@ -115,9 +162,7 @@ export const GeoapifyService = {
     );
 
     const suggestion = response.features?.map(toSuggestion).find((item) => item !== null);
-    if (!suggestion) {
-      throw new Error('Aucune adresse n’a été trouvée pour cette position.');
-    }
+    if (!suggestion) throw geoapifyError('not_found');
     return suggestion;
   },
 };

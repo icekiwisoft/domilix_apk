@@ -1,34 +1,63 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Keyboard,
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
 } from 'react-native';
-import { Button, IconButton } from 'react-native-paper';
+import { Button } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
+import { AuthBanner } from '@/components/auth/auth-banner';
+import { AuthDivider } from '@/components/auth/auth-divider';
+import { AuthField } from '@/components/auth/auth-field';
 import { GoogleSignInButton } from '@/components/auth/google-signin-button';
-import { Input } from '@/components/ui/input';
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { goAfterAuth } from '@/components/auth/go-after-auth';
+import { useKeyboardReveal } from '@/components/auth/use-keyboard-reveal';
+import { Colors, Fonts, Radius, Sizes, Spacing, Typography } from '@/constants/theme';
 import { useLogin } from '@/hooks/queries/use-auth-queries';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { loginSchema, resolveLoginDto, type LoginFormValues } from '@/lib/validators/auth.schema';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
+  // The full example no longer fits on one line from about 130 % font size.
+  const { fontScale } = useWindowDimensions();
+  // Content height and the banner height it was measured with.
+  const [content, setContent] = useState<{ height: number; banner: number }>({ height: 0, banner: Sizes.authBannerTall });
+  // Scroll view height with the keyboard closed (0 until laid out).
+  const [viewportHeight, setViewportHeight] = useState(0);
+  // QA-07: on a 1080×2400 phone at 100 % the screen was ~45 dp taller than the
+  // window, so "Explorer les annonces sans compte" rested under the gesture
+  // bar. The banner gives up that height so the whole form, footer and bottom
+  // inset fit; past that the screen scrolls. The floor is below the sign-up
+  // banner size because the "session expirée" notice adds ~31 dp, which the
+  // 148 dp floor could not absorb (footer link still on the gesture bar).
+  const overflowAtTall = content.height - content.banner + Sizes.authBannerTall - viewportHeight;
+  const bannerHeight: number =
+    content.height && viewportHeight
+      ? Math.min(Sizes.authBannerTall, Math.max(Sizes.authBannerMin, Sizes.authBannerTall - overflowAtTall))
+      : Sizes.authBannerTall;
+  const { scrollRef, targetRef, onScroll, onLayout, revealOnFocus, pastBanner } = useKeyboardReveal(bannerHeight);
   const scheme = useColorScheme();
   const C = Colors[scheme ?? 'light'];
+  const router = useRouter();
   const [showPwd, setShowPwd] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
   const login = useLogin();
-  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const { redirect, reason } = useLocalSearchParams<{ redirect?: string; reason?: string }>();
+  // Set by AuthProvider when the server refused the session (B-05).
+  const sessionExpired = reason === 'session-expired';
 
   const {
     control,
@@ -42,149 +71,198 @@ export default function LoginScreen() {
   function onSubmit(data: LoginFormValues) {
     login.mutate(
       resolveLoginDto(data.identifier.trim(), data.password),
-      { onSuccess: () => redirect ? router.replace(redirect as never) : router.replace('/(tabs)') }
+      { onSuccess: () => goAfterAuth(router, redirect, !sessionExpired) }
     );
   }
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: C.surface }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      // 'padding' on Android too: with edge-to-edge the window is not resized, and
+      // 'height' left a blank band at the bottom after the keyboard closed.
+      behavior="padding"
     >
       <ScrollView
-        contentContainerStyle={[
-          styles.scroll,
-          { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl },
-        ]}
+        ref={scrollRef}
+        onScroll={onScroll}
+        onLayout={(e) => {
+          onLayout();
+          if (!Keyboard.isVisible()) setViewportHeight(e.nativeEvent.layout.height);
+        }}
+        onContentSizeChange={(_w, h) => {
+          // With the keyboard open the content shrinks with the viewport; keep
+          // the banner as it was instead of resizing it while typing.
+          if (!Keyboard.isVisible()) setContent({ height: h, banner: bannerHeight });
+        }}
+        scrollEventThrottle={16}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + Spacing.sm }]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Back */}
-        {router.canGoBack() && (
-          <IconButton
-            icon="arrow-left"
-            mode="outlined"
-            size={22}
-            onPress={() => router.back()}
-            accessibilityLabel="Retour"
-            style={styles.backBtn}
-          />
-        )}
+        <AuthBanner
+          height={bannerHeight}
+          focusY="28%"
+          onBack={router.canGoBack() ? () => router.back() : undefined}
+        />
 
-        {/* Headline */}
-        <View style={styles.header}>
-          <Text style={[Typography.headlineLg, { color: C.primary }]}>Se connecter</Text>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant, marginTop: Spacing.xs }]}>
-            Bon retour parmi nous.
-          </Text>
-        </View>
+        <View style={styles.body}>
+          <View style={styles.header}>
+            <Text style={[Typography.titleLg, { color: C.onSurface }]} accessibilityRole="header">
+              Logements, terrains et meubles au Cameroun
+            </Text>
+            <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
+              Connectez-vous pour contacter les annonceurs et retrouver vos favoris.
+            </Text>
+          </View>
 
-        {/* Form */}
-        <View style={styles.form}>
-          {/* Identifiant */}
-          <Controller
-            control={control}
-            name="identifier"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Email ou numéro de téléphone"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="email@exemple.com ou +237 6XX XXX XXX"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                error={errors.identifier?.message}
-                leftElement={
-                  <MaterialIcons name="person-outline" size={20} color={C.onSurfaceVariant} />
-                }
-              />
-            )}
-          />
-
-          {/* Mot de passe */}
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Mot de passe"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry={!showPwd}
-                error={errors.password?.message}
-                leftElement={
-                  <MaterialIcons name="lock-outline" size={20} color={C.onSurfaceVariant} />
-                }
-                rightElement={
-                  <Pressable
-                    onPress={() => setShowPwd((v) => !v)}
-                    hitSlop={12}
-                    accessibilityRole="button"
-                    accessibilityLabel={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                  >
-                    <MaterialIcons
-                      name={showPwd ? 'visibility' : 'visibility-off'}
-                      size={22}
-                      color={C.onSurfaceVariant}
-                    />
-                  </Pressable>
-                }
-              />
-            )}
-          />
-
-          {/* Mot de passe oublié */}
-          <Pressable
-            onPress={() => router.push('/(auth)/forgot-password')}
-            style={styles.forgotRow}
-            accessibilityRole="link"
-          >
-            <Text style={[Typography.caption, { color: C.primary }]}>Mot de passe oublié ?</Text>
-          </Pressable>
-
-          {/* Erreur serveur */}
-          {login.error && (
-            <View style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}>
-              <MaterialIcons name="error-outline" size={16} color={C.error} />
-              <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
-                Identifiant ou mot de passe incorrect.
+          {sessionExpired && !login.error && (
+            <View
+              style={[styles.noticeBanner, { backgroundColor: C.surfaceContainerHigh, borderColor: C.outlineVariant }]}
+              accessibilityLiveRegion="polite"
+            >
+              <MaterialIcons name="info-outline" size={18} color={C.onSurface} />
+              <Text style={[Typography.bodySm, { color: C.onSurface, flex: 1 }]}>
+                Votre session a expiré, reconnectez-vous.
               </Text>
             </View>
           )}
 
-          {/* Bouton */}
-          <Button
-            mode="contained"
-            onPress={handleSubmit(onSubmit)}
-            loading={login.isPending}
-            disabled={login.isPending}
-            contentStyle={styles.submitBtnContent}
-            style={styles.submitBtn}
-          >
-            Se connecter
-          </Button>
-        </View>
+          <GoogleSignInButton redirectTo={redirect} targetBelow={!sessionExpired} />
 
-        <View style={styles.googleRow}>
-          <GoogleSignInButton redirectTo={redirect} />
-        </View>
+          <AuthDivider label="ou avec votre email ou téléphone" />
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={[Typography.bodyMd, { color: C.onSurfaceVariant }]}>
-            {'Pas encore de compte ? '}
-            <Text
-              style={{ color: C.primary, fontFamily: 'PlusJakartaSans_700Bold' }}
+          <View style={styles.form}>
+            <Controller
+              control={control}
+              name="identifier"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <AuthField
+                  label="Email ou téléphone"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  onFocus={revealOnFocus}
+                  placeholder={fontScale > 1.3 ? '6XX XXX XXX' : '+237 6XX XXX XXX ou email'}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="username"
+                  textContentType="username"
+                  returnKeyType="next"
+                  submitBehavior="submit"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  error={errors.identifier?.message}
+                  leftIcon={<MaterialIcons name="person-outline" size={20} color={C.onSurfaceVariant} />}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <AuthField
+                  ref={passwordRef}
+                  label="Mot de passe"
+                  labelAction={
+                    <Pressable
+                      onPress={() => router.push('/(auth)/forgot-password')}
+                      hitSlop={{ top: 14, bottom: 14, left: Spacing.sm, right: Spacing.sm }}
+                      accessibilityRole="link"
+                    >
+                      <Text style={[Typography.labelMd, { color: C.link }]}>Mot de passe oublié ?</Text>
+                    </Pressable>
+                  }
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  onFocus={revealOnFocus}
+                  secureTextEntry={!showPwd}
+                  autoComplete="current-password"
+                  textContentType="password"
+                  returnKeyType="go"
+                  onSubmitEditing={handleSubmit(onSubmit)}
+                  error={errors.password?.message}
+                  leftIcon={<MaterialIcons name="lock-outline" size={20} color={C.onSurfaceVariant} />}
+                  rightElement={
+                    <Pressable
+                      onPress={() => setShowPwd((v) => !v)}
+                      style={styles.iconBtn}
+                      accessibilityRole="button"
+                      accessibilityLabel={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    >
+                      <MaterialIcons
+                        name={showPwd ? 'visibility-off' : 'visibility'}
+                        size={22}
+                        color={C.onSurfaceVariant}
+                      />
+                    </Pressable>
+                  }
+                />
+              )}
+            />
+
+            {login.error && (
+              <View
+                style={[styles.errorBanner, { backgroundColor: C.errorContainer + '33', borderColor: C.error + '40' }]}
+                accessibilityLiveRegion="polite"
+              >
+                <MaterialIcons name="error-outline" size={16} color={C.error} />
+                <Text style={[Typography.caption, { color: C.error, flex: 1 }]}>
+                  Identifiant ou mot de passe incorrect.
+                </Text>
+              </View>
+            )}
+
+            <View ref={targetRef} collapsable={false}>
+              <Button
+                mode="contained"
+                onPress={handleSubmit(onSubmit)}
+                loading={login.isPending}
+                disabled={login.isPending}
+                buttonColor={C.cta}
+                textColor={C.onCta}
+                contentStyle={styles.submitContent}
+                labelStyle={styles.submitLabel}
+                style={styles.submit}
+              >
+                Se connecter
+              </Button>
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <Pressable
               onPress={() => router.push('/(auth)/register')}
+              style={styles.footerLink}
               accessibilityRole="link"
+              accessibilityLabel="Pas encore de compte ? S'inscrire"
             >
-              {"S'inscrire"}
-            </Text>
-          </Text>
+              <Text style={[Typography.bodyMd, styles.centered, { color: C.onSurfaceVariant }]}>
+                {'Pas encore de compte ? '}
+                <Text style={{ color: C.link, fontFamily: Fonts.bold }}>{"S'inscrire"}</Text>
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.replace('/(tabs)')}
+              style={styles.footerLink}
+              accessibilityRole="link"
+              accessibilityLabel="Explorer les annonces sans compte"
+            >
+              {/* Arrow inside the text so it follows the last word when the
+                  label wraps at large font sizes. */}
+              <Text style={[Typography.bodyMd, styles.centered, { color: C.onSurface, fontFamily: Fonts.semiBold }]}>
+                {'Explorer les annonces sans compte '}
+                <MaterialIcons name="arrow-forward" size={18} color={C.onSurface} />
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
+      {pastBanner && (
+        <View style={[styles.statusBand, { height: insets.top, backgroundColor: C.surface }]} />
+      )}
+      {/* Dark icons over the light photo, theme icons once the band is shown. */}
+      <StatusBar style={pastBanner && scheme === 'dark' ? 'light' : 'dark'} />
     </KeyboardAvoidingView>
   );
 }
@@ -192,25 +270,38 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.marginMobile,
   },
-  backBtn: {
-    alignSelf: 'flex-start',
-    margin: 0,
-    marginBottom: Spacing.xl,
+  statusBand: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  body: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    gap: Spacing.marginMobile,
   },
   header: {
-    marginBottom: Spacing.xl,
+    gap: Spacing.xs,
   },
   form: {
-    gap: Spacing.lg,
+    gap: Spacing.md,
   },
-  googleRow: {
-    marginTop: Spacing.xl,
+  iconBtn: {
+    width: Sizes.touchTarget,
+    height: Sizes.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  forgotRow: {
-    alignSelf: 'flex-end',
-    marginTop: -Spacing.sm,
+  noticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
   },
   errorBanner: {
     flexDirection: 'row',
@@ -220,16 +311,30 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     padding: Spacing.md,
   },
-  submitBtn: {
-    borderRadius: Radius.md,
-    marginTop: Spacing.sm,
+  submit: {
+    borderRadius: Radius.full,
+    marginTop: Spacing.xs,
   },
-  submitBtnContent: {
-    height: 50,
+  submitContent: {
+    minHeight: Sizes.control,
+  },
+  submitLabel: {
+    fontFamily: Fonts.bold,
+    fontSize: Typography.bodyMd.fontSize,
+    lineHeight: 22,
+    letterSpacing: 0,
   },
   footer: {
     marginTop: 'auto',
-    paddingTop: Spacing.xxl,
     alignItems: 'center',
+  },
+  footerLink: {
+    minHeight: Sizes.touchTarget,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  centered: {
+    textAlign: 'center',
+    flexShrink: 1,
   },
 });

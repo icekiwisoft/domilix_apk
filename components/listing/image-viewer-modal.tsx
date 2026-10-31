@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Modal, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { IconButton } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { AppText, IconButton } from '@/components/ui';
+import { Sizes, Spacing } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-color';
 
 const MAX_SCALE = 4;
 
@@ -90,10 +94,13 @@ interface ImageViewerModalProps {
   visible: boolean;
   images: string[];
   initialIndex: number;
-  onClose: () => void;
+  /** Receives the photo shown when closing, so the gallery can follow. */
+  onClose: (index: number) => void;
 }
 
 export function ImageViewerModal({ visible, images, initialIndex, onClose }: ImageViewerModalProps) {
+  const C = useThemeColors();
+  const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [index, setIndex] = useState(initialIndex);
 
@@ -104,44 +111,74 @@ export function ImageViewerModal({ visible, images, initialIndex, onClose }: Ima
   const total = images.length;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.root}>
-        <IconButton
-          icon="close"
-          iconColor="#fff"
-          size={24}
-          onPress={onClose}
-          accessibilityLabel="Fermer"
-          style={styles.closeBtn}
-        />
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => onClose(index)}
+      statusBarTranslucent
+      navigationBarTranslucent
+    >
+      <View style={{ flex: 1, backgroundColor: C.viewer, alignItems: 'center', justifyContent: 'center' }}>
+        {images[index] && <ZoomableImage uri={images[index]} width={width} height={height} />}
+
+        <View
+          style={{
+            position: 'absolute',
+            top: insets.top + Spacing.sm,
+            left: Spacing.sm,
+            right: Spacing.sm,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: Spacing.sm,
+          }}
+        >
+          <IconButton icon="close" label="Fermer" color="onViewer" background="photoBadge" onPress={() => onClose(index)} />
+          {total > 1 ? (
+            <AppText
+              variant="label"
+              color="onViewer"
+              accessibilityLiveRegion="polite"
+              accessibilityLabel={`Photo ${index + 1} sur ${total}`}
+              style={{ flex: 1, textAlign: 'center', fontVariant: ['tabular-nums'] }}
+            >
+              {`${index + 1} / ${total}`}
+            </AppText>
+          ) : null}
+          {/* Balances the close button so the counter stays centred. */}
+          {total > 1 ? <View style={{ width: Sizes.touchTarget }} /> : null}
+        </View>
 
         {total > 1 && (
-          <Text style={styles.counter}>{index + 1} / {total}</Text>
-        )}
-
-        {images[index] && (
-          <ZoomableImage uri={images[index]} width={width} height={height} />
-        )}
-
-        {total > 1 && (
-          <View style={styles.navRow} pointerEvents="box-none">
+          <View
+            pointerEvents="box-none"
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: '50%',
+              // Centred on the screen: the row is one 48 dp button tall.
+              marginTop: -Sizes.touchTarget / 2,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              paddingHorizontal: Spacing.xs,
+            }}
+          >
             <IconButton
               icon="chevron-left"
-              iconColor="#fff"
-              size={28}
+              label="Photo précédente"
+              color="onViewer"
+              background="photoBadge"
               disabled={index === 0}
               onPress={() => setIndex((i) => Math.max(0, i - 1))}
-              accessibilityLabel="Photo précédente"
-              style={[styles.navBtn, index === 0 && styles.navBtnDisabled]}
             />
             <IconButton
               icon="chevron-right"
-              iconColor="#fff"
-              size={28}
+              label="Photo suivante"
+              color="onViewer"
+              background="photoBadge"
               disabled={index === total - 1}
               onPress={() => setIndex((i) => Math.min(total - 1, i + 1))}
-              accessibilityLabel="Photo suivante"
-              style={[styles.navBtn, index === total - 1 && styles.navBtnDisabled]}
             />
           </View>
         )}
@@ -149,42 +186,3 @@ export function ImageViewerModal({ visible, images, initialIndex, onClose }: Ima
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: 48,
-    left: 8,
-    zIndex: 10,
-  },
-  counter: {
-    position: 'absolute',
-    top: 56,
-    alignSelf: 'center',
-    color: '#fff',
-    fontFamily: 'PlusJakartaSans_500Medium',
-    fontSize: 13,
-    zIndex: 10,
-  },
-  navRow: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '50%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-  },
-  navBtn: {
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  navBtnDisabled: {
-    opacity: 0.3,
-  },
-});
