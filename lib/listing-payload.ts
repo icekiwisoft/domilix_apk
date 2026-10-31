@@ -3,9 +3,22 @@ import type { CreateListingDraft } from '@/stores/create-listing.store';
 import type { AdType, Announce, AnnounceType, LandUse, Standing } from '@/types/announce';
 import type { UploadResponse } from '@/types/verification';
 
+/**
+ * Medias with the first photo moved to the front when the list starts with a
+ * video: the first media is the listing's cover (backend isPresentation) and a
+ * video has no thumbnail to show in the cards (QA-32). Order kept otherwise.
+ */
+export function coverFirst<T>(items: T[], isVideo: (item: T) => boolean): T[] {
+  if (items.length === 0 || !isVideo(items[0])) return items;
+  const photo = items.findIndex((item) => !isVideo(item));
+  if (photo < 0) return items;
+  return [items[photo], ...items.filter((_, i) => i !== photo)];
+}
+
 // Body of POST /announces, field for field the one the domilix.com publish
 // dialog sends (ArticlePostDialog.handleSubmit).
-export function buildCreatePayload(draft: CreateListingDraft, medias: UploadResponse[]) {
+export function buildCreatePayload(draft: CreateListingDraft, uploaded: UploadResponse[]) {
+  const medias = coverFirst(uploaded, (m) => m.mime_type.startsWith('video/'));
   const isManual = draft.location_source === 'manual';
   const isLand = draft.type === 'land';
   const flag = (value: boolean) => (value ? '1' : '0');

@@ -6,6 +6,7 @@ import { AppText } from '@/components/ui';
 import { MAX_MEDIAS } from '@/constants/listing';
 import { Sizes, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
+import { coverFirst } from '@/lib/listing-payload';
 import type { PickedMedia } from '@/services/uploads.service';
 
 import { AddPhotoTile, PhotoGrid, PhotoTile } from './media-upload-grid';
@@ -33,7 +34,8 @@ function toPickedMedia(asset: ImagePicker.ImagePickerAsset): PickedMedia {
 }
 
 // Photos and videos of a listing (same limits as the website: 15 medias).
-// The first media is the main one; tap another to make it the main media.
+// The first media is the main one (cover): a photo whenever there is one, since
+// a video has no thumbnail (QA-32). Tap another photo to make it the cover.
 export function MediaPickerGrid({
   medias,
   onChange,
@@ -54,12 +56,13 @@ export function MediaPickerGrid({
       selectionLimit: max - medias.length,
     });
     if (!result.canceled) {
-      onChange([...medias, ...result.assets.map(toPickedMedia)].slice(0, max));
+      const next = [...medias, ...result.assets.map(toPickedMedia)].slice(0, max);
+      onChange(mainMedia ? coverFirst(next, (m) => m.isVideo) : next);
     }
   }
 
   function makeMain(index: number) {
-    if (!mainMedia || index === 0 || disabled) return;
+    if (!mainMedia || index === 0 || disabled || medias[index].isVideo) return;
     const next = [...medias];
     const [picked] = next.splice(index, 1);
     next.unshift(picked);
@@ -67,7 +70,8 @@ export function MediaPickerGrid({
   }
 
   function remove(index: number) {
-    onChange(medias.filter((_, i) => i !== index));
+    const next = medias.filter((_, i) => i !== index);
+    onChange(mainMedia ? coverFirst(next, (m) => m.isVideo) : next);
   }
 
   return (
@@ -84,7 +88,7 @@ export function MediaPickerGrid({
               label={`${media.isVideo ? 'Vidéo' : 'Photo'} ${offset + i + 1}`}
               badge={isMain ? 'Principale' : mainMedia ? undefined : 'Nouvelle'}
               onRemove={disabled ? undefined : () => remove(i)}
-              onPress={mainMedia && i > 0 && !disabled ? () => makeMain(i) : undefined}
+              onPress={mainMedia && i > 0 && !disabled && !media.isVideo ? () => makeMain(i) : undefined}
               pressLabel="Définir comme média principal"
             />
           );
@@ -105,7 +109,7 @@ export function MediaPickerGrid({
       >
         <MaterialIcons name="photo-library" size={Sizes.iconSm} color={C.onSurfaceVariant} />
         <AppText variant="caption" color="onSurfaceVariant" style={{ flex: 1 }}>
-          {`${medias.length}/${max} · Images ou vidéos.${mainMedia ? ' Touchez un média pour en faire le média principal.' : ''}`}
+          {`${medias.length}/${max} · Images ou vidéos.${mainMedia ? ' Touchez une photo pour en faire la photo principale.' : ''}`}
         </AppText>
       </View>
     </View>

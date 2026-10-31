@@ -1,6 +1,6 @@
 import { useMutation, useQueries, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { AnnouncesService } from '@/services/announces.service';
-import { buildCreatePayload } from '@/lib/listing-payload';
+import { buildCreatePayload, coverFirst } from '@/lib/listing-payload';
 import { UploadsService, type PickedMedia } from '@/services/uploads.service';
 import type { CreateListingDraft } from '@/stores/create-listing.store';
 import type { Announce, AnnounceFilters, PaginatedResponse } from '@/types/announce';
@@ -181,16 +181,17 @@ export function useUpdateAnnounce() {
       id,
       payload,
       newMedia,
-      keepMediaIds,
+      keepMedias,
       onProgress,
     }: {
       id: string;
       payload: Record<string, unknown>;
       newMedia: PickedMedia[];
-      keepMediaIds: string[];
+      /** Kept medias in their order; `isVideo` lets a photo become the cover. */
+      keepMedias: { id: string; isVideo: boolean }[];
       onProgress?: (progress: UploadProgress) => void;
     }) => {
-      const uploadedIds: string[] = [];
+      const uploadedMedias: { id: string; isVideo: boolean }[] = [];
       for (const [index, file] of newMedia.entries()) {
         const report = (filePercent: number) =>
           onProgress?.({
@@ -202,12 +203,14 @@ export function useUpdateAnnounce() {
           });
         report(0);
         const uploaded = await UploadsService.upload('media', file, report);
-        uploadedIds.push(uploaded.id);
+        uploadedMedias.push({ id: uploaded.id, isVideo: file.isVideo });
       }
       onProgress?.({ stage: 'create', current: newMedia.length, total: newMedia.length, fileName: '', percent: 100 });
+      // The first id is the cover (isPresentation): a photo when there is one.
+      const ordered = coverFirst([...keepMedias, ...uploadedMedias], (m) => m.isVideo);
       return AnnouncesService.update(id, {
         ...payload,
-        media_ids: [...keepMediaIds, ...uploadedIds],
+        media_ids: ordered.map((m) => m.id),
       });
     },
     onSuccess: (_data, { id }) => {

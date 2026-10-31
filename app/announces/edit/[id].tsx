@@ -271,13 +271,13 @@ export default function EditAnnounceScreen() {
 
     // The API replaces the ad's media with `media_ids`: keep the ones that were
     // not removed, the new ones are uploaded by the hook first.
-    const keepMediaIds = existingMedias.map((m) => String(m.id));
+    const keepMedias = existingMedias.map((m) => ({ id: String(m.id), isVideo: (m.type ?? '').startsWith('video') }));
     sendingRef.current = true;
     setSending(true);
     setProgress(null);
 
     updateAnnounce.mutate(
-      { id, payload, newMedia: newMedias, keepMediaIds, onProgress: setProgress },
+      { id, payload, newMedia: newMedias, keepMedias, onProgress: setProgress },
       {
         onSettled: () => {
           sendingRef.current = false;
