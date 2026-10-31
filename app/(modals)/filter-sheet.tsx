@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 
@@ -57,6 +57,8 @@ function parseAmount(text: string): number | undefined {
 export default function FilterSheetScreen() {
   const C = useThemeColors();
   const router = useRouter();
+  // Opened from Home: the results are on Explore, so applying goes there (QA-35).
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const { filters, setFilters } = useFilterStore();
   // Side by side the two budget fields cut "Sans limite" from 150 % font size: stack them.
   const { fontScale } = useWindowDimensions();
@@ -126,7 +128,12 @@ export default function FilterSheetScreen() {
     // rather than show a list that is always empty.
     if (adType === 'sale') patch.period = undefined;
     setFilters(patch);
-    router.back();
+    if (from === 'home') {
+      router.dismiss();
+      router.navigate('/(tabs)/explore');
+    } else {
+      router.back();
+    }
   }
 
   return (

@@ -378,7 +378,7 @@ export default function HomeScreen() {
           value={search}
           onChangeText={setSearch}
           onSubmitEditing={handleSearch}
-          onFilterPress={() => router.push('/(modals)/filter-sheet')}
+          onFilterPress={() => router.push({ pathname: '/(modals)/filter-sheet', params: { from: 'home' } })}
           filterCount={filterCount}
         />
         <ChipGroup
