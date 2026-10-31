@@ -11,7 +11,7 @@ on:
   push:
     tags: ["v*.*.*"]
   pull_request:
-    paths: [".github/workflows/release-play.yml"]
+    paths: [".github/workflows/release-play.yml", ".github/scripts/play_upload.py"]
   workflow_dispatch:
     inputs:
       publish:
@@ -89,12 +89,16 @@ jobs:
           path: domilix-${{ github.run_number }}.aab
           if-no-files-found: error
 
+      # Resumable, chunked upload (see .github/scripts/play_upload.py): a one-request upload of
+      # the ~75 MB AAB failed with "Internal error encountered" on Play.
       - name: Publish to Google Play (test interne)
         if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish)
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.jack0237.domilix
-          releaseFiles: domilix-${{ github.run_number }}.aab
-          track: internal
-          status: completed
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          # Ubuntu 26.04 forbids a system-wide pip install (PEP 668): use a venv.
+          python3 -m venv "$RUNNER_TEMP/play"
+          "$RUNNER_TEMP/play/bin/pip" install --quiet google-auth==2.35.0
+          release_name="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF" != refs/tags/v* ]]; then release_name="manual-${{ github.run_number }}"; fi
+          "$RUNNER_TEMP/play/bin/python" .github/scripts/play_upload.py domilix-${{ github.run_number }}.aab com.jack0237.domilix internal "$release_name"
