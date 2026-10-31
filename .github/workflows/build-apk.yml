@@ -85,15 +85,18 @@ jobs:
       - name: 🚀 Build APK
         run: eas build --platform android --profile preview --non-interactive --local --output domilix-v${{ github.run_number }}.apk
         env:
-          # An unset secret would expand to "" and override the app's fallback
-          # (`??` keeps an empty string), so default to the production API here.
+          # An unset secret expands to "": default to the production API so the
+          # bundle always carries a real URL.
           EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || 'https://api.domilix.com' }}
           EXPO_PUBLIC_GEOAPIFY_API_KEY: ${{ secrets.EXPO_PUBLIC_GEOAPIFY_API_KEY }}
 
       - name: 🚀 Build AAB
         run: eas build --platform android --profile production --non-interactive --local --output domilix-v${{ github.run_number }}.aab
         env:
-          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          # An unset secret expands to "": default to the production API so the
+          # bundle always carries a real URL.
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || 'https://api.domilix.com' }}
+          EXPO_PUBLIC_GEOAPIFY_API_KEY: ${{ secrets.EXPO_PUBLIC_GEOAPIFY_API_KEY }}
 
       - name: 📥 Upload APK and AAB artifacts
         uses: actions/upload-artifact@v4

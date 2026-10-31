@@ -3,7 +3,8 @@ import { decodeJwtPayload } from '@/lib/decode-token';
 import { TokenStorage } from '@/lib/secure-storage';
 import { useAuthStore } from '@/stores/auth.store';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://api.domilix.com';
+// `||`, not `??`: an unset CI secret expands to an empty string, which must fall back too.
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.domilix.com';
 
 export const client = axios.create({
   baseURL: BASE_URL,
