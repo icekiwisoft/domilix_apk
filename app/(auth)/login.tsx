@@ -139,10 +139,18 @@ export default function LoginScreen() {
                 labelAction={
                   <Pressable
                     onPress={() => router.push('/(auth)/forgot-password')}
-                    // 20 dp of text + 2 × 16: a 52 dp target.
-                    hitSlop={{ top: Spacing.md, bottom: Spacing.md, left: Spacing.sm, right: Spacing.sm }}
                     accessibilityRole="link"
-                    style={({ pressed }) => pressedStyle(pressed)}
+                    // A real 48 dp target (QA-25): the label row grows to it
+                    // instead of a hitSlop that overlapped the password field.
+                    style={({ pressed }) => [
+                      {
+                        minHeight: Sizes.touchTarget,
+                        justifyContent: 'center',
+                        paddingHorizontal: Spacing.sm,
+                        marginRight: -Spacing.sm,
+                      },
+                      pressedStyle(pressed),
+                    ]}
                   >
                     <AppText variant="label" color="link">
                       Mot de passe oublié ?
