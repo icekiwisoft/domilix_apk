@@ -309,11 +309,14 @@ export default function RegisterScreen() {
                     {'.'}
                   </AppText>
                 </View>
-                {errors.terms ? (
-                  <AppText variant="caption" color="error" accessibilityLiveRegion="polite">
-                    {errors.terms.message}
-                  </AppText>
-                ) : null}
+                {/* Always mounted, as in Field: TalkBack reads a live region when its content changes. */}
+                <View accessibilityLiveRegion="polite">
+                  {errors.terms?.message ? (
+                    <AppText variant="caption" color="error" accessibilityLabel={`Erreur : ${errors.terms.message}`}>
+                      {errors.terms.message}
+                    </AppText>
+                  ) : null}
+                </View>
               </View>
             )}
           />

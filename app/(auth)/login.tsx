@@ -16,6 +16,8 @@ import { useLogin } from '@/hooks/queries/use-auth-queries';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { loginSchema, resolveLoginDto, type LoginFormValues } from '@/lib/validators/auth.schema';
 
+const LOGIN_ERROR = 'Identifiant ou mot de passe incorrect.';
+
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   // The full example no longer fits on one line from about 130 % font size.
@@ -170,18 +172,32 @@ export default function LoginScreen() {
             )}
           />
 
-          {login.error ? <Banner tone="error">Identifiant ou mot de passe incorrect.</Banner> : null}
+          <View>
+            {/* Always mounted, as in Field: TalkBack reads a live region when its content changes. */}
+            <View accessibilityLiveRegion="polite">
+              {login.error ? (
+                <Banner
+                  tone="error"
+                  announce={false}
+                  accessibilityLabel={`Erreur : ${LOGIN_ERROR}`}
+                  style={{ marginBottom: Spacing.md }}
+                >
+                  {LOGIN_ERROR}
+                </Banner>
+              ) : null}
+            </View>
 
-          <KeyboardTarget>
-            <Button
-              label="Se connecter"
-              size="lg"
-              fullWidth
-              onPress={handleSubmit(onSubmit)}
-              loading={login.isPending}
-              style={{ marginTop: Spacing.xs }}
-            />
-          </KeyboardTarget>
+            <KeyboardTarget>
+              <Button
+                label="Se connecter"
+                size="lg"
+                fullWidth
+                onPress={handleSubmit(onSubmit)}
+                loading={login.isPending}
+                style={{ marginTop: Spacing.xs }}
+              />
+            </KeyboardTarget>
+          </View>
         </View>
 
         <View style={{ marginTop: 'auto', alignItems: 'center' }}>
