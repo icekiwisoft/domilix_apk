@@ -180,6 +180,9 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
 13. `PUT /announces/:id` n'accepte pas le multipart (pas de FilesInterceptor) et ignore
     `remove_media_ids[]` ; l'app suit désormais le site (upload `/uploads` puis JSON avec `media_ids`).
     Le code postal est reçu en `zip` mais renvoyé en `postal_code` (UI-12).
+14. `GET /announces/:id` ne renvoie ni `garage` ni `furnitured` : toute modification les remettait à 0
+    (corrigé côté app à la fusion de main ; **le site a toujours le défaut** dans sa fenêtre de
+    modification). Dimensions des meubles en entier (85,5 enregistré 85) : décimales voulues ?
 
 ## Améliorations demandées par l'utilisateur
 
@@ -478,6 +481,15 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   (seule la case), « Suivant » absent entre les deux mots de passe de la réinitialisation, erreur de
   réinitialisation qui réapparaît après un nouveau code, `otp-input.tsx` encore en exception de lint,
   vieux documents `informations/` qui citent Paper.
+- Fusion de `main` (travail de l'ami : meubles, terrains, publication en 4 étapes, vidéos, 23 devises,
+  alertes, historique de recherche, devenir annonceur, vérification étudiante, signalement, suivi des
+  paiements) dans `develop` (2026-10-31) : tout conservé, écrans de l'ami passés sur le kit, Paper retiré
+  partout. QA sur backend local (code `45ec9f4`). Corrigés à la fusion : en-tête natif en double sur
+  alertes / devenir annonceur / vérification étudiante, bouton de publication sans état d'envoi (risque
+  de double envoi), statuts des demandes absents du menu Profil, « Débloquer » sur sa propre annonce,
+  vidéo en couverture, filtre de l'accueil sans effet, devise XOF écrasée en XAF. À trancher : panneau
+  de filtres « Terrain » (chambres, standing, équipements masqués) ; étape Localisation en « Position
+  exacte / Adresse manuelle ». Non vérifié : alignement de la bannière « Compte annonceur actif » à 200 %.
 
 ## Lots proposés
 
