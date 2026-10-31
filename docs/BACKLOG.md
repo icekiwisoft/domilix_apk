@@ -471,6 +471,13 @@ Sources : utilisateur, audit QA, revues. Règles : `docs/LECONS-EQUIPE.md`.
   de Paper ; kit et jetons uniquement ; AA clair et sombre, 48 dp, 200 %, TalkBack ; build release
   vérifié. QA : aucun tap Google ni SMS sans accord ; parcours d'écriture contre le backend local
   (règle 11).
+- Suites de UI-13 (2026-10-31) : **QA-22 corrigé, défaut de production** (la réinitialisation du mot de
+  passe ne partait jamais : le code n'arrivait pas au formulaire). À décider (QA-24) : juste après
+  l'inscription, le retour Android depuis la vérification SMS mène à l'Accueil connecté avec un numéro
+  non vérifié, sans retour possible à la vérification. Mineurs : ligne « J'accepte… » non cliquable
+  (seule la case), « Suivant » absent entre les deux mots de passe de la réinitialisation, erreur de
+  réinitialisation qui réapparaît après un nouveau code, `otp-input.tsx` encore en exception de lint,
+  vieux documents `informations/` qui citent Paper.
 
 ## Lots proposés
 
