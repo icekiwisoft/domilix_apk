@@ -443,6 +443,7 @@ export const Sizes = {
   dot: 10, // unread dot on the notification bell
   // UI-08: listing detail and announcer profile
   detailGallery: 320, // photo gallery at the top of a listing, under the status bar
+  documentPreview: 160, // picked ID card, student card or receipt (verification screens)
 } as const;
 
 // Border widths of the shared components (UI-06). `focus` is the focus and
