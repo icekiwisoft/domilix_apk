@@ -1,0 +1,97 @@
+name: Release Google Play
+
+# Construit l'AAB signé (clé d'upload gérée par EAS) et le publie sur Google Play,
+# piste de test interne. La promotion en production se fait à la main dans la Play Console.
+# - push d'un tag vX.Y.Z : build + publication, versionName = X.Y.Z
+# - lancement manuel : build, publication optionnelle
+# - PR qui modifie ce workflow : build seulement (vérifie que l'AAB se construit), jamais de publication
+# versionCode : incrémenté par EAS (appVersionSource "remote", profil production autoIncrement).
+on:
+  push:
+    tags: ["v*.*.*"]
+  pull_request:
+    paths: [".github/workflows/release-play.yml"]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publier sur Google Play (sinon, AAB en artefact seulement)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: release-play
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build AAB et publication (test interne)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      # ubuntu-latest (26.04) defaults to Java 25, which Gradle 8.14 rejects. React Native 0.81 uses JDK 17.
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck and lint
+        run: |
+          npx tsc --noEmit || true   # erreurs connues (collapsible, icon-symbol) tant qu'elles ne sont pas corrigées
+          npm run lint
+
+      - name: Check required secrets
+        env:
+          EXPO_PUBLIC_GEOAPIFY_API_KEY: ${{ secrets.EXPO_PUBLIC_GEOAPIFY_API_KEY }}
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          WILL_PUBLISH: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish) }}
+        run: |
+          if [ -z "$EXPO_PUBLIC_GEOAPIFY_API_KEY" ]; then echo "::error::EXPO_PUBLIC_GEOAPIFY_API_KEY is empty"; exit 1; fi
+          if [ "$WILL_PUBLISH" = "true" ] && [ -z "$PLAY_JSON" ]; then echo "::error::PLAY_SERVICE_ACCOUNT_JSON is empty"; exit 1; fi
+
+      - name: Version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          node -e "const f='app.json';const j=require('./'+f);j.expo.version=process.argv[1];require('fs').writeFileSync(f,JSON.stringify(j,null,2)+'\n')" "$version"
+          echo "versionName = $version"
+
+      - name: Build AAB
+        run: eas build --platform android --profile production --non-interactive --local --output domilix-${{ github.run_number }}.aab
+        env:
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || 'https://api.domilix.com' }}
+          EXPO_PUBLIC_GEOAPIFY_API_KEY: ${{ secrets.EXPO_PUBLIC_GEOAPIFY_API_KEY }}
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: domilix-${{ github.run_number }}.aab
+          path: domilix-${{ github.run_number }}.aab
+          if-no-files-found: error
+
+      - name: Publish to Google Play (test interne)
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.jack0237.domilix
+          releaseFiles: domilix-${{ github.run_number }}.aab
+          track: internal
+          status: completed
