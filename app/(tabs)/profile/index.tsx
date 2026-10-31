@@ -22,8 +22,10 @@ import { Radii, Sizes, Spacing } from '@/constants/theme';
 import { useAnnouncer } from '@/hooks/queries/use-announcers';
 import { useLogout, useMe } from '@/hooks/queries/use-auth-queries';
 import { useSubscriptions } from '@/hooks/queries/use-subscriptions';
+import { useAnnouncerRequest, useStudentVerification } from '@/hooks/queries/use-verification';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { isAnnouncerToken } from '@/lib/decode-token';
+import { formatDateFr } from '@/lib/format-date';
 import { isNetworkError } from '@/lib/network-error';
 import { isPackUsable } from '@/lib/subscription-helpers';
 import { useAuthStore } from '@/stores/auth.store';
@@ -87,6 +89,29 @@ export default function ProfileScreen() {
       ? `${activePacks.length} pack${activePacks.length > 1 ? 's' : ''} actif${activePacks.length > 1 ? 's' : ''}`
       : null;
   const isAnnouncer = isAnnouncerToken(accessToken) || !!user?.is_announcer || !!user?.announcer;
+  // Same queries and status rules as the two verification screens (QA-31).
+  const { data: announcerRequest } = useAnnouncerRequest();
+  const { data: studentRequest } = useStudentVerification();
+  const announcerSubtitle = user?.announcer_verified
+    ? 'Profil vérifié'
+    : announcerRequest?.status === 'pending'
+      ? 'Demande en attente de vérification'
+      : announcerRequest?.status === 'rejected'
+        ? 'Demande refusée, vous pouvez la renvoyer'
+        : 'Obtenir le badge annonceur vérifié';
+  const studentSubtitle = !studentRequest
+    ? 'Faire vérifier votre statut'
+    : studentRequest.status === 'approved'
+      ? studentRequest.is_currently_verified
+        ? studentRequest.expires_at
+          ? `Statut vérifié jusqu'au ${formatDateFr(studentRequest.expires_at)}`
+          : 'Statut vérifié'
+        : 'Statut expiré, à renouveler'
+      : studentRequest.status === 'pending'
+        ? 'Demande en attente de vérification'
+        : studentRequest.status === 'rejected'
+          ? 'Demande refusée, vous pouvez la renvoyer'
+          : 'Faire vérifier votre statut';
   const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const stacked = useStacked();
 
@@ -198,7 +223,7 @@ export default function ProfileScreen() {
           <ListRow
             icon="verified-user"
             title="Vérification du profil"
-            subtitle={user.announcer_verified ? 'Profil vérifié' : 'Obtenir le badge annonceur vérifié'}
+            subtitle={announcerSubtitle}
             onPress={() => router.push('/profile/become-announcer')}
           />
           <ListRow
@@ -228,7 +253,7 @@ export default function ProfileScreen() {
         <ListRow
           icon="school"
           title="Statut étudiant"
-          subtitle="Faire vérifier votre statut"
+          subtitle={studentSubtitle}
           onPress={() => router.push('/profile/student-verification')}
         />
         <ListRow
