@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type Ref } from 'react';
+import { useState, type ReactNode, type Ref, type ComponentRef } from 'react';
 import { TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 
 import { Borders, Radii, Sizes, Spacing, TextVariants } from '@/constants/theme';
@@ -30,7 +30,7 @@ export interface FieldProps extends Omit<TextInputProps, 'secureTextEntry'> {
   rightElement?: ReactNode;
   /** Password field with a 48 dp show / hide button. */
   secure?: boolean;
-  ref?: Ref<TextInput>;
+  ref?: Ref<ComponentRef<typeof TextInput>>;
   /** Style of the wrapper (label, box and message), e.g. a margin or flex. */
   containerStyle?: StyleProp<ViewStyle>;
   /** `style` applies to the TextInput itself (text alignment, etc.). */

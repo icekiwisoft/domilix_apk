@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { AnnouncerForm, type AnnouncerFormValues } from '@/components/forms/announcer-form';
@@ -33,11 +33,9 @@ export default function AnnouncerProfileEditScreen() {
   const announcerQuery = useAnnouncer(announcerId);
   const announcer = announcerQuery.data;
   const updateAnnouncerProfile = useUpdateAnnouncerProfile();
-  const [avatar, setAvatar] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (announcer?.avatar) setAvatar(announcer.avatar);
-  }, [announcer?.avatar]);
+  // A newly picked photo, otherwise the current one.
+  const [pickedAvatar, setAvatar] = useState<string | undefined>(undefined);
+  const avatar = pickedAvatar ?? announcer?.avatar;
 
   async function handlePickAvatar() {
     const result = await ImagePicker.launchImageLibraryAsync({

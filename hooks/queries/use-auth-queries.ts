@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { logFacebookRegistration } from '@/lib/facebook';
+import { unregisterPushNotifications } from '@/lib/push-notifications';
 import { AuthService } from '@/services/auth.service';
 import { signOutGoogle } from '@/hooks/use-google-signin';
 import { useAuthStore } from '@/stores/auth.store';
@@ -66,7 +68,8 @@ export function useRegister() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (dto: RegisterDto) => AuthService.register(dto),
-    onSuccess: (data) => {
+    onSuccess: (data, dto) => {
+      logFacebookRegistration(dto.email ? 'email' : 'phone');
       const raw = data as unknown as Record<string, unknown>;
       const { access, refresh } = extractTokens(raw);
       if (access) setTokens(access, refresh);
@@ -83,7 +86,11 @@ export function useLogout() {
   const { clearAuth } = useAuthStore.getState();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: AuthService.logout,
+    // The push token is dropped while the session can still authenticate.
+    mutationFn: async () => {
+      await unregisterPushNotifications();
+      return AuthService.logout();
+    },
     onSettled: () => {
       clearAuth();
       qc.clear();

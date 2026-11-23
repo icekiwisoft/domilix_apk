@@ -1,6 +1,5 @@
-import { usePreventRemove } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, usePreventRemove, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Linking, View } from 'react-native';
 
@@ -36,7 +35,7 @@ import {
   Stepper,
   useToast,
 } from '@/components/ui';
-import { CURRENCY_OPTIONS, LAND_USE_OPTIONS, MAX_MEDIAS, PERIOD_OPTIONS, currencyLabel } from '@/constants/listing';
+import { CURRENCY_OPTIONS, LAND_PRICE_UNIT_OPTIONS, LAND_USE_OPTIONS, MAX_MEDIAS, PERIOD_OPTIONS, currencyLabel } from '@/constants/listing';
 import { Spacing } from '@/constants/theme';
 import { useAnnounce, useUpdateAnnounce, type UploadProgress } from '@/hooks/queries/use-announces';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -324,6 +323,7 @@ export default function EditAnnounceScreen() {
   }
 
   const isLocation = details.ad_type === 'location';
+  const perSquareMeter = isLand && details.land_price_unit === 'square_meter';
   const hasCoordinates = !!coordinates.longitude && !!coordinates.latitude;
   const detectedLines = [details.address, details.neighbourhood, details.city, details.state, details.country].filter(
     Boolean
@@ -438,12 +438,23 @@ export default function EditAnnounceScreen() {
       </Section>
 
       <Section title="Prix et disponibilité">
+        {isLand ? (
+          <View style={{ gap: Spacing.sm }}>
+            <Label>Le prix indiqué est</Label>
+            <ChipGroup
+              label="Le prix indiqué est"
+              options={LAND_PRICE_UNIT_OPTIONS}
+              value={details.land_price_unit}
+              onChange={(v) => update('land_price_unit', v)}
+            />
+          </View>
+        ) : null}
         <Field
-          label="Prix"
+          label={perSquareMeter ? 'Prix au m²' : 'Prix'}
           value={details.price}
           onChangeText={(t) => update('price', digitsOnly(t))}
           keyboardType="number-pad"
-          suffix={deviseLabel(details.devise)}
+          suffix={perSquareMeter ? `${deviseLabel(details.devise)} / m²` : deviseLabel(details.devise)}
         />
         <Button
           variant="secondary"
@@ -452,7 +463,7 @@ export default function EditAnnounceScreen() {
           onPress={() => setCurrencyOpen(true)}
           style={{ alignSelf: 'flex-start' }}
         />
-        {isLocation ? (
+        {isLocation && !perSquareMeter ? (
           <View style={{ gap: Spacing.sm }}>
             <Label>Période</Label>
             <ChipGroup

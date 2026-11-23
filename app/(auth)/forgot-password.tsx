@@ -81,7 +81,7 @@ export default function ForgotPasswordScreen() {
             autoComplete="email"
             textContentType="emailAddress"
             returnKeyType="send"
-            onSubmitEditing={handleSubmit(onSubmit)}
+            onSubmitEditing={() => void handleSubmit(onSubmit)()}
             error={errors.email?.message}
           />
         )}
@@ -96,7 +96,7 @@ export default function ForgotPasswordScreen() {
           label="Envoyer le code"
           size="lg"
           fullWidth
-          onPress={handleSubmit(onSubmit)}
+          onPress={() => void handleSubmit(onSubmit)()}
           loading={sendReset.isPending}
           style={{ marginTop: Spacing.xs }}
         />

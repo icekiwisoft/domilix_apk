@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "domilix",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -17,7 +16,6 @@
         "backgroundColor": "#FFFFFF",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.jack0237.domilix",
       "googleServicesFile": "./google-services.json",
@@ -25,17 +23,56 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "category": ["BROWSABLE", "DEFAULT"],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
           "data": [
-            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/houses/" },
-            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/furnitures/" },
-            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/terrains/" },
-            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/fr/houses/" },
-            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/fr/furnitures/" },
-            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/fr/terrains/" },
-            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/en/houses/" },
-            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/en/furnitures/" },
-            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/en/terrains/" }
+            {
+              "scheme": "https",
+              "host": "domilix.com",
+              "pathPrefix": "/houses/"
+            },
+            {
+              "scheme": "https",
+              "host": "domilix.com",
+              "pathPrefix": "/furnitures/"
+            },
+            {
+              "scheme": "https",
+              "host": "domilix.com",
+              "pathPrefix": "/terrains/"
+            },
+            {
+              "scheme": "https",
+              "host": "domilix.com",
+              "pathPrefix": "/fr/houses/"
+            },
+            {
+              "scheme": "https",
+              "host": "domilix.com",
+              "pathPrefix": "/fr/furnitures/"
+            },
+            {
+              "scheme": "https",
+              "host": "domilix.com",
+              "pathPrefix": "/fr/terrains/"
+            },
+            {
+              "scheme": "https",
+              "host": "domilix.com",
+              "pathPrefix": "/en/houses/"
+            },
+            {
+              "scheme": "https",
+              "host": "domilix.com",
+              "pathPrefix": "/en/furnitures/"
+            },
+            {
+              "scheme": "https",
+              "host": "domilix.com",
+              "pathPrefix": "/en/terrains/"
+            }
           ]
         }
       ]
@@ -50,10 +87,11 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "imageWidth": 180,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
+            "image": "./assets/images/splash-icon-dark.png",
             "backgroundColor": "#000000"
           }
         }
@@ -74,6 +112,14 @@
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#e8921a",
+          "defaultChannel": "default"
         }
       ]
     ],

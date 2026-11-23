@@ -31,7 +31,7 @@ const SCALE_KEY = 0.04;
 export function AppText({ variant = 'body', color = 'onSurface', style, ...rest }: AppTextProps) {
   const C = useThemeColors();
   const { fontScale } = useWindowDimensions();
-  const base = StyleSheet.flatten<TextStyle>([TextVariants[variant], style])?.letterSpacing ?? 0;
+  const base = (StyleSheet.flatten([TextVariants[variant], style]) as TextStyle | undefined)?.letterSpacing ?? 0;
   const letterSpacing = base + fontScale * SCALE_KEY;
   return <Text {...rest} style={[TextVariants[variant], { color: C[color] }, style, { letterSpacing }]} />;
 }

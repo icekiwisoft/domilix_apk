@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { isAxiosError } from 'axios';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
-import { useRef } from 'react';
+import { useRef, type ComponentRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Linking, Pressable, TextInput, View } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
@@ -73,9 +73,9 @@ export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const C = useThemeColors();
   const router = useRouter();
-  const phoneRef = useRef<TextInput>(null);
-  const emailRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const phoneRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const emailRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const passwordRef = useRef<ComponentRef<typeof TextInput>>(null);
   const register = useRegister();
 
   const {
@@ -330,7 +330,7 @@ export default function RegisterScreen() {
               label="Créer mon compte"
               size="lg"
               fullWidth
-              onPress={handleSubmit(onSubmit)}
+              onPress={() => void handleSubmit(onSubmit)()}
               loading={register.isPending}
               style={{ marginTop: Spacing.xs }}
             />

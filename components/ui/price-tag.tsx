@@ -29,7 +29,12 @@ const PERIODS: Record<string, string> = {
   annual: 'an',
   an: 'an',
   année: 'an',
+  // Land priced per square metre (backend period `square_meter`).
+  square_meter: 'm²',
+  m2: 'm²',
 };
+
+const SPOKEN_PERIODS: Record<string, string> = { 'm²': 'mètre carré' };
 
 /** French label of a period, or null for an unknown value (never shows raw English). */
 export function periodLabel(period: string | null | undefined): string | null {
@@ -58,7 +63,7 @@ export interface PriceTagProps {
   amount: number;
   /** API `devise`; XAF is shown as FCFA, like on the website. */
   currency?: string;
-  /** API period (hour, day, night, month, year) or its French label; unknown values are dropped. */
+  /** API period (hour, day, night, month, year, square_meter) or its French label; unknown values are dropped. */
   period?: string | null;
   /** sm: cards in a row, md: listing cards (default), lg: listing detail. */
   size?: PriceTagSize;
@@ -78,7 +83,7 @@ export function PriceTag({ amount, currency = 'XAF', period, size = 'md', color 
   const v = SIZES[size];
   const amountText = formatAmount(amount);
   const unitText = per ? `${unit}${NBSP}/${NBSP}${per}` : unit;
-  const spoken = `${amountText} ${SPOKEN_CURRENCY[unit] ?? unit}${per ? ` par ${per}` : ''}`;
+  const spoken = `${amountText} ${SPOKEN_CURRENCY[unit] ?? unit}${per ? ` par ${SPOKEN_PERIODS[per] ?? per}` : ''}`;
   return (
     <View
       accessible

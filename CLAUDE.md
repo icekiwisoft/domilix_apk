@@ -23,7 +23,7 @@ No test framework is configured yet. CI: `.github/workflows/build-apk.yml` (EAS 
 
 ## Stack
 
-Expo SDK 54, React Native 0.81, React 19 with React Compiler (no manual `useMemo`/`useCallback` without a measured reason), TypeScript strict, Expo Router 6 (typed routes), New Architecture. React Query for server state, Zustand for client state, Axios client with token refresh, React Hook Form + Zod, Firebase Auth (Google sign-in), react-native-maps, expo-image.
+Expo SDK 58, React Native 0.88, React 19.3 with React Compiler (no manual `useMemo`/`useCallback` without a measured reason), TypeScript strict, Expo Router 6 (typed routes), New Architecture. React Query for server state, Zustand for client state, Axios client with token refresh, React Hook Form + Zod, Firebase Auth (Google sign-in), react-native-maps, expo-image.
 
 ## Layout
 

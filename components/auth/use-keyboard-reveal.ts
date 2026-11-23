@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import {
   Keyboard,
   TextInput,
@@ -11,8 +11,9 @@ import {
 import { Spacing } from '@/constants/theme';
 
 type Rect = { y: number; height: number };
+type ViewNode = ComponentRef<typeof View>;
 
-function measure(node: { measureInWindow: View['measureInWindow'] } | null | undefined): Promise<Rect | null> {
+function measure(node: ViewNode | null | undefined): Promise<Rect | null> {
   return new Promise((resolve) => {
     if (!node) return resolve(null);
     node.measureInWindow((_x, y, _w, height) => resolve({ y, height }));
@@ -29,8 +30,8 @@ function measure(node: { measureInWindow: View['measureInWindow'] } | null | und
  * the screen can paint a band behind it (edge-to-edge).
  */
 export function useKeyboardReveal(bannerBottom: number) {
-  const scrollRef = useRef<ScrollView>(null);
-  const targetRef = useRef<View>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const targetRef = useRef<ViewNode>(null);
   const scrollY = useRef(0);
   // Height of a bar fixed under the scroll view that rides on the keyboard
   // (Screen footer): it hides that much more of the content (QA-21).
@@ -41,12 +42,12 @@ export function useKeyboardReveal(bannerBottom: number) {
   const keyboardTop = useRef<number | null>(null);
 
   /** `node`: what must end above the keyboard; the main button by default. */
-  async function reveal(node?: View | null) {
+  async function reveal(node?: ViewNode | null) {
     const scroll = scrollRef.current;
     if (!scroll || keyboardTop.current == null) return;
-    const focused = TextInput.State.currentlyFocusedInput() as unknown as View | null;
+    const focused = TextInput.State.currentlyFocusedInput() as unknown as ViewNode | null;
     const [viewport, target, field] = await Promise.all([
-      measure(scroll as unknown as View),
+      measure(scroll as unknown as ViewNode),
       // Without a main button to keep in view, the focused field itself.
       measure(node ?? targetRef.current ?? focused),
       measure(focused),
@@ -97,7 +98,7 @@ export function useKeyboardReveal(bannerBottom: number) {
    * (address suggestions, UI-12) lands under the keyboard: scroll it into
    * view, keeping the field itself on screen.
    */
-  function revealNode(node: View | null) {
+  function revealNode(node: ViewNode | null) {
     if (keyboardTop.current != null) setTimeout(() => reveal(node), 80);
   }
 
@@ -107,5 +108,9 @@ export function useKeyboardReveal(bannerBottom: number) {
     if (past !== pastBanner) setPastBanner(past);
   }
 
-  return { scrollRef, targetRef, footerHeight, onScroll, onLayout, revealOnFocus, revealNode, pastBanner };
+  function setFooterHeight(height: number) {
+    footerHeight.current = height;
+  }
+
+  return { scrollRef, targetRef, setFooterHeight, onScroll, onLayout, revealOnFocus, revealNode, pastBanner };
 }

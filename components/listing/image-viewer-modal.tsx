@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Modal, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -104,9 +104,13 @@ export function ImageViewerModal({ visible, images, initialIndex, onClose }: Ima
   const { width, height } = useWindowDimensions();
   const [index, setIndex] = useState(initialIndex);
 
-  useEffect(() => {
-    if (visible) setIndex(initialIndex);
-  }, [visible, initialIndex]);
+  // Jump to the tapped image each time the viewer opens.
+  const [openedAt, setOpenedAt] = useState<number | null>(visible ? initialIndex : null);
+  const target = visible ? initialIndex : null;
+  if (target !== openedAt) {
+    setOpenedAt(target);
+    if (target !== null) setIndex(target);
+  }
 
   const total = images.length;
 

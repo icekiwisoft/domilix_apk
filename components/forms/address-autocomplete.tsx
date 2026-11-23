@@ -1,5 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useEffect, useRef, useState, type Ref } from 'react';
+import { useEffect, useRef, useState, type Ref, type ComponentRef } from 'react';
 import { Pressable, View, type TextInput, type TextInputProps } from 'react-native';
 
 import { AppText, Divider, Field, IconButton, pressedStyle, useScreenKeyboard } from '@/components/ui';
@@ -16,7 +16,7 @@ interface AddressAutocompleteProps {
   /** Field label; defaults to the website's "Adresse ou repère" / "Ville". */
   label?: string;
   error?: string;
-  ref?: Ref<TextInput>;
+  ref?: Ref<ComponentRef<typeof TextInput>>;
   /** Keyboard "Suivant" to the next field. */
   returnKeyType?: TextInputProps['returnKeyType'];
   onSubmitEditing?: () => void;
@@ -46,7 +46,7 @@ export function AddressAutocomplete({
   const [typed, setTyped] = useState(false);
   const isCity = kind === 'city';
   const keyboard = useScreenKeyboard();
-  const listRef = useRef<View>(null);
+  const listRef = useRef<ComponentRef<typeof View>>(null);
 
   const { data: suggestions = [], isFetching, isError, error: searchError } = useAddressSearch(
     value,

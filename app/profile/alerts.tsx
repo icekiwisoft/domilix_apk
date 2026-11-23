@@ -98,7 +98,7 @@ export default function AlertsScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isFetching && !isLoading}
-              onRefresh={refetch}
+              onRefresh={() => void refetch()}
               colors={[C.primaryContainer]}
               progressBackgroundColor={C.surfaceContainerLowest}
               tintColor={C.primaryContainer}
@@ -109,7 +109,7 @@ export default function AlertsScreen() {
               <AppText color="onSurfaceVariant" style={{ paddingBottom: Spacing.md }}>
                 {"Vos recherches sont privées. Domilix vous avertit lorsqu'une nouvelle annonce correspond à vos critères."}
               </AppText>
-            ) : null
+            ) : undefined
           }
           ListEmptyComponent={
             <EmptyState

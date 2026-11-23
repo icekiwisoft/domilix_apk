@@ -1,5 +1,5 @@
 import { client } from './api.client';
-import type { User, RegisterDto, LoginDto, AuthTokens } from '@/types/auth';
+import type { User, RegisterDto, LoginDto, AuthTokens, UpdateProfileDto } from '@/types/auth';
 
 export const AuthService = {
   register: (dto: RegisterDto) =>
@@ -21,7 +21,7 @@ export const AuthService = {
       return ((data.user ?? data) as User);
     }),
 
-  updateProfile: (dto: { name?: string; email?: string; phone_number?: string }) =>
+  updateProfile: (dto: UpdateProfileDto) =>
     client.put<unknown>('/auth/me', dto).then((r) => {
       const data = r.data as Record<string, unknown>;
       return ((data.user ?? data) as User);

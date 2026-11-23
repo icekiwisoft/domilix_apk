@@ -1,5 +1,6 @@
 import { useMutation, useQueries, useQuery, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { AnnouncesService } from '@/services/announces.service';
+import { logFacebookUnlock } from '@/lib/facebook';
 import { buildCreatePayload, coverFirst } from '@/lib/listing-payload';
 import { UploadsService, type PickedMedia } from '@/services/uploads.service';
 import type { CreateListingDraft } from '@/stores/create-listing.store';
@@ -168,6 +169,7 @@ export function useUnlockAnnounce() {
   return useMutation({
     mutationFn: (id: string) => AnnouncesService.unlock(id),
     onSuccess: (_data, id) => {
+      logFacebookUnlock(id);
       qc.invalidateQueries({ queryKey: ['announce', id] });
       qc.invalidateQueries({ queryKey: ['me'] });
     },

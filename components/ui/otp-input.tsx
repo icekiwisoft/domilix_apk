@@ -1,10 +1,9 @@
-import { useRef } from 'react';
+import { useRef, type ComponentRef } from 'react';
 import {
   StyleSheet,
   TextInput,
   View,
-  type NativeSyntheticEvent,
-  type TextInputKeyPressEventData,
+  type TextInputKeyPressEvent,
 } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Radius, Spacing, Typography } from '@/constants/theme';
@@ -18,7 +17,7 @@ interface OtpInputProps {
 }
 
 export function OtpInput({ value, onChange, error }: OtpInputProps) {
-  const refs = useRef<(TextInput | null)[]>([]);
+  const refs = useRef<(ComponentRef<typeof TextInput> | null)[]>([]);
 
   const surface = useThemeColor({}, 'surface');
   const primary = useThemeColor({}, 'primary');
@@ -56,7 +55,7 @@ export function OtpInput({ value, onChange, error }: OtpInputProps) {
   }
 
   function handleKeyPress(
-    e: NativeSyntheticEvent<TextInputKeyPressEventData>,
+    e: TextInputKeyPressEvent,
     index: number
   ) {
     if (e.nativeEvent.key === 'Backspace' && isEmpty(index) && index > 0) {

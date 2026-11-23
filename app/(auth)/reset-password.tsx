@@ -162,7 +162,7 @@ export default function ResetPasswordScreen() {
               label="Réinitialiser"
               size="lg"
               fullWidth
-              onPress={handleSubmit(onSubmit, onInvalid)}
+              onPress={() => void handleSubmit(onSubmit, onInvalid)()}
               loading={resetPassword.isPending}
               style={{ marginTop: Spacing.xs }}
             />

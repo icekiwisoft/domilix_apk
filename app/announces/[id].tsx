@@ -9,7 +9,10 @@ import { announcePlace, announceTitle } from '@/components/listing/announce-card
 import { categoryLabel } from '@/lib/category-label';
 import { AnnounceDetailSkeleton } from '@/components/listing/announce-detail-skeleton';
 import { ListingGallery } from '@/components/listing/listing-gallery';
+import { LocationMap } from '@/components/listing/location-map';
 import { ReportDialog } from '@/components/listing/report-dialog';
+import { GuidedTour, type TourStep } from '@/components/tour/guided-tour';
+import { TourTarget } from '@/components/tour/tour-target';
 import {
   AppText,
   Badge,
@@ -28,6 +31,11 @@ import { useThemeColors } from '@/hooks/use-theme-color';
 import { AnnouncesService } from '@/services/announces.service';
 import { useAuthStore } from '@/stores/auth.store';
 import type { Announce, LandUse, Standing } from '@/types/announce';
+
+const DETAIL_TOUR: TourStep[] = [
+  { target: 'detail-unlock', title: "Contactez l'annonceur", text: "Touchez « Débloquer le contact » : un Domicoin (6 pour un terrain) affiche le numéro et l'adresse exacte." },
+  { target: 'detail-like', title: 'Gardez-la de côté', text: "Ajoutez l'annonce à vos favoris pour la retrouver plus tard." },
+];
 
 // Labels of the website (domilix.com messages/fr.json, adForm.fields.amenities).
 const AMENITIES: {
@@ -190,6 +198,7 @@ export default function AnnounceDetailScreen() {
 
   const a = announce;
   const rent = a.ad_type === 'location';
+  const perSquareMeter = a.period === 'square_meter';
   const galleryHeight = insets.top + Sizes.detailGallery;
   const activeAmenities = a.type === 'realestate' ? AMENITIES.filter((m) => a[m.key]) : [];
   const factList = facts(a);
@@ -251,9 +260,14 @@ export default function AnnounceDetailScreen() {
     >
       {/* At large font sizes the button drops under the price instead of squeezing it. */}
       <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: '40%' }}>
-        <PriceTag amount={a.price} currency={a.devise} period={rent ? (a.period ?? 'month') : null} color="onSurface" />
+        <PriceTag
+          amount={a.price}
+          currency={a.devise}
+          period={perSquareMeter ? 'square_meter' : rent ? (a.period ?? 'month') : null}
+          color="onSurface"
+        />
         <AppText variant="caption" color="onSurfaceVariant">
-          {rent ? 'Location' : 'Prix de vente'}
+          {perSquareMeter ? (rent ? 'Location, prix au m²' : 'Prix de vente au m²') : rent ? 'Location' : 'Prix de vente'}
         </AppText>
       </View>
       {/* The owner has nothing to unlock on their own listing: offer to edit it instead (QA-30). */}
@@ -266,14 +280,15 @@ export default function AnnounceDetailScreen() {
           style={{ flexGrow: 1 }}
         />
       ) : (
-        <Button
-          size="lg"
-          icon={a.unlocked ? 'call' : 'lock-open'}
-          label={a.unlocked ? 'Contacter' : 'Débloquer le contact'}
-          accessibilityLabel={a.unlocked ? "Contacter l'annonceur" : 'Débloquer les coordonnées'}
-          onPress={handleUnlock}
-          style={{ flexGrow: 1 }}
-        />
+        <TourTarget id="detail-unlock" style={{ flexGrow: 1 }}>
+          <Button
+            size="lg"
+            icon={a.unlocked ? 'call' : 'lock-open'}
+            label={a.unlocked ? 'Contacter' : 'Débloquer le contact'}
+            accessibilityLabel={a.unlocked ? "Contacter l'annonceur" : 'Débloquer les coordonnées'}
+            onPress={handleUnlock}
+          />
+        </TourTarget>
       )}
     </View>
   );
@@ -305,14 +320,16 @@ export default function AnnounceDetailScreen() {
             {!a.is_owner ? (
               <IconButton icon="outlined-flag" label="Signaler l'annonce" overlay onPress={handleReport} />
             ) : null}
-            <IconButton
-              icon="favorite-border"
-              selectedIcon="favorite"
-              selected={a.liked}
-              label={a.liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-              overlay
-              onPress={() => toggleLike.mutate(id ?? '')}
-            />
+            <TourTarget id="detail-like">
+              <IconButton
+                icon="favorite-border"
+                selectedIcon="favorite"
+                selected={a.liked}
+                label={a.liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                overlay
+                onPress={() => toggleLike.mutate(id ?? '')}
+              />
+            </TourTarget>
           </View>
         </View>
       </View>
@@ -394,6 +411,13 @@ export default function AnnounceDetailScreen() {
               {address ? <AppText color="onSurfaceVariant">{address}</AppText> : null}
             </View>
           </View>
+          <LocationMap
+            latitude={a.latitude}
+            longitude={a.longitude}
+            city={a.city}
+            address={a.address}
+            unlocked={a.unlocked}
+          />
           <View style={{ flexDirection: 'row', gap: Spacing.ms }}>
             <MaterialIcons
               name={a.unlocked ? 'lock-open' : 'verified-user'}
@@ -417,6 +441,7 @@ export default function AnnounceDetailScreen() {
       </View>
 
       <ReportDialog visible={reportVisible} announceId={String(a.id)} onDismiss={() => setReportVisible(false)} />
+      <GuidedTour tourId="detail-v1" steps={DETAIL_TOUR} enabled={!a.unlocked && !a.is_owner} />
     </Screen>
   );
 }

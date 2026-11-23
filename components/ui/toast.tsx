@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   runOnJS,
@@ -69,13 +69,12 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: 
   const C = useThemeColors();
   const p = PALETTE[toast.type];
   const spoken = `${p.prefix}${toast.message}`;
-  const dismissRef = useRef(() => onDismiss(toast.id));
-  dismissRef.current = () => onDismiss(toast.id);
+  const dismiss = useEffectEvent(() => onDismiss(toast.id));
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
-    const finish = () => dismissRef.current();
+    const finish = () => dismiss();
     translateY.value = withSpring(0, ENTER);
     opacity.value = withTiming(1, { duration: FADE_IN });
     AccessibilityInfo.announceForAccessibility(spoken);
@@ -104,7 +103,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: 
   return (
     <Animated.View style={[styles.toast, { backgroundColor: C[p.bg] }, animStyle]}>
       <Pressable
-        onPress={() => dismissRef.current()}
+        onPress={() => onDismiss(toast.id)}
         style={styles.toastInner}
         accessibilityRole="button"
         accessibilityLabel={spoken}

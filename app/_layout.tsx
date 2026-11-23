@@ -15,6 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { initFacebook } from '@/lib/facebook';
 import { DomilixThemeProvider } from '@/providers/theme.provider';
 import { QueryProvider } from '@/providers/query.provider';
 import { AuthProvider } from '@/providers/auth.provider';
@@ -22,6 +23,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useThemeStore } from '@/stores/theme.store';
 import { ToastProvider } from '@/components/ui/toast';
 import { PaymentObserver } from '@/providers/payment-observer';
+import { PushNotificationsObserver } from '@/providers/push-notifications';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -51,6 +53,10 @@ export default function RootLayout() {
   const fontsReady = fontsLoaded || !!fontError;
 
   useEffect(() => {
+    initFacebook();
+  }, []);
+
+  useEffect(() => {
     if (fontsReady && authHydrated && themeHydrated) SplashScreen.hideAsync();
   }, [fontsReady, authHydrated, themeHydrated]);
 
@@ -64,6 +70,7 @@ export default function RootLayout() {
           <AuthProvider>
             <ToastProvider>
               <PaymentObserver />
+              <PushNotificationsObserver />
               <Stack>
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

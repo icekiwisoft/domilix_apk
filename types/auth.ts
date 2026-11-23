@@ -7,6 +7,9 @@ export interface User {
   email_verified?: boolean;
   announcer_verified?: boolean;
   avatar?: string | null;
+  presentation?: string | null;
+  avatar_media_id?: string | null;
+  presentation_media_id?: string | null;
   is_admin: boolean;
   is_announcer?: boolean;
   credits?: number;
@@ -16,6 +19,15 @@ export interface User {
   announcer?: string;
   created_at: string;
   updated_at: string;
+}
+
+// PUT /auth/me — every field the backend lets a user change on their account.
+export interface UpdateProfileDto {
+  name?: string;
+  email?: string;
+  phone_number?: string;
+  avatar_media_id?: string;
+  presentation_media_id?: string;
 }
 
 export interface AuthTokens {
