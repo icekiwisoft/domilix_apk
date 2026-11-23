@@ -169,6 +169,15 @@ export default function UnlockConfirmScreen() {
               </AppText>
             </View>
           ) : null}
+          {showShortage ? (
+            // Replaces the dialog: Back from the packs comes back to the listing.
+            <Button
+              fullWidth
+              icon="add-card"
+              label="Recharger mes Domicoins"
+              onPress={() => router.replace('/profile/subscriptions')}
+            />
+          ) : null}
 
         </ScrollView>
 

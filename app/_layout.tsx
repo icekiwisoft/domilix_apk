@@ -22,6 +22,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useThemeStore } from '@/stores/theme.store';
 import { ToastProvider } from '@/components/ui/toast';
 import { PaymentObserver } from '@/providers/payment-observer';
+import { PushNotificationsObserver } from '@/providers/push-notifications';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -64,6 +65,7 @@ export default function RootLayout() {
           <AuthProvider>
             <ToastProvider>
               <PaymentObserver />
+              <PushNotificationsObserver />
               <Stack>
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

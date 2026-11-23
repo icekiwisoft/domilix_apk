@@ -165,4 +165,27 @@ export const GeoapifyService = {
     if (!suggestion) throw geoapifyError('not_found');
     return suggestion;
   },
+
+  // Static map image (no native map SDK or Google key needed).
+  staticMapUrl({ longitude, latitude, zoom, marker, width = 640, height = 320 }: {
+    longitude: number;
+    latitude: number;
+    zoom: number;
+    marker: boolean;
+    width?: number;
+    height?: number;
+  }) {
+    const params = new URLSearchParams({
+      style: 'osm-bright',
+      width: String(width),
+      height: String(height),
+      scaleFactor: '2',
+      center: `lonlat:${longitude},${latitude}`,
+      zoom: String(zoom),
+      apiKey: getApiKey(),
+    });
+    if (marker) params.set('marker', `lonlat:${longitude},${latitude};type:awesome;color:#f97316;size:large;icon:home`);
+    else params.set('geometry', `circle:${longitude},${latitude},700;linewidth:2;linecolor:#f97316;fillcolor:#f97316;fillopacity:0.18`);
+    return `https://maps.geoapify.com/v1/staticmap?${params.toString()}`;
+  },
 };

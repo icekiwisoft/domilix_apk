@@ -1,4 +1,4 @@
-import { AMENITY_OPTIONS, knownDevise, type AmenityKey } from '@/constants/listing';
+import { AMENITY_OPTIONS, knownDevise, type AmenityKey, type LandPriceUnit } from '@/constants/listing';
 import type { CreateListingDraft } from '@/stores/create-listing.store';
 import type { AdType, Announce, AnnounceType, LandUse, Standing } from '@/types/announce';
 import type { UploadResponse } from '@/types/verification';
@@ -49,7 +49,13 @@ export function buildCreatePayload(draft: CreateListingDraft, uploaded: UploadRe
     ...amenities,
     // For land, the "gate" amenity above stands for "Clôturé".
     ...(isLand ? { land_use: draft.land_use, land_title: flag(draft.land_title) } : {}),
-    period: draft.ad_type === 'location' ? draft.period : '',
+    // Land priced per m² sends the `square_meter` period instead of a rent period.
+    period:
+      isLand && draft.land_price_unit === 'square_meter'
+        ? 'square_meter'
+        : draft.ad_type === 'location'
+          ? draft.period
+          : '',
     description: draft.description,
     contact_phone: draft.contact_phone,
     contact_email: draft.contact_email,
@@ -89,7 +95,9 @@ export function getEditDetails(ad: Announce) {
     price: toText(ad.price),
     ad_type: (ad.ad_type || 'location') as AdType,
     category_id: toText(ad.category?.id),
-    period: toText(ad.period),
+    // A per-m² land keeps "month" as the rent period behind its unit choice.
+    period: ad.period === 'square_meter' ? 'month' : toText(ad.period),
+    land_price_unit: (ad.period === 'square_meter' ? 'square_meter' : 'total') as LandPriceUnit,
     // Kept as saved when the backend knows it (XOF is a real currency); only an
     // unknown value such as the old "FCFA" becomes XAF.
     devise: knownDevise(ad.devise),
@@ -203,7 +211,12 @@ export function buildUpdatePayload(
     price: Number(details.price),
     ad_type: details.ad_type,
     category_id: details.category_id || null,
-    period: details.ad_type === 'location' ? details.period : '',
+    period:
+      type === 'land' && details.land_price_unit === 'square_meter'
+        ? 'square_meter'
+        : details.ad_type === 'location'
+          ? details.period
+          : '',
     devise: details.devise,
     contact_phone: details.contact_phone,
     contact_email: details.contact_email,

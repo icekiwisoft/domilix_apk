@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
 import {
@@ -134,13 +135,16 @@ function PaymentSheet({
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [phone, setPhone] = useState('');
 
-  useEffect(() => {
+  // Start from the first step each time the sheet opens.
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
     if (visible) {
       setStep('method');
       setMethod(null);
       setPhone('');
     }
-  }, [visible]);
+  }
 
   function handleMethodSelect(m: PaymentMethod) {
     setMethod(m);
@@ -229,6 +233,7 @@ function PaymentSheet({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function SubscriptionsScreen() {
+  const router = useRouter();
   const C = useThemeColors();
   const toast = useToast();
 
@@ -309,7 +314,17 @@ export default function SubscriptionsScreen() {
   }
 
   return (
-    <Screen header={<ScreenHeader title="Packs Domicoin" />} contentStyle={{ gap: Spacing.lg }}>
+    <Screen
+      header={
+        <ScreenHeader
+          title="Packs Domicoin"
+          // Always offer a way back, even when the screen was opened first
+          // (link, notification): then it leads to the profile tab.
+          onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile'))}
+        />
+      }
+      contentStyle={{ gap: Spacing.lg }}
+    >
       <View style={{ gap: Spacing.xs }}>
         <AppText variant="title">Choisissez votre pack</AppText>
         <AppText color="onSurfaceVariant">

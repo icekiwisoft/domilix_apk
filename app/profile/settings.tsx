@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 
 import {
   AppText,
@@ -28,8 +28,10 @@ import {
   useVerifyEmail,
 } from '@/hooks/queries/use-auth-queries';
 import { getApiErrorMessage } from '@/lib/api-error';
+import { getPushPermission, registerForPushNotifications } from '@/lib/push-notifications';
 import { changePasswordSchema, type ChangePasswordFormValues } from '@/lib/validators/auth.schema';
 import { useThemeStore, type ThemePreference } from '@/stores/theme.store';
+import { useTourStore } from '@/stores/tour.store';
 
 const THEME_OPTIONS: readonly SegmentOption<ThemePreference>[] = [
   { value: 'light', label: 'Clair', icon: 'light-mode' },
@@ -58,6 +60,27 @@ export default function SettingsScreen() {
   const router = useRouter();
   const toast = useToast();
   const { preference, setPreference } = useThemeStore();
+  const resetTours = useTourStore((s) => s.reset);
+  const [pushGranted, setPushGranted] = useState(false);
+
+  useEffect(() => {
+    getPushPermission()
+      .then((p) => setPushGranted(p.granted))
+      .catch(() => setPushGranted(false));
+  }, []);
+
+  // Asks the system dialog while Android still allows it, otherwise opens the
+  // app's system settings where the user can turn notifications on.
+  async function enablePush() {
+    const { canAskAgain } = await getPushPermission();
+    if (!canAskAgain) {
+      void Linking.openSettings();
+      return;
+    }
+    const granted = await registerForPushNotifications(true).catch(() => false);
+    setPushGranted(granted);
+    if (!granted) toast.show('Notifications refusées. Vous pouvez les activer dans les réglages du téléphone.', 'info');
+  }
   const changePassword = useChangePassword();
   const { data: me } = useMe();
   const sendEmailVerification = useSendEmailVerification();
@@ -132,6 +155,81 @@ export default function SettingsScreen() {
 
   return (
     <Screen keyboard header={<ScreenHeader title="Paramètres" />} contentStyle={{ gap: Spacing.lg }}>
+      {/* Every account field the API lets the user change (PUT /auth/me, PUT /auth/announcer-profile). */}
+      {me ? (
+        <Section title="Mon compte">
+          <ListRow
+            title="Informations personnelles"
+            subtitle={[me.name, me.email, me.phone_number].filter(Boolean).join(' · ') || 'Nom, email, téléphone'}
+            icon="person-outline"
+            onPress={() => router.push('/profile/edit')}
+          />
+          <ListRow
+            title="Photo de profil et image de présentation"
+            subtitle="Affichées sur votre profil et votre page annonceur"
+            icon="photo-camera"
+            onPress={() => router.push('/profile/edit')}
+          />
+          {me.phone_number && !me.phone_verified ? (
+            <ListRow
+              title="Vérifier mon numéro"
+              subtitle={`${me.phone_number} n'est pas encore vérifié`}
+              icon="sms"
+              onPress={() =>
+                router.push({ pathname: '/(auth)/verify-phone/[user_id]', params: { user_id: me.id, phone: me.phone_number } })
+              }
+            />
+          ) : null}
+          {me.announcer ? (
+            <ListRow
+              title="Profil annonceur"
+              subtitle="Entreprise, bio, téléphone professionnel"
+              icon="storefront"
+              onPress={() => router.push('/profile/announcer-profile')}
+            />
+          ) : (
+            <ListRow
+              title="Devenir annonceur"
+              subtitle="Publiez vos biens sur Domilix"
+              icon="campaign"
+              onPress={() => router.push('/profile/become-announcer')}
+            />
+          )}
+          <ListRow
+            title="Alertes de recherche"
+            subtitle="Être averti des nouvelles annonces"
+            icon="notifications-none"
+            onPress={() => router.push('/profile/alerts')}
+          />
+        </Section>
+      ) : null}
+
+      <Section title="Notifications">
+        <ListRow
+          title="Notifications push"
+          subtitle={
+            pushGranted
+              ? 'Activées sur ce téléphone'
+              : 'Paiements, déblocages et nouvelles annonces de vos alertes'
+          }
+          icon={pushGranted ? 'notifications-active' : 'notifications-off'}
+          chevron={!pushGranted}
+          onPress={pushGranted ? undefined : enablePush}
+        />
+      </Section>
+
+      <Section title="Aide">
+        <ListRow
+          title="Revoir le guide de l'application"
+          subtitle="Le doigt vous montre à nouveau chaque étape"
+          icon="touch-app"
+          onPress={() => {
+            resetTours();
+            router.replace('/(tabs)');
+          }}
+        />
+      </Section>
+
       <View style={{ gap: Spacing.sm }}>
         <BlockTitle>Apparence</BlockTitle>
         <SegmentedControl
@@ -198,7 +296,7 @@ export default function SettingsScreen() {
             size="lg"
             fullWidth
             loading={changePassword.isPending}
-            onPress={handleSubmit(onSubmit)}
+            onPress={() => void handleSubmit(onSubmit)()}
           />
         </KeyboardTarget>
       </View>

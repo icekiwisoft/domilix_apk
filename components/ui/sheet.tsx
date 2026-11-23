@@ -47,11 +47,11 @@ export function Sheet({ visible, onClose, title, closeLabel, children, footer }:
   const bottom = useKeyboardShown(visible) ? 0 : insets.bottom;
   // Stay mounted during the closing animation.
   const [mounted, setMounted] = useState(visible);
+  if (visible && !mounted) setMounted(true);
   const progress = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
-      setMounted(true);
       progress.value = withTiming(1, { duration: OPEN_MS });
     } else {
       progress.value = withTiming(0, { duration: CLOSE_MS }, (finished) => {

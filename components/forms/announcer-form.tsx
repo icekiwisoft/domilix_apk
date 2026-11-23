@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRef } from 'react';
+import { useRef, type ComponentRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { View, type TextInput } from 'react-native';
 import { z } from 'zod';
@@ -31,7 +31,7 @@ interface AnnouncerFormProps {
  * name to the multi-line presentation, the phone submits. Use inside `<Screen keyboard>`.
  */
 export function AnnouncerForm({ defaultValues, onSubmit, loading }: AnnouncerFormProps) {
-  const bioRef = useRef<TextInput>(null);
+  const bioRef = useRef<ComponentRef<typeof TextInput>>(null);
   const {
     control,
     handleSubmit,
@@ -44,7 +44,7 @@ export function AnnouncerForm({ defaultValues, onSubmit, loading }: AnnouncerFor
       professional_phone: defaultValues?.professional_phone ?? '',
     },
   });
-  const submit = handleSubmit(onSubmit);
+  const submit = () => void handleSubmit(onSubmit)();
 
   return (
     <View style={{ gap: Spacing.md }}>

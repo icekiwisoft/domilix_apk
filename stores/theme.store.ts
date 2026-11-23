@@ -21,7 +21,7 @@ interface ThemeState {
  */
 function applyNativeScheme(preference: ThemePreference) {
   if (process.env.EXPO_OS === 'web') return;
-  Appearance.setColorScheme(preference === 'system' ? null : preference);
+  Appearance.setColorScheme(preference === 'system' ? 'unspecified' : preference);
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({

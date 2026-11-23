@@ -17,7 +17,7 @@ import {
   StepHeader,
   useToast,
 } from '@/components/ui';
-import { CURRENCY_OPTIONS, PERIOD_OPTIONS, currencyLabel } from '@/constants/listing';
+import { CURRENCY_OPTIONS, LAND_PRICE_UNIT_OPTIONS, PERIOD_OPTIONS, currencyLabel } from '@/constants/listing';
 import { Spacing } from '@/constants/theme';
 import { useCreateAnnounce, type UploadProgress } from '@/hooks/queries/use-announces';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -38,12 +38,14 @@ export default function CreateStep4Screen() {
   const [refusal, setRefusal] = useState<string | null>(null);
 
   const isLocation = draft.ad_type === 'location';
+  // Land: price per m² (checked by default) or for the whole plot.
+  const perSquareMeter = draft.type === 'land' && draft.land_price_unit === 'square_meter';
   const canPublish =
     !!draft.description.trim() &&
     !!draft.price.trim() &&
     draft.medias.length > 0 &&
     (draft.type !== 'land' || Number(draft.size) > 0) &&
-    (!isLocation || !!draft.period);
+    (!isLocation || perSquareMeter || !!draft.period);
   // Set on the tap itself, before React Query reports the mutation: the
   // whole sequence (media uploads, then create) shows busy and a second tap
   // is ignored (QA-33). The ref closes the gap until the re-render.
@@ -170,14 +172,28 @@ export default function CreateStep4Screen() {
         autoComplete="email"
       />
 
+      {draft.type === 'land' ? (
+        <View style={{ gap: Spacing.sm }}>
+          <AppText variant="bodyStrong" accessibilityRole="header">
+            Le prix indiqué est
+          </AppText>
+          <ChipGroup
+            label="Le prix indiqué est"
+            options={LAND_PRICE_UNIT_OPTIONS}
+            value={draft.land_price_unit}
+            onChange={(land_price_unit) => setDraft({ land_price_unit })}
+          />
+        </View>
+      ) : null}
+
       <View style={{ gap: Spacing.sm }}>
         <Field
-          label={isLocation ? 'Prix de location' : 'Prix de vente'}
-          labelHint={isLocation ? '(par période)' : undefined}
+          label={perSquareMeter ? (isLocation ? 'Loyer au m²' : 'Prix au m²') : isLocation ? 'Prix de location' : 'Prix de vente'}
+          labelHint={perSquareMeter ? undefined : isLocation ? '(par période)' : undefined}
           value={draft.price}
           onChangeText={(t) => setDraft({ price: digitsOnly(t) })}
           keyboardType="number-pad"
-          suffix={deviseLabel(draft.devise)}
+          suffix={perSquareMeter ? `${deviseLabel(draft.devise)} / m²` : deviseLabel(draft.devise)}
         />
         <Button
           variant="secondary"
@@ -188,7 +204,7 @@ export default function CreateStep4Screen() {
         />
       </View>
 
-      {isLocation ? (
+      {isLocation && !perSquareMeter ? (
         <View style={{ gap: Spacing.sm }}>
           <AppText variant="bodyStrong" accessibilityRole="header">
             Période de paiement
@@ -208,7 +224,7 @@ export default function CreateStep4Screen() {
         photos={`${draft.medias.length} média${draft.medias.length > 1 ? 's' : ''}`}
         price={draft.price}
         devise={draft.devise}
-        period={isLocation ? periodLabel : undefined}
+        period={perSquareMeter ? 'm²' : isLocation ? periodLabel : undefined}
         address={draft.address || draft.neighbourhood}
         city={draft.city}
       />

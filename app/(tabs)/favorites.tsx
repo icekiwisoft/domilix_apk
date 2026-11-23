@@ -105,7 +105,7 @@ export default function FavoritesScreen() {
               accessibilityLabel="Chargement de la suite…"
               style={{ marginTop: Spacing.md }}
             />
-          ) : null
+          ) : undefined
         }
         onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
         onEndReachedThreshold={0.5}

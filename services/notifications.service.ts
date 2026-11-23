@@ -10,6 +10,13 @@ function normalizeNotification(n: RawNotification): Notification {
 }
 
 export const NotificationsService = {
+  // Expo push token of this phone (see lib/push-notifications.ts).
+  registerPushToken: (token: string, platform: 'android' | 'ios') =>
+    client.post('/notifications/push-token', { token, platform }).then((r) => r.data),
+
+  removePushToken: (token: string) =>
+    client.delete('/notifications/push-token', { data: { token } }).then((r) => r.data),
+
   list: (params?: { unread_only?: string; per_page?: string; page?: string }) =>
     client
       .get<PaginatedResponse<RawNotification>>('/notifications', { params })

@@ -27,6 +27,7 @@ import { useThemeColors } from '@/hooks/use-theme-color';
 import { isAnnouncerToken } from '@/lib/decode-token';
 import { formatDateFr } from '@/lib/format-date';
 import { isNetworkError } from '@/lib/network-error';
+import { openQuittez } from '@/lib/quittez';
 import { isPackUsable } from '@/lib/subscription-helpers';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -266,6 +267,15 @@ export default function ProfileScreen() {
           icon="privacy-tip"
           title="Politique de confidentialité"
           onPress={() => Linking.openURL('https://domilix.com/privacy-policy')}
+        />
+      </Section>
+
+      <Section title="Nos autres applications">
+        <ListRow
+          icon="flight-takeoff"
+          title="Quittez le pays"
+          subtitle="Préparez vos études et votre départ à l'étranger"
+          onPress={openQuittez}
         />
       </Section>
 

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRef } from 'react';
+import { useRef, type ComponentRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { View, type TextInput } from 'react-native';
 import { z } from 'zod';
@@ -31,8 +31,8 @@ interface ProfileFormProps {
  * last one submits. Use inside `<Screen keyboard>`.
  */
 export function ProfileForm({ defaultValues, onSubmit, loading }: ProfileFormProps) {
-  const emailRef = useRef<TextInput>(null);
-  const phoneRef = useRef<TextInput>(null);
+  const emailRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const phoneRef = useRef<ComponentRef<typeof TextInput>>(null);
   const {
     control,
     handleSubmit,
@@ -45,7 +45,7 @@ export function ProfileForm({ defaultValues, onSubmit, loading }: ProfileFormPro
       phone_number: defaultValues?.phone_number ?? '',
     },
   });
-  const submit = handleSubmit(onSubmit);
+  const submit = () => void handleSubmit(onSubmit)();
 
   return (
     <View style={{ gap: Spacing.md }}>

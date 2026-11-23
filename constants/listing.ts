@@ -68,6 +68,13 @@ export const PERIOD_OPTIONS = [
   { value: 'year', label: 'Année' },
 ] as const;
 
+/** Land price unit; per m² is the default when publishing (backend period `square_meter`). */
+export type LandPriceUnit = 'square_meter' | 'total';
+export const LAND_PRICE_UNIT_OPTIONS: { value: LandPriceUnit; label: string }[] = [
+  { value: 'square_meter', label: 'Prix au m²' },
+  { value: 'total', label: 'Prix total' },
+];
+
 export const LAND_USE_OPTIONS: { value: LandUse; label: string }[] = [
   { value: 'residential', label: 'Habitation' },
   { value: 'agricultural', label: 'Agricole' },

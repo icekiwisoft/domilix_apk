@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Keyboard, Pressable, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,7 +39,7 @@ export default function LoginScreen() {
       : Sizes.authBannerTall;
   const C = useThemeColors();
   const router = useRouter();
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<ComponentRef<typeof TextInput>>(null);
   const login = useLogin();
   const { redirect, reason } = useLocalSearchParams<{ redirect?: string; reason?: string }>();
   // Set by AuthProvider when the server refused the session (B-05).
@@ -165,7 +165,7 @@ export default function LoginScreen() {
                 secure
                 autoComplete="current-password"
                 returnKeyType="go"
-                onSubmitEditing={handleSubmit(onSubmit)}
+                onSubmitEditing={() => void handleSubmit(onSubmit)()}
                 error={errors.password?.message}
                 leftIcon={<MaterialIcons name="lock-outline" size={Sizes.icon} color={C.onSurfaceVariant} />}
               />
@@ -192,7 +192,7 @@ export default function LoginScreen() {
                 label="Se connecter"
                 size="lg"
                 fullWidth
-                onPress={handleSubmit(onSubmit)}
+                onPress={() => void handleSubmit(onSubmit)()}
                 loading={login.isPending}
                 style={{ marginTop: Spacing.xs }}
               />

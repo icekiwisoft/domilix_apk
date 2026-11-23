@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AmenityKey } from '@/constants/listing';
+import type { AmenityKey, LandPriceUnit } from '@/constants/listing';
 import type { PickedMedia } from '@/services/uploads.service';
 import type { AdType, LandUse, Standing } from '@/types/announce';
 
@@ -47,6 +47,8 @@ export interface CreateListingDraft {
   price: string;
   devise: string;
   period: string;
+  /** Land only: the price is per m² (default) or for the whole plot. */
+  land_price_unit: LandPriceUnit;
   description: string;
   contact_phone: string;
   contact_email: string;
@@ -100,6 +102,7 @@ const DEFAULT_DRAFT: CreateListingDraft = {
   price: '',
   devise: 'XAF',
   period: 'month',
+  land_price_unit: 'square_meter',
   description: '',
   contact_phone: '',
   contact_email: '',

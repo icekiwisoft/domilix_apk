@@ -4,9 +4,13 @@ import { useState, type ComponentProps, type ReactNode } from 'react';
 import { Linking, ScrollView, View } from 'react-native';
 
 import { BroadcastBanner } from '@/components/home/broadcast-banner';
+import { DomicoinBadge } from '@/components/home/domicoin-badge';
+import { QuittezPromo } from '@/components/home/quittez-promo';
 import { SectionHeader } from '@/components/home/section-header';
 import { AnnounceCard } from '@/components/listing/announce-card';
 import { activeFilters } from '@/components/search/active-filters';
+import { GuidedTour, type TourStep } from '@/components/tour/guided-tour';
+import { TourTarget } from '@/components/tour/tour-target';
 import {
   AppText,
   Chip,
@@ -28,6 +32,17 @@ import { useAuthStore } from '@/stores/auth.store';
 import type { CityCount } from '@/services/announces.service';
 import { toAnnounceQuery, useFilterStore, type ExploreFilters } from '@/stores/filter.store';
 import type { Announce, AnnounceType, PaginatedResponse } from '@/types/announce';
+
+// First-launch guide (components/tour): the finger walks through the main actions.
+const HOME_TOUR: TourStep[] = [
+  { target: 'home-search', title: 'Cherchez un bien', text: 'Tapez une ville ou un quartier, puis affinez avec les filtres (prix, type, chambres…).' },
+  { target: 'home-categories', title: 'Choisissez une catégorie', text: 'Immobilier, terrains ou meubles : touchez une catégorie pour voir les annonces correspondantes.' },
+  { target: 'home-domicoins', title: 'Débloquez les contacts', text: "Les Domicoins permettent d'afficher le numéro de l'annonceur et l'adresse exacte d'une annonce." },
+  { target: 'tab-explore', title: 'Explorez', text: 'Parcourez toutes les annonces en liste ou sur la carte.' },
+  { target: 'tab-publish', title: 'Publiez une annonce', text: 'Propriétaire ou agent ? Mettez votre bien, terrain ou meuble en ligne en quelques étapes.' },
+  { target: 'tab-favorites', title: 'Vos favoris', text: 'Touchez le cœur sur une annonce pour la retrouver ici.' },
+  { target: 'tab-profile', title: 'Votre compte', text: 'Domicoins, alertes, paramètres et profil annonceur se gèrent depuis cet onglet.' },
+];
 
 const CATEGORIES = [
   { value: 'realestate' as const, label: 'Immobilier', icon: 'home-work' as const },
@@ -374,21 +389,28 @@ export default function HomeScreen() {
       contentStyle={{ gap: Spacing.lg }}
     >
       <View style={{ gap: Spacing.md }}>
-        <SearchBar
-          value={search}
-          onChangeText={setSearch}
-          onSubmitEditing={handleSearch}
-          onFilterPress={() => router.push({ pathname: '/(modals)/filter-sheet', params: { from: 'home' } })}
-          filterCount={filterCount}
-        />
-        <ChipGroup
-          label="Catégorie"
-          layout="scroll"
-          options={CATEGORIES}
-          // The home screen lists real estate: Immobilier shows as the current one.
-          value="realestate"
-          onChange={handleCategory}
-        />
+        <TourTarget id="home-domicoins">
+          <DomicoinBadge />
+        </TourTarget>
+        <TourTarget id="home-search">
+          <SearchBar
+            value={search}
+            onChangeText={setSearch}
+            onSubmitEditing={handleSearch}
+            onFilterPress={() => router.push({ pathname: '/(modals)/filter-sheet', params: { from: 'home' } })}
+            filterCount={filterCount}
+          />
+        </TourTarget>
+        <TourTarget id="home-categories">
+          <ChipGroup
+            label="Catégorie"
+            layout="scroll"
+            options={CATEGORIES}
+            // The home screen lists real estate: Immobilier shows as the current one.
+            value="realestate"
+            onChange={handleCategory}
+          />
+        </TourTarget>
         {citiesLoading ? (
           <CityChipsSkeleton />
         ) : chips.length > 0 ? (
@@ -414,6 +436,8 @@ export default function HomeScreen() {
       ) : null}
 
       {rows}
+      <QuittezPromo />
+      <GuidedTour tourId="home-v1" steps={HOME_TOUR} />
     </Screen>
   );
 }

@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { createContext, useContext, useEffect, useState, type ReactNode, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode, type RefObject, type ComponentRef } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -19,11 +19,11 @@ import { useThemeColors } from '@/hooks/use-theme-color';
 
 type ScreenKeyboard = {
   /** Attach to the View that must stay above the keyboard (the main button). */
-  targetRef: RefObject<View | null>;
+  targetRef: RefObject<ComponentRef<typeof View> | null>;
   /** Fields call it on focus: moving between fields fires no keyboard event. */
   revealOnFocus: () => void;
   /** Scrolls a node shown under the focused field (suggestions) above the keyboard. */
-  revealNode: (node: View | null) => void;
+  revealNode: (node: ComponentRef<typeof View> | null) => void;
 };
 
 const ScreenKeyboardContext = createContext<ScreenKeyboard | null>(null);
@@ -126,7 +126,7 @@ export function Screen({
   const keyboardShown = useKeyboardShown(keyboard && !!footer);
   const bottom = bottomInset ? insets.bottom : Sizes.tabBarOverhang;
   const hero = heroHeight != null && !header;
-  const { scrollRef, targetRef, footerHeight, onScroll: trackScroll, onLayout: revealOnLayout, revealOnFocus, revealNode, pastBanner } =
+  const { scrollRef, targetRef, setFooterHeight, onScroll: trackScroll, onLayout: revealOnLayout, revealOnFocus, revealNode, pastBanner } =
     useKeyboardReveal(hero ? heroHeight : 0);
   // Without a hero, the band is always there (the content starts under it).
   const showBand = !header && (!hero || pastBanner);
@@ -186,7 +186,7 @@ export function Screen({
         {footer ? (
           <View
             onLayout={(e) => {
-              footerHeight.current = e.nativeEvent.layout.height;
+              setFooterHeight(e.nativeEvent.layout.height);
             }}
             style={{ paddingBottom: keyboardShown ? 0 : bottom, backgroundColor: bg }}
           >

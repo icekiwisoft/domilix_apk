@@ -1,9 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import * as Haptics from 'expo-haptics';
 import { Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { TourTarget } from '@/components/tour/tour-target';
 import { Borders, Fonts, Radii, Shadows, Sizes, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
 
@@ -46,7 +47,7 @@ function haptic() {
  * label `link` 6.1:1 (light) / 11:1 (dark); inactive onSurfaceVariant 8.9:1;
  * onCta on cta 8.5:1.
  */
-export function TabBar({ state, descriptors, navigation, items, centerRoute, centerAction }: TabBarProps) {
+export function TabBar({ state, descriptors, emitter, navigateToTab, items, centerRoute, centerAction }: TabBarProps) {
   const C = useThemeColors();
   const insets = useSafeAreaInsets();
 
@@ -71,6 +72,7 @@ export function TabBar({ state, descriptors, navigation, items, centerRoute, cen
         if (route.name === centerRoute && centerAction) {
           return (
             <View key={route.key} style={{ flex: 1, alignItems: 'center' }}>
+              <TourTarget id="tab-publish">
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={centerAction.label}
@@ -95,6 +97,7 @@ export function TabBar({ state, descriptors, navigation, items, centerRoute, cen
               >
                 <MaterialIcons name={centerAction.icon} size={Sizes.iconLg + Spacing.xs} color={C.onCta} />
               </Pressable>
+              </TourTarget>
             </View>
           );
         }
@@ -105,14 +108,15 @@ export function TabBar({ state, descriptors, navigation, items, centerRoute, cen
         const focused = state.index === index;
 
         const onPress = () => {
-          const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+          const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!focused && !event.defaultPrevented) navigateToTab(route.key);
         };
-        const onLongPress = () => navigation.emit({ type: 'tabLongPress', target: route.key });
+        const onLongPress = () => emitter.emit({ type: 'tabLongPress', target: route.key });
 
         return (
+          // Guided tour anchor (components/tour): "tab-explore", "tab-profile"…
+          <TourTarget key={route.key} id={`tab-${route.name}`} style={{ flex: 1 }}>
           <Pressable
-            key={route.key}
             accessibilityRole="tab"
             accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
             accessibilityState={{ selected: focused }}
@@ -170,6 +174,7 @@ export function TabBar({ state, descriptors, navigation, items, centerRoute, cen
               {label}
             </AppText>
           </Pressable>
+          </TourTarget>
         );
       })}
     </View>

@@ -41,8 +41,8 @@ export function AnnounceCard({ announce: a, onPress, onToggleFavorite, variant, 
       tagVariant={rent ? 'rent' : 'sale'}
       price={a.price}
       currency={a.devise}
-      // Like the website card: the period only for rentals.
-      period={rent ? a.period : null}
+      // Like the website card: the period only for rentals, or "/ m²" for land priced per m².
+      period={rent || a.period === 'square_meter' ? a.period : null}
       onPress={onPress}
       favorite={a.liked}
       onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(a.id) : undefined}

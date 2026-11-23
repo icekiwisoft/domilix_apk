@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { unregisterPushNotifications } from '@/lib/push-notifications';
 import { AuthService } from '@/services/auth.service';
 import { signOutGoogle } from '@/hooks/use-google-signin';
 import { useAuthStore } from '@/stores/auth.store';
@@ -83,7 +84,11 @@ export function useLogout() {
   const { clearAuth } = useAuthStore.getState();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: AuthService.logout,
+    // The push token is dropped while the session can still authenticate.
+    mutationFn: async () => {
+      await unregisterPushNotifications();
+      return AuthService.logout();
+    },
     onSettled: () => {
       clearAuth();
       qc.clear();

@@ -238,7 +238,7 @@ export default function MyListingsScreen() {
               <SummaryItem value={locationCount} label={`location${locationCount > 1 ? 's' : ''}`} color="tertiary" />
               <SummaryItem value={saleCount} label={`vente${saleCount > 1 ? 's' : ''}`} color="secondary" />
             </Card>
-          ) : null
+          ) : undefined
         }
         ListEmptyComponent={empty}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.ms }} />}
@@ -249,7 +249,7 @@ export default function MyListingsScreen() {
               accessibilityLabel="Chargement de la suite…"
               style={{ marginTop: Spacing.md }}
             />
-          ) : null
+          ) : undefined
         }
         onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
         onEndReachedThreshold={0.5}

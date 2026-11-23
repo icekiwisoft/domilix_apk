@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 
+import { DomicoinBadge } from '@/components/home/domicoin-badge';
 import { Chip, SearchBar, SegmentedControl } from '@/components/ui';
 import { Borders, Shadows, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-color';
@@ -62,6 +63,8 @@ export function ExploreHeader({
             },
       ]}
     >
+      {/* Domicoin invitation above the search, in the list only (not over the map). */}
+      {overMap ? null : <DomicoinBadge />}
       <SearchBar
         value={search}
         onChangeText={onSearchChange}

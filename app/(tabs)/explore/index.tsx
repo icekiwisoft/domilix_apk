@@ -177,7 +177,7 @@ export default function ExploreScreen() {
             <View style={{ paddingBottom: Spacing.xs }}>
               <ResultsCount count={total} query={search.trim() || undefined} city={cityLabel(filters)} />
             </View>
-          ) : null
+          ) : undefined
         }
         ListEmptyComponent={empty}
         ListFooterComponent={
@@ -188,7 +188,7 @@ export default function ExploreScreen() {
               onPress={() => setPageState({ key: queryKey, page: page + 1 })}
               style={{ marginTop: Spacing.md, alignSelf: 'center' }}
             />
-          ) : null
+          ) : undefined
         }
         ItemSeparatorComponent={() => <View style={{ height: Spacing.ms }} />}
         contentContainerStyle={{
