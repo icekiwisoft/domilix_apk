@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/toast';
-import { logFacebookPurchase } from '@/lib/facebook';
 import { AuthService } from '@/services/auth.service';
 import { SubscriptionsService } from '@/services/subscriptions.service';
 import { useAuthStore } from '@/stores/auth.store';
@@ -51,7 +50,6 @@ export function PaymentObserver() {
             queryClient.setQueryData(['me'], user);
             void queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
             void queryClient.invalidateQueries({ queryKey: ['notifications'] });
-            logFacebookPurchase(payment.amount);
             toastRef.current.show('Paiement confirmé. Vos Domicoins sont disponibles.', 'success');
           } else {
             toastRef.current.show('Le paiement a échoué. Aucun Domicoin ajouté.', 'error');

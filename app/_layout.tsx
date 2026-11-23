@@ -15,7 +15,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Fonts } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { initFacebook } from '@/lib/facebook';
 import { DomilixThemeProvider } from '@/providers/theme.provider';
 import { QueryProvider } from '@/providers/query.provider';
 import { AuthProvider } from '@/providers/auth.provider';
@@ -51,10 +50,6 @@ export default function RootLayout() {
   // A font load error counts as ready: the app falls back to the system font
   // instead of leaving the splash screen up forever (UI-03).
   const fontsReady = fontsLoaded || !!fontError;
-
-  useEffect(() => {
-    initFacebook();
-  }, []);
 
   useEffect(() => {
     if (fontsReady && authHydrated && themeHydrated) SplashScreen.hideAsync();

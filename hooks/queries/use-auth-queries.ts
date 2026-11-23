@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { logFacebookRegistration } from '@/lib/facebook';
 import { unregisterPushNotifications } from '@/lib/push-notifications';
 import { AuthService } from '@/services/auth.service';
 import { signOutGoogle } from '@/hooks/use-google-signin';
@@ -68,8 +67,7 @@ export function useRegister() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (dto: RegisterDto) => AuthService.register(dto),
-    onSuccess: (data, dto) => {
-      logFacebookRegistration(dto.email ? 'email' : 'phone');
+    onSuccess: (data) => {
       const raw = data as unknown as Record<string, unknown>;
       const { access, refresh } = extractTokens(raw);
       if (access) setTokens(access, refresh);
