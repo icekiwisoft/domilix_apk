@@ -20,7 +20,25 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.jack0237.domilix",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "category": ["BROWSABLE", "DEFAULT"],
+          "data": [
+            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/houses/" },
+            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/furnitures/" },
+            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/terrains/" },
+            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/fr/houses/" },
+            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/fr/furnitures/" },
+            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/fr/terrains/" },
+            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/en/houses/" },
+            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/en/furnitures/" },
+            { "scheme": "https", "host": "domilix.com", "pathPrefix": "/en/terrains/" }
+          ]
+        }
+      ]
     },
     "web": {
       "output": "static",
