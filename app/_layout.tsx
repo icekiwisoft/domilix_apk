@@ -83,6 +83,7 @@ export default function RootLayout() {
                 <Stack.Screen name="profile/subscriptions" options={{ headerShown: false }} />
                 <Stack.Screen name="profile/announcer-profile" options={{ headerShown: false }} />
                 <Stack.Screen name="profile/alerts" options={{ headerShown: false }} />
+                <Stack.Screen name="profile/orders" options={{ headerShown: false }} />
                 <Stack.Screen name="profile/become-announcer" options={{ headerShown: false }} />
                 <Stack.Screen name="profile/student-verification" options={{ headerShown: false }} />
               </Stack>

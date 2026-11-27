@@ -52,6 +52,10 @@ export interface CreateListingDraft {
   description: string;
   contact_phone: string;
   contact_email: string;
+  private_owner_name: string;
+  private_owner_phone: string;
+  private_notes: string;
+  domilix_sale_enabled: boolean;
 }
 
 const NO_AMENITIES: Record<AmenityKey, boolean> = {
@@ -106,6 +110,10 @@ const DEFAULT_DRAFT: CreateListingDraft = {
   description: '',
   contact_phone: '',
   contact_email: '',
+  private_owner_name: '',
+  private_owner_phone: '',
+  private_notes: '',
+  domilix_sale_enabled: false,
 };
 
 /** True while nothing was entered since the last reset (the flow can start fresh silently). */

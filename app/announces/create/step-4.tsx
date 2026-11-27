@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import { deviseLabel } from '@/components/forms/listing-options';
 import { ListingRecap } from '@/components/forms/listing-recap';
 import { OptionPickerDialog } from '@/components/forms/option-picker-dialog';
+import { DomilixSaleToggle, PrivateListingFields } from '@/components/forms/private-listing-fields';
 import { CREATE_STEPS, CREATE_TITLE, SendProgress, StepFooter, StepIntro } from '@/components/forms/step-layout';
 import {
   AppText,
@@ -24,12 +25,14 @@ import { getApiErrorMessage } from '@/lib/api-error';
 import { digitsOnly } from '@/lib/digits';
 import { isNetworkError } from '@/lib/network-error';
 import { useCreateListingStore } from '@/stores/create-listing.store';
+import { useAuthStore } from '@/stores/auth.store';
 
 export default function CreateStep4Screen() {
   const router = useRouter();
   const toast = useToast();
   const { draft, setDraft, resetDraft } = useCreateListingStore();
   const createAnnounce = useCreateAnnounce();
+  const verifiedAnnouncer = useAuthStore((state) => state.user?.announcer_verified === true);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   // 403 from POST /announces: not an announcer, or no publication left in
@@ -171,6 +174,19 @@ export default function CreateStep4Screen() {
         autoCorrect={false}
         autoComplete="email"
       />
+
+      <PrivateListingFields
+        value={{ owner_name: draft.private_owner_name, owner_phone: draft.private_owner_phone, notes: draft.private_notes }}
+        onChange={(fields) => setDraft({
+          private_owner_name: fields.owner_name ?? draft.private_owner_name,
+          private_owner_phone: fields.owner_phone ?? draft.private_owner_phone,
+          private_notes: fields.notes ?? draft.private_notes,
+        })}
+      />
+      {verifiedAnnouncer ? (
+        <DomilixSaleToggle value={draft.domilix_sale_enabled}
+          onChange={(domilix_sale_enabled) => setDraft({ domilix_sale_enabled })} />
+      ) : null}
 
       {draft.type === 'land' ? (
         <View style={{ gap: Spacing.sm }}>
