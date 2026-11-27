@@ -47,6 +47,7 @@ const HOME_TOUR: TourStep[] = [
 const CATEGORIES = [
   { value: 'realestate' as const, label: 'Immobilier', icon: 'home-work' as const },
   { value: 'furniture' as const, label: 'Mobilier', icon: 'chair' as const },
+  { value: 'land' as const, label: 'Terrain', icon: 'square-foot' as const },
 ];
 
 /** Cards shown per row. */
@@ -404,7 +405,7 @@ export default function HomeScreen() {
         <TourTarget id="home-categories">
           <ChipGroup
             label="Catégorie"
-            layout="scroll"
+            layout="wrap"
             options={CATEGORIES}
             // The home screen lists real estate: Immobilier shows as the current one.
             value="realestate"
