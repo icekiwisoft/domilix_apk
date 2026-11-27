@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useNavigation, usePreventRemove, useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Linking, View } from 'react-native';
@@ -16,6 +17,7 @@ import {
 import { MediaPickerGrid } from '@/components/forms/media-picker-grid';
 import { PhotoGrid, PhotoTile } from '@/components/forms/media-upload-grid';
 import { OptionPickerDialog } from '@/components/forms/option-picker-dialog';
+import { DomilixSaleToggle, PrivateListingFields } from '@/components/forms/private-listing-fields';
 import { SendProgress, StepFooter } from '@/components/forms/step-layout';
 import {
   AppText,
@@ -50,7 +52,9 @@ import {
   type EditDetails,
 } from '@/lib/listing-payload';
 import { GeoapifyError, GeoapifyService } from '@/services/geoapify.service';
+import { AdActivityService, type PrivateListingInfo } from '@/services/ad-activity.service';
 import type { PickedMedia } from '@/services/uploads.service';
+import { useAuthStore } from '@/stores/auth.store';
 
 // Same fields as the website's edit dialog (domilix.com EditAdModal.tsx).
 
@@ -94,6 +98,16 @@ export default function EditAnnounceScreen() {
 
   const { data: announce, isLoading, isError, error: loadError, refetch } = useAnnounce(id);
   const updateAnnounce = useUpdateAnnounce();
+  const user = useAuthStore((state) => state.user);
+  const privateInfo = useQuery({
+    queryKey: ['ad-private-info', user?.id, id],
+    queryFn: () => AdActivityService.privateInfo(id),
+    enabled: !!id && !!user && !!announce?.is_owner,
+    gcTime: 0,
+  });
+  const privateScope = user ? `${user.id}:${id}` : '';
+  const [privateDraft, setPrivateDraft] = useState<{ scope: string; fields: Partial<PrivateListingInfo> }>();
+  const privatePatch = privateDraft?.scope === privateScope ? privateDraft.fields : {};
 
   const [details, setDetails] = useState<EditDetails | null>(null);
   const [amenities, setAmenities] = useState<Record<AmenityKey, boolean> | null>(null);
@@ -132,7 +146,7 @@ export default function EditAnnounceScreen() {
     );
   }, [announce]);
 
-  const dirty =
+  const dirty = Object.keys(privatePatch).length > 0 || (
     initialSnapshot !== null &&
     JSON.stringify([
       details,
@@ -141,7 +155,7 @@ export default function EditAnnounceScreen() {
       coordinates,
       removedMediaIds,
       newMedias.map((m) => m.uri),
-    ]) !== initialSnapshot;
+    ]) !== initialSnapshot);
 
   // Back arrow, Android back or swipe with unsaved changes: ask first.
   const navigation = useNavigation();
@@ -268,6 +282,12 @@ export default function EditAnnounceScreen() {
       readableAmenityKeys(announce)
     );
 
+    const privatePayload = user && announce.is_owner && privateInfo.data ? {
+      private_owner_name: privatePatch.owner_name,
+      private_owner_phone: privatePatch.owner_phone,
+      private_notes: privatePatch.notes,
+    } : {};
+
     // The API replaces the ad's media with `media_ids`: keep the ones that were
     // not removed, the new ones are uploaded by the hook first.
     const keepMedias = existingMedias.map((m) => ({ id: String(m.id), isVideo: (m.type ?? '').startsWith('video') }));
@@ -276,7 +296,7 @@ export default function EditAnnounceScreen() {
     setProgress(null);
 
     updateAnnounce.mutate(
-      { id, payload, newMedia: newMedias, keepMedias, onProgress: setProgress },
+      { id, payload: { ...payload, ...privatePayload }, newMedia: newMedias, keepMedias, onProgress: setProgress },
       {
         onSettled: () => {
           sendingRef.current = false;
@@ -389,6 +409,23 @@ export default function EditAnnounceScreen() {
           autoCorrect={false}
         />
       </Section>
+
+      {privateInfo.data && privateScope && announce.is_owner ? (
+        <Card outlined>
+          <PrivateListingFields value={{ ...privateInfo.data, ...privatePatch }}
+            onChange={(fields) => setPrivateDraft({ scope: privateScope, fields: { ...privatePatch, ...fields } })} />
+        </Card>
+      ) : privateInfo.isError && announce.is_owner ? (
+        <Section title="Informations privées">
+          <Button variant="text" label="Réessayer le chargement" onPress={() => privateInfo.refetch()} />
+        </Section>
+      ) : null}
+      {announce.is_owner && user?.announcer_verified ? (
+        <Card outlined>
+          <DomilixSaleToggle value={details.domilix_sale_enabled}
+            onChange={(value) => update('domilix_sale_enabled', value)} />
+        </Card>
+      ) : null}
 
       <Section title={`Médias (${totalMedias})`}>
         {existingMedias.length > 0 ? (

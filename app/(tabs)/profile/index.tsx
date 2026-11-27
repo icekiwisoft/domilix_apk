@@ -1,5 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Linking, View, useWindowDimensions } from 'react-native';
 
@@ -198,6 +198,8 @@ export default function ProfileScreen() {
       <BalanceCard credits={user.credits ?? 0} onRecharge={() => router.push('/profile/subscriptions')} />
 
       <Section title="Activité">
+        <ListRow icon="shopping-cart" title="Panier et commandes"
+          onPress={() => router.push('/profile/orders' as Href)} />
         <ListRow icon="favorite-border" title="Mes favoris" onPress={() => router.push('/(tabs)/favorites')} />
         <ListRow
           icon="notifications-none"

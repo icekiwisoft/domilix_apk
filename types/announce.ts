@@ -79,6 +79,8 @@ export interface Announce {
   longitude?: number;
   views?: number;
   is_owner?: boolean;
+  comments_available?: boolean;
+  domilix_sale_enabled?: boolean;
   publisher_type?: 'AGENT' | 'LANDLORD' | 'OWNER';
   // Land listings
   land_use?: LandUse | null;

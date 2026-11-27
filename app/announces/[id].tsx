@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Linking, Share, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +10,7 @@ import { announcePlace, announceTitle } from '@/components/listing/announce-card
 import { categoryLabel } from '@/lib/category-label';
 import { AnnounceDetailSkeleton } from '@/components/listing/announce-detail-skeleton';
 import { ListingGallery } from '@/components/listing/listing-gallery';
+import { ListingComments } from '@/components/listing/listing-comments';
 import { LocationMap } from '@/components/listing/location-map';
 import { ReportDialog } from '@/components/listing/report-dialog';
 import { GuidedTour, type TourStep } from '@/components/tour/guided-tour';
@@ -23,12 +25,15 @@ import {
   PriceTag,
   Screen,
   ScreenHeader,
+  useToast,
   type IconName,
 } from '@/components/ui';
 import { Borders, Radii, Sizes, Spacing } from '@/constants/theme';
 import { useAnnounce, useToggleLike } from '@/hooks/queries/use-announces';
 import { useThemeColors } from '@/hooks/use-theme-color';
 import { AnnouncesService } from '@/services/announces.service';
+import { AdActivityService } from '@/services/ad-activity.service';
+import { getApiErrorMessage } from '@/lib/api-error';
 import { useAuthStore } from '@/stores/auth.store';
 import type { Announce, LandUse, Standing } from '@/types/announce';
 
@@ -158,6 +163,8 @@ function SectionTitle({ children }: { children: string }) {
 export default function AnnounceDetailScreen() {
   const C = useThemeColors();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const toast = useToast();
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -167,6 +174,14 @@ export default function AnnounceDetailScreen() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const [expanded, setExpanded] = useState(false);
   const [reportVisible, setReportVisible] = useState(false);
+  const cart = useMutation({
+    mutationFn: AdActivityService.addToCart,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['ad-orders'] });
+      router.push('/profile/orders' as Href);
+    },
+    onError: (error) => toast.show(getApiErrorMessage(error, "Impossible d'ajouter ce bien au panier."), 'error'),
+  });
 
   // Count one view per opened listing (deduplicated server-side, non-blocking).
   const announceId = announce?.id;
@@ -230,6 +245,14 @@ export default function AnnounceDetailScreen() {
     setReportVisible(true);
   }
 
+  function handleBuy() {
+    if (!accessToken) {
+      router.push({ pathname: '/(auth)/login', params: { redirect: `/announces/${a.id}` } });
+      return;
+    }
+    if (!cart.isPending) cart.mutate(String(a.id));
+  }
+
   // Same text and public URL as the website's ShareModal (domilix.com
   // src/views/Ad/Ad.tsx + src/utils/adPath.ts). Android ignores `url`, so the
   // link goes inside `message`.
@@ -290,6 +313,10 @@ export default function AnnounceDetailScreen() {
           />
         </TourTarget>
       )}
+      {a.domilix_sale_enabled && !a.is_owner ? (
+        <Button size="lg" label={rent ? 'Ajouter au panier' : 'Acheter'} icon="shopping-cart" loading={cart.isPending}
+          onPress={handleBuy} style={{ flexGrow: 1 }} />
+      ) : null}
     </View>
   );
 
@@ -438,6 +465,7 @@ export default function AnnounceDetailScreen() {
           <SectionTitle>{"L'annonceur"}</SectionTitle>
           <AnnouncerCard verified={!!a.announcer?.verified} />
         </View>
+        {a.comments_available ? <ListingComments key={a.id} id={String(a.id)} /> : null}
       </View>
 
       <ReportDialog visible={reportVisible} announceId={String(a.id)} onDismiss={() => setReportVisible(false)} />
